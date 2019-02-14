@@ -958,7 +958,7 @@ sub print_status_and_return_reasons_to_exit {
 
     }
     if (@{$skipped_analyses{'DONE'}}) {
-      $self->formatter->add_info(sprintf("%d analyses not shown because all their jobs are done.", scalar(@{$skipped_analyses{'DONE'}})));
+        $self->formatter->add_info(sprintf("%d analyses not shown because all their jobs are done.", scalar(@{$skipped_analyses{'DONE'}})));
     }
     $self->formatter->add_info(printf("total over %d analyses : %6.2f%% complete (< %.2f CPU_hrs) (%d to_do + %d done + %d failed + %d excluded = %d total)",
            scalar(@$list_of_analyses), $percentage_completed, $cpuhrs_to_do, $total_jobs_to_do, $total_done_jobs, $total_failed_jobs, $total_excluded_jobs, $total_jobs));
@@ -968,7 +968,7 @@ sub print_status_and_return_reasons_to_exit {
          if ($total_excluded_jobs > 0) {
              push (@reasons_to_exit, {'message' => "### Some analyses are excluded ###",
                                       'exit_status' => 'NO_WORK'});
-               $self->formatter->add_info("Reasons to exit ### Some analyses are excluded ### exit_status: NO_WORK");
+             $self->formatter->add_info("Reasons to exit ### Some analyses are excluded ### exit_status: NO_WORK");
          }
          push (@reasons_to_exit, {'message' => "### No jobs left to do ###",
                                   'exit_status' => 'NO_WORK'});

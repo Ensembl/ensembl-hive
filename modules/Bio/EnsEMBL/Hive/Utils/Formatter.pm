@@ -43,87 +43,86 @@ use Bio::EnsEMBL::Hive::Utils ('throw');
 
 
 sub new {
-  my $class = shift @_;
-  my $self = bless {}, $class;
-  $self->{mode}->{onfly} = 0;
-  $self->{mode}->{text} = 1;
-  $self->{mode}->{json} = 0;
-  $self->{mode}->{error} = 1;
-  $self->{mode}->{warning} = 1;
-  $self->{mode}->{info} = 1;
+    my $class = shift @_;
+    my $self = bless {}, $class;
+    $self->{mode}->{onfly} = 0;
+    $self->{mode}->{text} = 0;
+    $self->{mode}->{json} = 0;
+    $self->{mode}->{error} = 1;
+    $self->{mode}->{warning} = 1;
+    $self->{mode}->{info} = 1;
 
-  return $self;
+    return $self;
 }
 
 sub set_mode {
-  my ($self, $mode, $value) = @_;
-  $self->{mode}->{$mode} = $value;
+    my ($self, $mode, $value) = @_;
+    $self->{mode}->{$mode} = $value;
 }
 
 sub stack_output {
-  my ($self, $output) = @_;
-  if ($self->{mode}->{onfly} == 1) {
-    $self->{output} = [];
-    push @{$self->{output}},$output;
-    $self->print_data();
-  } else {
-    push @{$self->{output}},$output;
-  }
+    my ($self, $output) = @_;
+    if ($self->{mode}->{onfly} == 1) {
+        $self->{output} = [];
+        push @{$self->{output}},$output;
+        $self->print_data();
+    } else {
+        push @{$self->{output}},$output;
+    }
 }
 
 sub add_warning {
-  my ($self, $warning) = @_;
-  $self->stack_output({msg => $warning, type => 'warning'});
+    my ($self, $warning) = @_;
+    $self->stack_output({msg => $warning, type => 'warning'});
 }
 
 
 sub add_error {
-  my ($self, $error) = @_;
-  $self->stack_output({msg => $error, type => 'error'});
+    my ($self, $error) = @_;
+    $self->stack_output({msg => $error, type => 'error'});
 }
 
 sub add_info {
-  my ($self, $info) = @_;
-  $self->stack_output({msg => $info, type => 'info'});
+    my ($self, $info) = @_;
+    $self->stack_output({msg => $info, type => 'info'});
 }
 
 sub add_custom_output {
-  my ($self, $info, $type, $function) = @_;
-  $self->stack_output({msg => $info, type => $type, function => $function});
+    my ($self, $info, $type, $function) = @_;
+    $self->stack_output({msg => $info, type => $type, function => $function});
 }
 
 sub add_infoHash {
-  my ($self, $info) = @_;
-  $self->{infoHash} = $info;
-  if ($self->{mode}->{onfly} == 1) {
-    $self->print_data();
-  }
+    my ($self, $info) = @_;
+    $self->{infoHash} = $info;
+    if ($self->{mode}->{onfly} == 1) {
+        $self->print_data();
+    }
 }
 
 sub print_data {
-  my ($self) = @_;
+    my ($self) = @_;
 
-  if ($self->{mode}->{json} == 1) {
-    my $json = JSON->new->allow_nonref;
-    print $json->encode($self->{infoHash});
-    return;
-  }
-
-  if ($self->{mode}->{text} == 1) {
-    foreach my $text (@{$self->{output}}) {
-      my $type = $text->{type};
-      if ($self->{mode}->{$type} == 1) {
-        if ($text->{function}){
-          my @params = @{ $text->{msg} };
-          $text->{function}->(@params);
-        } else {
-          print $text->{msg};
-          print "\n";
-        }
-      }
+    if ($self->{mode}->{json} == 1) {
+        my $json = JSON->new->allow_nonref;
+        print $json->encode($self->{infoHash});
+        return;
     }
-  }
 
+    if ($self->{mode}->{text} == 1) {
+        foreach my $text (@{$self->{output}}) {
+            my $type = $text->{type};
+            if ($self->{mode}->{$type} == 1) {
+                if ($text->{function}){
+                    my @params = @{ $text->{msg} };
+                    $text->{function}->(@params);
+                } else {
+                    print $text->{msg};
+                    print "\n";
+                }
+            }
+        }
+    }
 }
 
 

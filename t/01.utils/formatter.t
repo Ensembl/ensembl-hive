@@ -44,7 +44,7 @@ $testStructure->{heade2} = 'Mole';
 $testStructure->{header3}->{type} = 'Mushroom';
 
 my $stdout = capture_stdout {
-  $formatter->add_infoHash($testStructure);
+    $formatter->add_infoHash($testStructure);
 };
 
 is_valid_json $stdout;
@@ -62,7 +62,7 @@ $formatter->add_info('info');
 $formatter->add_warning('warning');
 
 $stdout = capture_stdout {
-  $formatter->print_data();
+    $formatter->print_data();
 };
 
 print $stdout;
