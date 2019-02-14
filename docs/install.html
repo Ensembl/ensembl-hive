@@ -1,0 +1,129 @@
+<html>
+    <head>
+        <title>eHive installation and setup</title>
+        <link rel="stylesheet" type="text/css" media="all" href="ehive_doc.css" />
+    </head>
+<body>
+
+    <center><h1>eHive installation and setup</h1></center>
+    <hr width=50% />
+
+    <center><h2>eHive dependencies</h2></center>
+
+    eHive system depends on the following components that you may need to download and install first:
+    <ol>
+        <li>Perl 5.14 <a href=http://www.perl.org/get.html>or higher</a></li>
+        <li>A database engine of your choice. eHive keeps its state in a database, so you will need
+            <ol>
+                <li>a server installed on the machine where you want to maintain the state of your pipeline(s) and</li>
+                <li>clients installed on the machines where the jobs are to be executed.</li>
+            </ol>
+            At the moment, the following database options are available:
+            <ul>
+                <li>MySQL 5.1 <a href=http://dev.mysql.com/downloads/>or higher</a></li>
+                <li>SQLite 3.6 <a href=http://www.sqlite.org/download.html>or higher</a></li>
+                <li>PostgreSQL 9.2 <a href=http://www.postgresql.org/download/>or higher</a></li>
+            </ul>
+        </li>
+        <li>Perl DBI API version 1.6 <a href=http://dbi.perl.org/>or higher</a> --
+            Perl database interface that has to include a driver for the database engine of your choice above.
+        </li>
+        <li>Perl libraries for visualisation (optional but recommended). They can be found on CPAN:
+            <ul>
+                <li><a href=http://search.cpan.org/~rsavage/GraphViz/lib/GraphViz.pm>GraphViz</a> (needed for generate_graph.pl and the GUI)</li>
+                <li><a href=http://search.cpan.org/dist/Chart-Gnuplot/lib/Chart/Gnuplot.pm>Chart::Gnuplot</a> (needed for generate_timeline.pl)</li>
+            </ul>
+        </li>
+
+    </ol>
+
+    <hr width=50% />
+
+    <center><h2>Installing eHive code</h2></center>
+
+<h3>Check out the repository by cloning it from GitHub:</h3>
+
+<p>
+All eHive pipelines will require the ensembl-hive repository, which can be found on
+<a href="https://github.com/Ensembl/ensembl-hive">GitHub</a>. As such it is assumed that <a href="http://git-scm.com/">Git</a> is 
+installed on your system, if not follow the instructions <a href="https://help.github.com/articles/set-up-git/">here</a>
+</p>
+
+<p>
+To download the repository, move to a suitable directory and run the following on the 
+command line:
+</p>
+<pre>
+        git clone -b version/2.2 https://github.com/Ensembl/ensembl-hive.git
+</pre>
+
+<p>
+This will create ensembl-hive directory with all the code and documentation.<br/>
+If you cd into the ensembl-hive directory and do an ls you should see something like the
+following:
+</p>
+
+<pre>
+        ls
+        Changelog  docs  hive_config.json  modules  README.md  scripts  sql  t
+</pre>
+
+The major directories here are:
+<dl>
+	<dt>modules</dt>
+	<dd>This contains all the eHive modules, which are written in Perl</dd>
+	<dt>scripts</dt>
+	<dd>Has various scripts that are key to initialising, running and debugging the pipeline</dd>
+	<dt>sql</dt>
+	<dd>Contains sql used to build a standard pipeline database</dd>
+</dl>
+
+
+<h3>Optional configuration of the system:</h3>
+
+<p>
+You may find it convenient (although it is not necessary) to add "ensembl-hive/scripts"
+to your <code>$PATH</code> variable to make it easier to run beekeeper.pl and other useful Hive scripts.
+</p>
+
+<ul>
+<li><i>using bash syntax:</i>
+<pre>
+        export PATH=$PATH:$ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts<i>
+                #
+                # (for best results, append this line to your ~/.bashrc or ~/.bash_profile configuration file)</i>
+</pre></li>
+
+<li><i>using [t]csh syntax:</i>
+<pre>
+        set path = ( $path ${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/scripts )<i>
+                #
+                # (for best results, append this line to your ~/.cshrc or ~/.tcshrc configuration file)</i>
+</pre></li>
+</ul>
+
+<p>
+Also, if you are developing the code and not just running ready pipelines,
+you may find it convenient to add "ensembl-hive/modules" to your <code>$PERL5LIB</code> variable.
+</p>
+
+<ul>
+<li><i>using bash syntax:</i>
+<pre>
+        export PERL5LIB=${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules
+        export PERL5LIB=${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules<i>
+                #
+                # (for best results, append these lines to your ~/.bashrc or ~/.bash_profile configuration file)</i>
+</pre></li>
+
+<li><i>using [t]csh syntax:</i>
+<pre>
+        setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules
+        setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules<i>
+                #
+                # (for best results, append these lines to your ~/.cshrc or ~/.tcshrc configuration file)</i>
+</pre></li>
+</ul>
+
+</body>
+</html>
