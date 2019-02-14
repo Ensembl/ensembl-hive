@@ -71,7 +71,7 @@ ok(index($stdout, 'info') != -1, 'Text info output works correctly');
 $formatter->set_mode('warning', 0);
 
 $stdout = capture_stdout {
-  $formatter->print_data();
+    $formatter->print_data();
 };
 
 ok(index($stdout, 'warning') == -1, 'Warning switch off works correctly');
@@ -85,7 +85,7 @@ $formatter->add_custom_output([
     \&print_aligned_fields);
 
 $stdout = capture_stdout {
-  $formatter->print_data();
+    $formatter->print_data();
 };
 
 ok(index($stdout, 'field') != -1, 'Custom function works correctly');
