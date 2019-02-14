@@ -25,7 +25,6 @@ use Test::Warn;
 use Test::JSON;
 use Capture::Tiny ':all';
 use Bio::EnsEMBL::Hive::Utils::Formatter;
-use Bio::EnsEMBL::Hive::Utils ('print_aligned_fields');
 
 BEGIN {
     use_ok( 'Bio::EnsEMBL::Hive::Utils::Formatter' );
