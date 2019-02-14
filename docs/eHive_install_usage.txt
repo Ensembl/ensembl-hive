@@ -2,7 +2,7 @@
 
 1. Download and install the necessary external software:
 
-1.1. Perl 5.10 or higher, since eHive code is written in Perl
+1.1. Perl 5.14 or higher, since eHive code is written in Perl
 
 	see http://www.perl.com/download.csp
 
