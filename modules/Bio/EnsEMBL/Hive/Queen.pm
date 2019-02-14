@@ -731,12 +731,12 @@ sub synchronize_hive {
 
     my $start_time = time();
 
-    print "\nSynchronizing the hive (".scalar(@$list_of_analyses)." analyses this time):\n";
+    $self->formatter->add_info("Synchronizing the hive (".scalar(@$list_of_analyses)." analyses this time):");
     foreach my $analysis (@$list_of_analyses) {
         $self->synchronize_AnalysisStats($analysis->stats);
         $self->formatter->add_info(($analysis->stats()->status eq 'BLOCKED') ? 'x' : 'o');
     }
-    $self->formatter->add_info(''.((time() - $start_time))." seconds to synchronize_hive\n\n");
+    $self->formatter->add_info(''.((time() - $start_time))." seconds to synchronize_hive\n");
 }
 
 
