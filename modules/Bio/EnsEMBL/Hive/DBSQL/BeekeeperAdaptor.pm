@@ -131,5 +131,34 @@ sub reload_beekeeper_is_blocked {
 }
 
 
+=head2 block_all_alive_beekeepers
+
+  Example     : $bk_adaptor->block_all_alive_beekeepers();
+  Description : Set is_blocked for all beekeepers known to the
+                pipeline which haven't died yet. Part of the "shut
+                everything down" feature - as eHive stands we cannot
+                tell other beekeepers to kill their respective active
+                workers (unless said workers happen to belong to the
+                same meadow, in which case we can essentially hijack
+                them) but at least we can prevent them from spawning
+                new workers.
+  Returntype  : none
+  Exception   : none
+  Caller      : beekeeper.pl
+  Status      : Stable
+
+=cut
+
+sub block_all_alive_beekeepers {
+    my ( $self ) = @_;
+
+    my $statement = 'UPDATE beekeeper SET is_blocked = 1 WHERE cause_of_death IS NULL';
+    my $sth = $self->dbc()->prepare( $statement );
+    $sth->execute();
+    $sth->finish();
+
+    return;
+}
+
 
 1;

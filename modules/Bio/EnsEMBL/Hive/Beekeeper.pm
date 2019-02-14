@@ -187,5 +187,27 @@ sub check_if_blocked {
     return $self->is_blocked;
 }
 
+
+=head2 toString
+
+  Example     : print $beekeeper->toString();
+  Description : Produces a string summary of properties of this beekeeper.
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub toString {
+    my ( $self ) = @_;
+
+    return join( ', ',
+            'process=' . $self->meadow_user() . '@' . $self->meadow_host() . '#' . $self->process_id(),
+            "options='" . $self->options() . "'",
+    );
+}
+
+
 1;
 

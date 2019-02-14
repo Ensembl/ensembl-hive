@@ -136,7 +136,8 @@ sub check_worker_is_alive_and_mine {
 sub kill_worker {
     my ($self, $worker, $fast) = @_;
 
-    system('kill', '-9', $worker->process_id());
+    my $exec_status = system('kill', '-9', $worker->process_id());
+    return ( $exec_status >> 8 );
 }
 
 

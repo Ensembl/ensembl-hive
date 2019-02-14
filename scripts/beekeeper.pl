@@ -61,6 +61,7 @@ sub main {
     my $job_id_for_output           = 0;
     my $show_worker_stats           = 0;
     my $kill_worker_id              = 0;
+    my $big_red_button              = 0;
     my $keep_alive                  = 0;        # DEPRECATED
     my $reset_job_id                = 0;
     my $reset_all_jobs_for_analysis = 0;        # DEPRECATED
@@ -142,6 +143,7 @@ sub main {
                'dead!'             => \$check_for_dead,
                'unkwn!'            => \$bury_unkwn_workers,
                'killworker=i'      => \$kill_worker_id,
+               'big_red_button'    => \$big_red_button,
                'alldead!'          => \$all_dead,
                'balance_semaphores'=> \$balance_semaphores,
                'worker_stats'      => \$show_worker_stats,
@@ -340,6 +342,10 @@ sub main {
         }
     }
 
+    if ( $big_red_button ) {
+      return big_red_button( $self, $valley );
+    }
+
     my $run_job;
     if($run_job_id) {
         eval {$run_job = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID( $run_job_id ) or die};
@@ -506,6 +512,49 @@ sub register_beekeeper {
     }
     return $beekeeper;
 }
+
+
+sub big_red_button {
+    my ( $self, $valley ) = @_;
+
+    my $bk_a = $self->{dba}->get_BeekeeperAdaptor();
+    my $blocked_beekeepers;
+
+    # Save a list of IDs of beekeepers which were blocked earlier so
+    # that we can not mention them while reporting the current blocking.
+    $blocked_beekeepers = $bk_a->fetch_all( 'is_blocked = 1' );
+    my %previously_blocked_ids;
+    while ( my $blocked_bk = shift @{ $blocked_beekeepers } ) {
+        $previously_blocked_ids{ $blocked_bk->dbID() } = 1;
+    }
+
+    # Begin the shutdown by blocking all registered beekeepers so that
+    # none of them start spawning new workers just as this one tries to
+    # kill all workers.
+    $bk_a->block_all_alive_beekeepers();
+
+    # Report which beekeepers, self excluded, we have just blocked
+    $blocked_beekeepers = $bk_a->fetch_all( 'is_blocked = 1' );
+    my $my_dbid = $self->{'beekeeper'}->dbID();
+    my @newly_blocked = grep {
+        ( ! exists $previously_blocked_ids{ $_->dbID() } )
+          && ( $_->dbID() != $my_dbid )
+    } @{ $blocked_beekeepers };
+    while ( my $blocked_bk = shift @newly_blocked ) {
+        print 'Blocked beekeeper ' . $blocked_bk->dbID() . ': '
+            . $blocked_bk->toString() . "\n";
+    }
+
+    # Next, kill all workers which are still alive.
+    # FIXME: double-check correct job status:
+    #  - running ones should be marked as 'failed'
+    #  - claimed but unstarted ones should get back to 'unclaimed'
+    my $queen = $self->{'dba'}->get_Queen();
+    $queen->kill_all_workers( $valley );
+
+    return 0;
+}
+
 
 sub run_autonomously {
     my ($self, $pipeline, $max_loops, $loop_until, $valley, $list_of_analyses, $analyses_pattern, $run_job_id) = @_;
@@ -972,6 +1021,10 @@ re-synchronise the ehive
 =item --unkwn
 
 detect all workers in UNKWN state and reset their Jobs for resubmission (careful, they *may* reincarnate!)
+
+=item --big_red_button
+
+shut everything down: block all beekeepers connected to the pipeline and terminate workers
 
 =item --alldead
 
