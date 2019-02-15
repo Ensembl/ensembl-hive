@@ -195,6 +195,7 @@ sub new {       # construct an attached or a detached Pipeline object
 
     $self->{ACTION} = {
         '=' => "SET",
+        '+' => "SET",
         '?' => "SHOW",
         '#' => "DELETE"
     };
@@ -703,6 +704,7 @@ sub apply_tweaks {
             foreach my $analysis (@$analyses) {
                 my $tweakStructure;
                 $tweakStructure->{Object}->{Type} = "Analysis";
+                $tweakStructure->{Action} = $self->{ACTION}->{substr($operator, 0, 1)};
                 my $analysis_name = $analysis->logic_name;
                 $tweakStructure->{Object}->{Id} = $analysis->dbID + 0;
                 $tweakStructure->{Object}->{Name} = $analysis->logic_name;
@@ -712,13 +714,11 @@ sub apply_tweaks {
                     my $acr_collection  = $analysis->control_rules_collection;
                     $tweakStructure->{Return}->{OldValue} = [map { $_->condition_analysis_url } @$acr_collection];
                     if($operator eq '?') {
-                        $tweakStructure->{Action} = "SHOW";
                         $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
                         push @response, "Tweak.Show  \tanalysis[$analysis_name].wait_for ::\t[".join(', ', map { $_->condition_analysis_url } @$acr_collection )."]\n";
                     }
 
                     if($operator eq '#' or $operator eq '=') {     # delete the existing rules
-                        $tweakStructure->{Action} = "DELETE";
                         $tweakStructure->{Return}->{NewValue} = undef;
                         foreach my $c_rule ( @$acr_collection ) {
                             $cr_collection->forget_and_mark_for_deletion( $c_rule );
@@ -729,7 +729,6 @@ sub apply_tweaks {
                     }
 
                     if($operator eq '=' or $operator eq '+=') {     # create new rules
-                        $tweakStructure->{Action} = "SET";
                         $tweakStructure->{Return}->{NewValue} = $new_value;
                         Bio::EnsEMBL::Hive::Utils::PCL::parse_wait_for($self, $analysis, $new_value);
                         $need_write = 1;
@@ -739,13 +738,11 @@ sub apply_tweaks {
                     $tweakStructure->{Return}->{OldValue} = undef;
                     if($operator eq '?') {
                         # FIXME: should not recurse
-                        $tweakStructure->{Action} = 'SHOW';
                         $tweakStructure->{Return}->{NewValue} = undef;
                         #$analysis->print_diagram_node($self, '', {});
                     }
 
                     if($operator eq '#' or $operator eq '=') {     # delete the existing rules
-                        $tweakStructure->{Action} = 'DELETE';
                         $tweakStructure->{Return}->{NewValue} = undef;
                         my $dfr_collection = $self->collection_of( 'DataflowRule' );
                         my $dft_collection = $self->collection_of( 'DataflowTarget' );
@@ -769,7 +766,6 @@ sub apply_tweaks {
                     }
 
                     if($operator eq '=' or $operator eq '+=') {     # create new rules
-                        $tweakStructure->{Action} = 'SET';
                         $tweakStructure->{Return}->{NewValue} = $new_value;
 
                         $need_write = 1;
@@ -895,7 +891,7 @@ sub apply_tweaks {
                     my $rc_name = $rc->name;
                     $tweakStructure->{Object}->{Id} = $rc->dbID + 0;
                     $tweakStructure->{Object}->{Name} = $rc_name;
-                    $tweakStructure->{Action} = "SHOW";
+                    $tweakStructure->{Action} = $self->{ACTION}->{substr($operator, 0, 1)};
 
                     if(my $rd = $self->collection_of( 'ResourceDescription' )->find_one_by('resource_class', $rc, 'meadow_type', $meadow_type)) {
                         my ($submission_cmd_args, $worker_cmd_args) = ($rd->submission_cmd_args, $rd->worker_cmd_args);
@@ -918,10 +914,10 @@ sub apply_tweaks {
                 foreach my $rc (@$resource_classes) {
                     my $tweakStructure;
                     $tweakStructure->{Object}->{Type} = "Resource class";
+                    $tweakStructure->{Action} = $self->{ACTION}->{substr($operator, 0, 1)};
                     my $rc_name = $rc->name;
                     $tweakStructure->{Object}->{Id} = $rc->dbID + 0;
                     $tweakStructure->{Object}->{Name} = $rc_name;
-                    $tweakStructure->{Action} = "SET";
 
                     if(my $rd = $self->collection_of( 'ResourceDescription' )->find_one_by('resource_class', $rc, 'meadow_type', $meadow_type)) {
                         my ($submission_cmd_args, $worker_cmd_args) = ($rd->submission_cmd_args, $rd->worker_cmd_args);
