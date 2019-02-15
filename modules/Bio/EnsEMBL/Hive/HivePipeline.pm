@@ -891,6 +891,7 @@ sub apply_tweaks {
                         $need_write = 1;
                     }
                 } else {
+                    $tweakStructure->{Return}->{Field} = $attrib_name;
                     if($operator eq '?') {
                         $tweakStructure->{Action} = "SHOW";
                     } elsif($operator eq '#') {
