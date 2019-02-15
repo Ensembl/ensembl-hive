@@ -14,6 +14,7 @@ on 'test' => sub {
 	requires 'Test::Exception';
 	requires 'Test::More';
 	requires 'Test::Warn';
+	requires 'Test::JSON';
 	requires 'Test::Warnings';
 	requires 'Test::File::Contents';
 	requires 'Test::Perl::Critic';
@@ -25,4 +26,3 @@ recommends 'Getopt::ArgvFile';
 recommends 'BSD::Resource';
 recommends 'Chart::Gnuplot';
 recommends 'GraphViz';
-
