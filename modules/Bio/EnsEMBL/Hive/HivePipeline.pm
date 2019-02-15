@@ -929,7 +929,7 @@ sub apply_tweaks {
                         push @response, "Tweak.Show    \tresource_class[$rc_name].$meadow_type ::\t(missing values)\n";
                         $tweakStructure->{Return}->{OldValue} = undef;
                     }
-                    $tweakStructure->{Return}->{Field} = "resource_class[$rc_name].$meadow_type";
+                    $tweakStructure->{Return}->{Field} = $meadow_type;
                     $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
                     push @{$responseStructure->{Tweaks}}, $tweakStructure;
                 }
@@ -969,7 +969,7 @@ sub apply_tweaks {
                         );
                         $tweakStructure->{Return}->{OldValue} = undef;
                     }
-                    $tweakStructure->{Return}->{Field} = "resource_class[$rc_name].meadow";
+                    $tweakStructure->{Return}->{Field} = $meadow_type;
                     $tweakStructure->{Return}->{NewValue} = stringify([$new_submission_cmd_args, $new_worker_cmd_args]);
                     $need_write = 1;
                     push @{$responseStructure->{Tweaks}}, $tweakStructure;
