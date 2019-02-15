@@ -186,6 +186,13 @@ sub new {       # construct an attached or a detached Pipeline object
 #       warn "Created a standalone pipeline";
     }
 
+    $self->{ERROR_MSG} = {
+        PARSE_ERROR => "Tweak cannot be parsed",
+        ACTION_ERROR => "Action is not supported",
+        FIELD_ERROR => "Field not recognized",
+        VALUE_ERROR => "Invalid value"
+    };
+
     Bio::EnsEMBL::Hive::TheApiary->pipelines_collection->add( $self );
 
     return $self;
@@ -631,7 +638,7 @@ sub apply_tweaks {
                 } else {
                     $tweakStructure->{Action} = 'SET';
                 }
-                $tweakStructure->{Error} = 'Field not recognized';
+                $tweakStructure->{Error} = $self->{ERROR_MSG}->{FIELD_ERROR};
                 push @response, "Tweak.Error   \tCould not find the pipeline-wide '$attrib_name' method\n";
             }
             push @{$responseStructure->{Tweaks}}, $tweakStructure;
@@ -811,7 +818,7 @@ sub apply_tweaks {
                         }
                     } elsif($operator eq '#') {
                         $tweakStructure->{Action} = "DELETE";
-                        $tweakStructure->{Error} = "Action is not supported";
+                        $tweakStructure->{Error} = $self->{ERROR_MSG}->{ACTION_ERROR};
                         push @response, "Tweak.Error   \tDeleting of ResourceClasses is not supported\n";
                     } else {
                         $tweakStructure->{Action} = "SET";
@@ -847,13 +854,13 @@ sub apply_tweaks {
                         push @response, "Tweak.Show    \tanalysis[$analysis_name].is_excluded ::\t".$analysis_stats->is_excluded()."\n";
                     } elsif($operator eq '#') {
                         $tweakStructure->{Action} = "DELETE";
-                        $tweakStructure->{Error} = "Action is not supported";
+                        $tweakStructure->{Error} = $self->{ERROR_MSG}->{ACTION_ERROR};
                         push @response, "Tweak.Error   \tDeleting of excluded status is not supported\n";
                     } else {
                         $tweakStructure->{Action} = "SET";
                         $tweakStructure->{Return}->{NewValue} = $new_value_str;
                         if(!($new_value =~ /^[01]$/)) {
-                            $tweakStructure->{Error} = "Invalid value";
+                            $tweakStructure->{Error} = $self->{ERROR_MSG}->{VALUE_ERROR};
                             push @response, "Tweak.Error    \tis_excluded can only be 0 (no) or 1 (yes)\n";
                         } elsif ($new_value == $analysis_stats->is_excluded()) {
                             push @response, "Tweak.Info    \tanalysis[$analysis_name].is_excluded is already $new_value, leaving as is\n";
@@ -874,7 +881,7 @@ sub apply_tweaks {
                         push @response, "Tweak.Show    \tanalysis[$analysis_name].$attrib_name ::\t$old_value\n";
                     } elsif($operator eq '#') {
                         $tweakStructure->{Action} = "DELETE";
-                        $tweakStructure->{Error} = "Action is not supported";
+                        $tweakStructure->{Error} = $self->{ERROR_MSG}->{ACTION_ERROR};
                         push @response, "Tweak.Error   \tDeleting of Analysis attributes is not supported\n";
                     } else {
                         $tweakStructure->{Action} = "SET";
@@ -891,7 +898,7 @@ sub apply_tweaks {
                     } else {
                         $tweakStructure->{Action} = "SET";
                     }
-                    $tweakStructure->{Error} = 'Field not recognized';
+                    $tweakStructure->{Error} = $self->{ERROR_MSG}->{FIELD_ERROR};
                     push @response, "Tweak.Error   \tAnalysis does not support '$attrib_name' attribute\n";
                 }
 
@@ -971,7 +978,7 @@ sub apply_tweaks {
 
         } else {
             my $tweakStructure;
-            $tweakStructure->{Error} = "Tweak cannot be parsed";
+            $tweakStructure->{Error} = $self->{ERROR_MSG}->{PARSE_ERROR};
             push @response, "Tweak.Error   \tFailed to parse the tweak\n";
             push @{$responseStructure->{Tweaks}}, $tweakStructure;
         }
