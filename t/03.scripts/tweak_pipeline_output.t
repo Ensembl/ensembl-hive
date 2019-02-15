@@ -106,7 +106,7 @@ foreach my $request (@tweak_requests) {
         ok(exists ($tweakJson->{Object}->{Name}), 'Name field exists for' . join (' ', @{$request}));
         ok(exists ($tweakJson->{Return}->{OldValue}) || $tweakJson->{Error}, 'Old value exists for ' . join (' ', @{$request}));
         ok(exists($tweakJson->{Return}->{NewValue}) || $tweakJson->{Error}, 'New value exists for ' . join (' ', @{$request}));
-        ok($tweakJson->{Return}->{Field} || $tweakJson->{Error}, 'Field exists for ' . join (' ', @{$request}));
+        ok($tweakJson->{Return}->{Field}, 'Field exists for ' . join (' ', @{$request}));
     };
 }
 
