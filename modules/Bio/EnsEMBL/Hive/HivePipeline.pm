@@ -650,7 +650,7 @@ sub apply_tweaks {
                 my $analysis_name = $analysis->logic_name;
                 my $old_value = $analysis->parameters;
 
-                $tweakStructure->{Object}->{Id} = $analysis->dbID;
+                $tweakStructure->{Object}->{Id} = $analysis->dbID + 0;
                 $tweakStructure->{Object}->{Name} = $analysis_name;
                 $tweakStructure->{Return}->{Field} = $param_name;
                 my $param_hash  = destringify( $old_value );
@@ -703,7 +703,7 @@ sub apply_tweaks {
                 my $tweakStructure;
                 $tweakStructure->{Object}->{Type} = "Analysis";
                 my $analysis_name = $analysis->logic_name;
-                $tweakStructure->{Object}->{Id} = $analysis->dbID;
+                $tweakStructure->{Object}->{Id} = $analysis->dbID + 0;
                 $tweakStructure->{Object}->{Name} = $analysis->logic_name;
 
                 if( $attrib_name eq 'wait_for' ) {
@@ -794,7 +794,7 @@ sub apply_tweaks {
                 my $analysis_name = $analysis->logic_name;
                 my $tweakStructure;
                 $tweakStructure->{Object}->{Type} = 'Analysis';
-                $tweakStructure->{Object}->{Id} = $analysis->dbID;
+                $tweakStructure->{Object}->{Id} = $analysis->dbID + 0;
                 $tweakStructure->{Object}->{Name} = $analysis_name;
 
                 if( $attrib_name eq 'resource_class' ) {
@@ -909,7 +909,7 @@ sub apply_tweaks {
                     my $tweakStructure;
                     $tweakStructure->{Object}->{Type} = "Resource class";
                     my $rc_name = $rc->name;
-                    $tweakStructure->{Object}->{Id} = $rc->dbID;
+                    $tweakStructure->{Object}->{Id} = $rc->dbID + 0;
                     $tweakStructure->{Object}->{Name} = $rc_name;
                     $tweakStructure->{Action} = "SHOW";
 
@@ -935,7 +935,7 @@ sub apply_tweaks {
                     my $tweakStructure;
                     $tweakStructure->{Object}->{Type} = "Resource class";
                     my $rc_name = $rc->name;
-                    $tweakStructure->{Object}->{Id} = $rc->dbID;
+                    $tweakStructure->{Object}->{Id} = $rc->dbID + 0;
                     $tweakStructure->{Object}->{Name} = $rc_name;
                     $tweakStructure->{Action} = "SET";
 
@@ -971,7 +971,6 @@ sub apply_tweaks {
 
         } else {
             my $tweakStructure;
-            my $errorMsg =
             $tweakStructure->{Error} = "Tweak cannot be parsed";
             push @response, "Tweak.Error   \tFailed to parse the tweak\n";
             push @{$responseStructure->{Tweaks}}, $tweakStructure;
