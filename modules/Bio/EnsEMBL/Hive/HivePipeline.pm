@@ -735,15 +735,13 @@ sub apply_tweaks {
                     }
 
                 } elsif( $attrib_name eq 'flow_into' ) {
-                    $tweakStructure->{Return}->{OldValue} = undef;
+                    $tweakStructure->{Warning} = "Value can't be displayed";
                     if($operator eq '?') {
                         # FIXME: should not recurse
-                        $tweakStructure->{Return}->{NewValue} = undef;
-                        #$analysis->print_diagram_node($self, '', {});
+                        #$analysis->print_diagram_node($self, '', {}); TODO: refactor with formatter.pm
                     }
 
                     if($operator eq '#' or $operator eq '=') {     # delete the existing rules
-                        $tweakStructure->{Return}->{NewValue} = undef;
                         my $dfr_collection = $self->collection_of( 'DataflowRule' );
                         my $dft_collection = $self->collection_of( 'DataflowTarget' );
 
@@ -766,8 +764,6 @@ sub apply_tweaks {
                     }
 
                     if($operator eq '=' or $operator eq '+=') {     # create new rules
-                        $tweakStructure->{Return}->{NewValue} = $new_value;
-
                         $need_write = 1;
                         Bio::EnsEMBL::Hive::Utils::PCL::parse_flow_into($self, $analysis, $new_value );
                     }
