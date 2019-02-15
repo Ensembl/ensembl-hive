@@ -706,11 +706,11 @@ sub apply_tweaks {
                 my $analysis_name = $analysis->logic_name;
                 $tweakStructure->{Object}->{Id} = $analysis->dbID + 0;
                 $tweakStructure->{Object}->{Name} = $analysis->logic_name;
+                $tweakStructure->{Return}->{Field} = $attrib_name;
                 if( $attrib_name eq 'wait_for' ) {
-                    $tweakStructure->{Return}->{Field} = 'wait_for';
                     my $cr_collection   = $self->collection_of( 'AnalysisCtrlRule' );
                     my $acr_collection  = $analysis->control_rules_collection;
-                    $tweakStructure->{Return}->{OldValue} = join(', ', map { $_->condition_analysis_url } @$acr_collection );
+                    $tweakStructure->{Return}->{OldValue} = [map { $_->condition_analysis_url } @$acr_collection];
                     if($operator eq '?') {
                         $tweakStructure->{Action} = "SHOW";
                         $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
@@ -736,12 +736,11 @@ sub apply_tweaks {
                     }
 
                 } elsif( $attrib_name eq 'flow_into' ) {
-                    $tweakStructure->{Return}->{Field} = 'flow_into';
-                    $tweakStructure->{Return}->{OldValue} = $analysis->logic_name;
+                    $tweakStructure->{Return}->{OldValue} = undef;
                     if($operator eq '?') {
                         # FIXME: should not recurse
                         $tweakStructure->{Action} = 'SHOW';
-                        $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
+                        $tweakStructure->{Return}->{NewValue} = undef;
                         #$analysis->print_diagram_node($self, '', {});
                     }
 
