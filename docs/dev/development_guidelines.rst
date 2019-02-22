@@ -291,11 +291,16 @@ commits, some bugs have to be fixed differently on different branches. If
 that is the case, either fix the merge commit immediately, or do a merge
 for the sake of it (``git merge -s ours``) and then add the correct
 commits. Forcing merges to happen provides a clearer history and
-facilitates tools like ``git bisect``.
+facilitates tools like ``git bisect``. 
 
 Experimental branches should be rebased onto master just before the final
 merge (which then becomes a **fast-forward**). Together with the above
 rules, this keeps the history as linear as possible.
+
+All changes should be done on an experimental branch or fork, and submitted as a
+pull request. Maintainers will bring in the pull request using GitHub's
+**"Rebase and merge"** option. If the pull request is on a branch other than master,
+the maintainers will coordinate the subsequent cascade-merge up to master.
 
 guiHive follows very similar rules:
 
@@ -344,6 +349,8 @@ There are very few rules when writing new code:
    for the Unicode Art output of :ref:`generate_graph.pl <script-generate_graph>`, but they are meant
    to be replaced with character names (resp. code points), e.g.
    ``\N{BOX DRAWINGS DOUBLE UP AND RIGHT}`` (resp. ``\N{U+255A}``).
+3. Use snake_case for subroutine and variable names, CamelCase for class
+   names.
 
 When updating code, try to keep the changes minimal, avoiding white-space
 changes when possible. You can also consider breaking the four-spaces rule if
