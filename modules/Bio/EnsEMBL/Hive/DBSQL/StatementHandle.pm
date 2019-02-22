@@ -143,6 +143,7 @@ sub AUTOLOAD {
         } or do {
             my $error = $@;
             if( $error =~ /MySQL server has gone away/                      # mysql version  ( test by setting "SET SESSION wait_timeout=5;" and waiting for 10sec)
+             or $error =~ /Lost connection to MySQL server during query/    # mysql version (alternative message)
              or $error =~ /server closed the connection unexpectedly/ ) {   # pgsql version
 
                 my $dbc = $self->dbc();
