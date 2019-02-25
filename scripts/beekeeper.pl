@@ -289,9 +289,7 @@ sub main {
     if($reset_job_id) { $queen->reset_job_by_dbID_and_sync($reset_job_id); }
 
     if($reset_job_for_input_id and $self->{'analyses_pattern'}) {
-        my $analyses_list;
-        $analyses_list = $self->{'pipeline'}->collection_of('Analysis')->find_all_by_pattern( $self->{'analyses_pattern'});
-        $queen->reset_job_by_inputID_and_sync($reset_job_for_input_id, $analyses_list);
+        $queen->reset_job_by_inputID_and_sync($reset_job_for_input_id, $self->{'analyses_pattern'});
     }
 
     if($reset_job_for_input_id and ! $self->{'analyses_pattern'}) {
