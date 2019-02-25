@@ -148,7 +148,10 @@ sub standaloneJob {
             }
         }, sprintf('standaloneJob("%s", %s, (...), %s)', $module_or_file, stringify($param_hash), stringify($flags)));
 
-        ok(!scalar(@$events_to_test), 'no untriggered events') if $expected_events;
+        if ($expected_events) {
+            ok(!scalar(@$events_to_test), 'no untriggered events');
+            diag("Did not receive: " . stringify($events_to_test)) if scalar(@$events_to_test);
+        }
     }
 }
 
