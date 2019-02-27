@@ -77,6 +77,8 @@ use Bio::EnsEMBL::Hive::Scheduler;
 use Bio::EnsEMBL::Hive::Valley;
 use Bio::EnsEMBL::Hive::Worker;
 
+use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
+
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
 sub default_table_name {
@@ -276,7 +278,7 @@ sub specialize_worker {
             or die "Could not fetch job with dbID='$job_id'";
         my $job_status = $job->status();
 
-        if($job_status =~/(CLAIMED|PRE_CLEANUP|FETCH_INPUT|RUN|WRITE_OUTPUT|POST_HEALTHCHECK|POST_CLEANUP)/ ) {
+        if ($Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor::ALL_STATUSES_OF_TAKEN_JOBS =~ /'$job_status'/) {
             die "Job with dbID='$job_id' is already in progress, cannot run";   # FIXME: try GC first, then complain
         } elsif($job_status =~/(DONE|SEMAPHORED)/ and !$force) {
             die "Job with dbID='$job_id' is $job_status, please use --force to override";
