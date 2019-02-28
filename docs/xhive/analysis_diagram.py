@@ -135,7 +135,7 @@ def generate_dot_diagram(pipeconfig_content):
     graph_path = os.path.join(os.environ["EHIVE_ROOT_DIR"], "scripts", "generate_graph.pl")
     dotcontent = subprocess.check_output([graph_path, "-pipeconfig", pipeconfig_fh.name, "--format", "dot", "-config_file", default_config_file, "-config_file", json_filename], stderr=sys.stderr)
 
-    return dotcontent
+    return dotcontent.decode()
 
 
 def cleanup_tmp_files(app, exception):
