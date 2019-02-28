@@ -50,7 +50,7 @@ from xhive import setup_if_needed
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.coverage',
-    'sphinx.ext.pngmath',
+    'sphinx.ext.imgmath',
     'sphinx.ext.graphviz',
     'sphinxcontrib.doxylink',
     'xhive.code_doc',
