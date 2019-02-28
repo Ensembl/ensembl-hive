@@ -54,7 +54,7 @@ class IncludeCommand(Directive):
         try:
             docutils_input = io.StringInput(source=content)
             rawtext = docutils_input.read()
-        except IOError, error:
+        except IOError as error:
             # Show the content
             raise self.severe(u'Problems with "%s" command:\n%s.' % ''.join(self.options['command']), ErrorString(error))
         include_lines = statemachine.string2lines(rawtext, 4, convert_whitespace=True)
