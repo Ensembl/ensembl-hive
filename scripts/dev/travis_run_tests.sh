@@ -20,7 +20,7 @@ export TEST_AUTHOR=$USER
 
 COVERALLS="false"
 
-if [ "$PERLBREW_PERL" = '5.10' ]; then
+if [ "$PERLBREW_PERL" = '5.14' ]; then
     echo "Testing with Coveralls"
     COVERALLS="true"
 fi
