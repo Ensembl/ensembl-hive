@@ -60,7 +60,7 @@ sub new {
 
     my $real_self = {};
     # $self will remain empty whereas $real_self will actually have all the data
-    # It's only purpose is to offer a hash-reference on which perl allows
+    # Its only purpose is to offer a hash-reference on which perl allows
     # calling hash accessors, e.g. $sth->{Active}
     tie %$self, 'DBIstHashProxy', $dbi_sth, $real_self;
 
