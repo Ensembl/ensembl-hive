@@ -55,6 +55,12 @@ sub assert_jobs {
     is_deeply(\@job_data, $job_expected_data, 'Job counts and statuses are correct');
 }
 
+sub fetch_job_completion_date {
+    my ($job_adaptor, $job_id) = @_;
+    my $job = $job_adaptor->fetch_by_dbID($job_id);
+    ok($job, "Job dbID=$job_id could be fetched");
+    return $job->when_completed;
+}
 
 foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
 
@@ -82,6 +88,23 @@ foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
     # Forgive FAILED jobs
     beekeeper($hive_url, ['-forgive_failed_jobs'], 'beekeeper.pl -forgive_failed_jobs');
     assert_jobs($job_adaptor, [["DONE",0,0],["SEMAPHORED",0,4],["DONE",2,0],["READY",1,0],["READY",1,0],["READY",1,0],["READY",1,0]] );
+
+    # Run a singl job
+    my $job_id = 4;
+    runWorker($pipeline_url, ['--job_id' => $job_id]);
+    assert_jobs($job_adaptor, [["DONE",0,0],["SEMAPHORED",0,3],["DONE",2,0],["DONE",1,0],["READY",1,0],["READY",1,0],["READY",1,0]] );
+    my $completion_date1 = fetch_job_completion_date($job_adaptor, $job_id);
+
+    # Try again
+    ok(system($ENV{'EHIVE_ROOT_DIR'}.'/scripts/runWorker.pl', '--job_id', $job_id), 'Cannot rerun a job that is already done without the --force option');
+    assert_jobs($job_adaptor, [["DONE",0,0],["SEMAPHORED",0,3],["DONE",2,0],["DONE",1,0],["READY",1,0],["READY",1,0],["READY",1,0]] );
+
+    # And again
+    sleep(1); # Guarantee there is at least 1 second between both completions
+    runWorker($pipeline_url, ['--job_id' => $job_id, '--force']);
+    my $completion_date2 = fetch_job_completion_date($job_adaptor, $job_id);
+    cmp_ok($completion_date2, 'gt', $completion_date1, 'The job was really re-run (newer completion date)');
+    assert_jobs($job_adaptor, [["DONE",0,0],["SEMAPHORED",0,3],["DONE",2,0],["DONE",1,0],["READY",1,0],["READY",1,0],["READY",1,0]] );
 
     # Run another worker to get more failures
     runWorker($pipeline_url);
