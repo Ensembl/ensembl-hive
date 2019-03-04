@@ -9,7 +9,7 @@ Prerequisites
 eHive system depends on the following components that you may need to
 download and install first:
 
-#. Perl 5.10 `or higher <http://www.perl.org/get.html>`__
+#. Perl 5.14 `or higher <http://www.perl.org/get.html>`__
 #. A database engine of your choice. eHive keeps its state in a
    database, so you will need
 
