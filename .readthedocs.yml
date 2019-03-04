@@ -1,0 +1,9 @@
+version: 2
+
+python:
+  version: 2.7
+  install:
+    - requirements: requirements.txt
+
+build:
+   image: stable
