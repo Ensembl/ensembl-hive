@@ -41,6 +41,7 @@ use warnings;
 use Time::HiRes ('usleep');
 use Bio::EnsEMBL::Hive::Utils ('throw');
 use Bio::EnsEMBL::Hive::Utils::URL ('parse', 'hash_to_url');
+use Bio::EnsEMBL::Hive::Utils::SQLErrorParser;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection');
 
@@ -138,11 +139,7 @@ sub connect {       # a wrapper that imitates CSMA/CD protocol's incremental bac
             $retval = $self->SUPER::connect( @_ );
             1;
         } or do {
-            if( ($@ =~ /Could not connect to database.+?failed: Too many connections/s)                             # problem on server side (configured with not enough connections)
-             or ($@ =~ /Could not connect to database.+?failed: Can't connect to \w+? server on '.+?' \(99\)/s)     # problem on client side (cooling down period after a disconnect)
-             or ($@ =~ /Could not connect to database.+?failed: Can't connect to \w+? server on '.+?' \(110\)/s)    # problem on server side ("Connection timed out"L the server is temporarily dropping connections until it reaches a reasonable load)
-             or ($@ =~ /Could not connect to database.+?failed: Lost connection to MySQL server at 'reading authorization packet', system error: 0/s)     # problem on server side (server too busy ?)
-            ) {
+            if (Bio::EnsEMBL::Hive::Utils::SQLErrorParser::is_server_too_busy($self->driver, $@)) {
 
                 warn "Possibly transient problem conecting to the database (attempt #$attempt). Will try again in $sleep_sec sec";
 
@@ -188,9 +185,7 @@ sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" b
         } or do {
             $query_msg = "QUERY: $sql_cmd, PARAMS: (".join(', ',@$sql_params).")";
 
-            if( ($@ =~ /Deadlock found when trying to get lock; try restarting transaction/)                        # MySQL error
-             or ($@ =~ /Lock wait timeout exceeded; try restarting transaction/)                                    # MySQL error
-            ) {
+            if (Bio::EnsEMBL::Hive::Utils::SQLErrorParser::is_deadlock($self->driver, $@)) {
 
                 my $this_sleep_sec = int( rand( $sleep_max_sec )*100 ) / 100.0;
 
