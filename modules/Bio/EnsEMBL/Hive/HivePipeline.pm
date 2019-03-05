@@ -187,17 +187,17 @@ sub new {       # construct an attached or a detached Pipeline object
     }
 
     $self->{ERROR_MSG} = {
-        PARSE_ERROR => "Tweak cannot be parsed",
+        PARSE_ERROR  => "Tweak cannot be parsed",
         ACTION_ERROR => "Action is not supported",
-        FIELD_ERROR => "Field not recognized",
-        VALUE_ERROR => "Invalid value"
+        FIELD_ERROR  => "Field not recognized",
+        VALUE_ERROR  => "Invalid value",
     };
 
     $self->{ACTION} = {
         '=' => "SET",
         '+' => "SET",
         '?' => "SHOW",
-        '#' => "DELETE"
+        '#' => "DELETE",
     };
 
     Bio::EnsEMBL::Hive::TheApiary->pipelines_collection->add( $self );
@@ -665,8 +665,8 @@ sub apply_tweaks {
                 if($operator eq '?') {
                     $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
                     push @response, "Tweak.Show    \tanalysis[$analysis_name].param[$param_name] ::\t"
-	                        . (exists($param_hash->{ $param_name }) ? stringify($param_hash->{ $param_name }) : '(missing value)')
-	                        ."\n";
+    	               . (exists($param_hash->{ $param_name }) ? stringify($param_hash->{ $param_name }) : '(missing value)')
+	                   ."\n";
                 } elsif($operator eq '#') {
                     $tweakStructure->{Return}->{NewValue} = undef;
                     push @response, "Tweak.Deleting\tanalysis[$analysis_name].param[$param_name] ::\t".stringify($param_hash->{ $param_name })." --> (missing value)\n";
@@ -715,7 +715,7 @@ sub apply_tweaks {
                     $tweakStructure->{Return}->{OldValue} = [map { $_->condition_analysis_url } @$acr_collection];
                     if($operator eq '?') {
                         $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
-                        push @response, "Tweak.Show  \tanalysis[$analysis_name].wait_for ::\t[".join(', ', map { $_->condition_analysis_url } @$acr_collection )."]\n";
+                        push @response, "Tweak.Show    \tanalysis[$analysis_name].wait_for ::\t[".join(', ', map { $_->condition_analysis_url } @$acr_collection )."]\n";
                     }
 
                     if($operator eq '#' or $operator eq '=') {     # delete the existing rules
@@ -832,7 +832,7 @@ sub apply_tweaks {
                     if($operator eq '?') {
                         $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
                         push @response, "Tweak.Show    \tanalysis[$analysis_name].is_excluded ::\t".$analysis_stats->is_excluded()."\n";
-                    } elsif($operator eq '#') {;
+                    } elsif($operator eq '#') {
                         $tweakStructure->{Error} = $self->{ERROR_MSG}->{ACTION_ERROR};
                         push @response, "Tweak.Error   \tDeleting of excluded status is not supported\n";
                     } else {
