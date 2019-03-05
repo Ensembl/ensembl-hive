@@ -43,6 +43,14 @@ import sys
 from docutils import io, nodes, statemachine
 from docutils.parsers.rst import Directive, directives
 
+
+# Shamelessly stolen from six
+if (sys.version_info[0] == 3):
+    string_type = str
+else:
+    string_type = basestring
+
+
 class IncludeCommand(Directive):
     required_arguments = 0
     option_spec = {
@@ -54,7 +62,7 @@ class IncludeCommand(Directive):
         try:
             docutils_input = io.StringInput(source=content)
             rawtext = docutils_input.read()
-        except IOError, error:
+        except IOError as error:
             # Show the content
             raise self.severe(u'Problems with "%s" command:\n%s.' % ''.join(self.options['command']), ErrorString(error))
         include_lines = statemachine.string2lines(rawtext, 4, convert_whitespace=True)
@@ -66,7 +74,7 @@ class IncludeCommand(Directive):
 
     def get_content(self):
         command = self.get_command()
-        if isinstance(command, basestring):
+        if isinstance(command, string_type):
             return subprocess.check_output(command, stderr=sys.stderr, shell=True)
         else:
             return subprocess.check_output(command, stderr=sys.stderr)

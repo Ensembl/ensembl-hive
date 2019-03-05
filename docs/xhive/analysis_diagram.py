@@ -33,6 +33,9 @@
 # The directive will show side-by-side the pipeconfig code and the
 # diagram it models
 
+# For python2 compatibility
+from __future__ import print_function
+
 import json
 import os.path
 import subprocess
@@ -108,9 +111,8 @@ def generate_dot_diagram(pipeconfig_content):
     # A temporary file for the JSON config
     global json_filename
     if json_filename is None:
-        json_fh = tempfile.NamedTemporaryFile(dir = "_build", delete = False)
-        #print "json_fh:", json_fh.name
-        print >> json_fh, display_config_json
+        json_fh = tempfile.NamedTemporaryFile(mode='w+', dir="_build", delete=False)
+        print(display_config_json, file=json_fh)
         json_fh.close()
         json_filename = json_fh.name
 
@@ -120,21 +122,20 @@ def generate_dot_diagram(pipeconfig_content):
     # A temporary file for the sample PipeConfig
     global pipeconfig_filename
     if pipeconfig_filename is None:
-        pipeconfig_fh = tempfile.NamedTemporaryFile(suffix = '.pm', dir = "_build", delete = False)
+        pipeconfig_fh = tempfile.NamedTemporaryFile(mode='w+', suffix='.pm', dir="_build", delete=False)
         pipeconfig_filename = pipeconfig_fh.name
     else:
         pipeconfig_fh = open(pipeconfig_filename, "w")
 
     package_name = "_build::" + os.path.basename(pipeconfig_fh.name)[:-3]
-    #print "pipeconfig:", pipeconfig_fh.name, package_name
-    print >> pipeconfig_fh, pipeconfig_template % (package_name, pipeconfig_content)
+    print(pipeconfig_template % (package_name, pipeconfig_content), file=pipeconfig_fh)
     pipeconfig_fh.close()
 
     # Run generate_graph and read the content of the dot file
     graph_path = os.path.join(os.environ["EHIVE_ROOT_DIR"], "scripts", "generate_graph.pl")
     dotcontent = subprocess.check_output([graph_path, "-pipeconfig", pipeconfig_fh.name, "--format", "dot", "-config_file", default_config_file, "-config_file", json_filename], stderr=sys.stderr)
 
-    return dotcontent
+    return dotcontent.decode()
 
 
 def cleanup_tmp_files(app, exception):

@@ -7,10 +7,10 @@ Python environment
 The manual is written in RestructuredText_ and is built with Sphinx_. It
 relies on a number of Python modules.
 
-Locally, install these two requirements file:
+Locally, install Python dependencies using these two requirements files:
 
-* https://github.com/Ensembl/python-requirements/blob/master/readthedocs/requirements.txt
-* https://github.com/Ensembl/ensembl-hive/blob/master/requirements.txt
+* https://raw.githubusercontent.com/Ensembl/python-requirements/master/readthedocs/requirements.txt
+* https://raw.githubusercontent.com/Ensembl/ensembl-hive/master/requirements.txt
 
 On the EBI farm, those are already installed and you only need to activate
 the `ehive_sphinx` environment with ``pyenv local ehive_sphinx``.

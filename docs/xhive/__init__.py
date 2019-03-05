@@ -14,6 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# For python2 compatibility
+from __future__ import print_function
+
 import json
 import os.path
 import subprocess
@@ -56,7 +59,7 @@ def setup_if_needed(this_release, run_doxygen):
             subprocess.check_call([mkdoxygen_path, doxygen_target])
 
     with open(release_holder, "w") as fh:
-        print >> fh, this_release,
+        print(this_release, end=' ', file=fh)
 
     return doxygen_target
 
