@@ -40,6 +40,7 @@ init_pipeline('Bio::EnsEMBL::Hive::Examples::SystemCmd::PipeConfig::AnyCommands_
 my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url );
 
 my @tweak_requests = ();
+my @tweak_request_errors = ();
 
 #Check pipeline.param (show, delete, set)
 push @tweak_requests,  ["-SET" => "pipeline.param[take_time]=20", "-json"];
@@ -90,7 +91,7 @@ foreach my $request (@tweak_requests) {
     is_valid_json $stdout;
     my $stdoutJson = decode_json($stdout);
     use Data::Dumper;
-    ok(scalar @{$stdoutJson->{Tweaks}} > 0, "Tweaks responce recieved for " . join (' ', @{$request}) . Dumper($stdoutJson->{Tweaks}));
+    ok(scalar @{$stdoutJson->{Tweaks}} > 0, "Tweaks response received for " . join (' ', @{$request}) . Dumper($stdoutJson->{Tweaks}));
     foreach my $tweakJson (@{$stdoutJson->{Tweaks}}) {
         ok($tweakJson->{Object}->{Type} eq "Pipeline" ||
             $tweakJson->{Object}->{Type} eq "Analysis" ||
@@ -102,11 +103,16 @@ foreach my $request (@tweak_requests) {
             $tweakJson->{Action} eq "DELETE",
             'Action field is correct for ' . join (' ', @{$request}));
 
-        ok(exists ($tweakJson->{Object}->{Id}), 'Id field exists for' . join (' ', @{$request}));
-        ok(exists ($tweakJson->{Object}->{Name}), 'Name field exists for' . join (' ', @{$request}));
-        ok(exists ($tweakJson->{Return}->{OldValue}) || $tweakJson->{Warning} || $tweakJson->{Error}, 'Old value exists for ' . join (' ', @{$request}));
-        ok(exists($tweakJson->{Return}->{NewValue}) || $tweakJson->{Warning} || $tweakJson->{Error}, 'New value exists for ' . join (' ', @{$request}));
-        ok($tweakJson->{Return}->{Field}, 'Field exists for ' . join (' ', @{$request}));
+        ok(exists ($tweakJson->{Object}->{Id}),
+            'Id field exists for' . join (' ', @{$request}));
+        ok(exists ($tweakJson->{Object}->{Name}),
+            'Name field exists for' . join (' ', @{$request}));
+        ok(exists ($tweakJson->{Return}->{OldValue}) || $tweakJson->{Warning} || $tweakJson->{Error},
+            'Old value exists for ' . join (' ', @{$request}));
+        ok(exists($tweakJson->{Return}->{NewValue}) || $tweakJson->{Warning} || $tweakJson->{Error},
+            'New value exists for ' . join (' ', @{$request}));
+        ok($tweakJson->{Return}->{Field},
+            'Field exists for ' . join (' ', @{$request}));
     };
 }
 
