@@ -76,6 +76,7 @@ use DBI;
 use Bio::EnsEMBL::Hive::DBSQL::StatementHandle;
 
 use Bio::EnsEMBL::Hive::Utils ('throw');
+use Bio::EnsEMBL::Hive::Utils::SQLErrorParser;
 
 
 use vars qw(@ISA);      # If Ensembl Core code is available, inherit from its' DBConnection for compatibility.
@@ -986,9 +987,7 @@ sub AUTOLOAD {
             1;
         } or do {
             my $error = $@;
-            if( $error =~ /MySQL server has gone away/                      # mysql version  ( test by setting "SET SESSION wait_timeout=5;" and waiting for 10sec)
-             or $error =~ /Lost connection to MySQL server during query/    # mysql version  ( test by setting "SET SESSION wait_timeout=5;" and waiting for 10sec)
-             or $error =~ /server closed the connection unexpectedly/ ) {   # pgsql version
+            if (Bio::EnsEMBL::Hive::Utils::SQLErrorParser::is_connection_lost($self->driver, $error)) {
 
                 warn "trying to reconnect...";
                 # NOTE: parameters set via the hash interface of $dbh will be lost

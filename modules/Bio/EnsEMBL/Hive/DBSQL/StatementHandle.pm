@@ -43,6 +43,7 @@ use strict;
 no strict 'refs';
 use warnings;
 use Bio::EnsEMBL::Hive::Utils ('throw', 'stringify');
+use Bio::EnsEMBL::Hive::Utils::SQLErrorParser;
 
 
 sub new {
@@ -60,7 +61,7 @@ sub new {
 
     my $real_self = {};
     # $self will remain empty whereas $real_self will actually have all the data
-    # It's only purpose is to offer a hash-reference on which perl allows
+    # Its only purpose is to offer a hash-reference on which perl allows
     # calling hash accessors, e.g. $sth->{Active}
     tie %$self, 'DBIstHashProxy', $dbi_sth, $real_self;
 
@@ -142,11 +143,9 @@ sub AUTOLOAD {
             1;
         } or do {
             my $error = $@;
-            if( $error =~ /MySQL server has gone away/                      # mysql version  ( test by setting "SET SESSION wait_timeout=5;" and waiting for 10sec)
-             or $error =~ /Lost connection to MySQL server during query/    # mysql version  ( test by setting "SET SESSION wait_timeout=5;" and waiting for 10sec)
-             or $error =~ /server closed the connection unexpectedly/ ) {   # pgsql version
+            my $dbc = $self->dbc();
+            if (Bio::EnsEMBL::Hive::Utils::SQLErrorParser::is_connection_lost($dbc->driver, $error)) {
 
-                my $dbc = $self->dbc();
                 my $sql = $self->sql();
                 my $attr = $self->attr();
 
