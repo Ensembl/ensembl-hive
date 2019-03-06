@@ -186,14 +186,14 @@ sub new {       # construct an attached or a detached Pipeline object
 #       warn "Created a standalone pipeline";
     }
 
-    $self->{ERROR_MSG} = {
+    $self->{TWEAK_ERROR_MSG} = {
         PARSE_ERROR  => "Tweak cannot be parsed",
         ACTION_ERROR => "Action is not supported",
         FIELD_ERROR  => "Field not recognized",
         VALUE_ERROR  => "Invalid value",
     };
 
-    $self->{ACTION} = {
+    $self->{TWEAK_ACTION} = {
         '=' => "SET",
         '+' => "SET",
         '?' => "SHOW",
@@ -568,7 +568,7 @@ sub apply_tweaks {
         if($tweak=~/^pipeline\.param\[(\w+)\](\?|#|=(.+))$/) {
             my ($param_name, $operator, $new_value_str) = ($1, $2, $3);
             my $tweakStructure;
-            $tweakStructure->{Action} = $self->{ACTION}->{substr($operator, 0, 1)};
+            $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
             $tweakStructure->{Object}->{Type} = 'Pipeline';
             $tweakStructure->{Object}->{Id} = undef;
             $tweakStructure->{Object}->{Name} = undef;
@@ -618,7 +618,7 @@ sub apply_tweaks {
             $tweakStructure->{Object}->{Id} = undef;
             $tweakStructure->{Object}->{Name} = undef;
             $tweakStructure->{Return}->{Field} = $attrib_name;
-            $tweakStructure->{Action} = $self->{ACTION}->{substr($operator, 0, 1)};
+            $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
 
             if($self->can($attrib_name)) {
                 my $old_value = stringify( $self->$attrib_name() );
@@ -637,7 +637,7 @@ sub apply_tweaks {
                 }
 
             } else {
-                $tweakStructure->{Error} = $self->{ERROR_MSG}->{FIELD_ERROR};
+                $tweakStructure->{Error} = $self->{TWEAK_ERROR_MSG}->{FIELD_ERROR};
                 push @response, "Tweak.Error   \tCould not find the pipeline-wide '$attrib_name' method\n";
             }
             push @{$responseStructure->{Tweaks}}, $tweakStructure;
@@ -652,7 +652,7 @@ sub apply_tweaks {
             foreach my $analysis (@$analyses) {
                 my $tweakStructure;
                 $tweakStructure->{Object}->{Type} = 'Analysis';
-                $tweakStructure->{Action} = $self->{ACTION}->{substr($operator, 0, 1)};
+                $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
                 my $analysis_name = $analysis->logic_name;
                 my $old_value = $analysis->parameters;
 
@@ -704,7 +704,7 @@ sub apply_tweaks {
             foreach my $analysis (@$analyses) {
                 my $tweakStructure;
                 $tweakStructure->{Object}->{Type} = "Analysis";
-                $tweakStructure->{Action} = $self->{ACTION}->{substr($operator, 0, 1)};
+                $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
                 my $analysis_name = $analysis->logic_name;
                 $tweakStructure->{Object}->{Id} = $analysis->dbID + 0;
                 $tweakStructure->{Object}->{Name} = $analysis->logic_name;
@@ -787,7 +787,7 @@ sub apply_tweaks {
                 $tweakStructure->{Object}->{Type} = 'Analysis';
                 $tweakStructure->{Object}->{Id} = $analysis->dbID + 0;
                 $tweakStructure->{Object}->{Name} = $analysis_name;
-                $tweakStructure->{Action} = $self->{ACTION}->{substr($operator, 0, 1)};
+                $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
                 if( $attrib_name eq 'resource_class' ) {
                     $tweakStructure->{Return}->{OldValue} = $analysis->resource_class ? $analysis->resource_class->name : undef;
                     $tweakStructure->{Return}->{Field} = 'resource_class';
@@ -800,7 +800,7 @@ sub apply_tweaks {
                             push @response, "Tweak.Show    \tanalysis[$analysis_name].resource_class ::\t(missing value)\n";
                         }
                     } elsif($operator eq '#') {
-                        $tweakStructure->{Error} = $self->{ERROR_MSG}->{ACTION_ERROR};
+                        $tweakStructure->{Error} = $self->{TWEAK_ERROR_MSG}->{ACTION_ERROR};
                         push @response, "Tweak.Error   \tDeleting of ResourceClasses is not supported\n";
                     } else {
                         $tweakStructure->{Return}->{NewValue} = $new_value_str;
@@ -833,12 +833,12 @@ sub apply_tweaks {
                         $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
                         push @response, "Tweak.Show    \tanalysis[$analysis_name].is_excluded ::\t".$analysis_stats->is_excluded()."\n";
                     } elsif($operator eq '#') {
-                        $tweakStructure->{Error} = $self->{ERROR_MSG}->{ACTION_ERROR};
+                        $tweakStructure->{Error} = $self->{TWEAK_ERROR_MSG}->{ACTION_ERROR};
                         push @response, "Tweak.Error   \tDeleting of excluded status is not supported\n";
                     } else {
                         $tweakStructure->{Return}->{NewValue} = $new_value_str;
                         if(!($new_value =~ /^[01]$/)) {
-                            $tweakStructure->{Error} = $self->{ERROR_MSG}->{VALUE_ERROR};
+                            $tweakStructure->{Error} = $self->{TWEAK_ERROR_MSG}->{VALUE_ERROR};
                             push @response, "Tweak.Error    \tis_excluded can only be 0 (no) or 1 (yes)\n";
                         } elsif ($new_value == $analysis_stats->is_excluded()) {
                             push @response, "Tweak.Info    \tanalysis[$analysis_name].is_excluded is already $new_value, leaving as is\n";
@@ -857,7 +857,7 @@ sub apply_tweaks {
                         $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
                         push @response, "Tweak.Show    \tanalysis[$analysis_name].$attrib_name ::\t$old_value\n";
                     } elsif($operator eq '#') {
-                        $tweakStructure->{Error} = $self->{ERROR_MSG}->{ACTION_ERROR};
+                        $tweakStructure->{Error} = $self->{TWEAK_ERROR_MSG}->{ACTION_ERROR};
                         push @response, "Tweak.Error   \tDeleting of Analysis attributes is not supported\n";
                     } else {
                         $tweakStructure->{Return}->{NewValue} = stringify($new_value);
@@ -867,7 +867,7 @@ sub apply_tweaks {
                     }
                 } else {
                     $tweakStructure->{Return}->{Field} = $attrib_name;
-                    $tweakStructure->{Error} = $self->{ERROR_MSG}->{FIELD_ERROR};
+                    $tweakStructure->{Error} = $self->{TWEAK_ERROR_MSG}->{FIELD_ERROR};
                     push @response, "Tweak.Error   \tAnalysis does not support '$attrib_name' attribute\n";
                 }
 
@@ -887,7 +887,7 @@ sub apply_tweaks {
                     my $rc_name = $rc->name;
                     $tweakStructure->{Object}->{Id} = $rc->dbID + 0;
                     $tweakStructure->{Object}->{Name} = $rc_name;
-                    $tweakStructure->{Action} = $self->{ACTION}->{substr($operator, 0, 1)};
+                    $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
 
                     if(my $rd = $self->collection_of( 'ResourceDescription' )->find_one_by('resource_class', $rc, 'meadow_type', $meadow_type)) {
                         my ($submission_cmd_args, $worker_cmd_args) = ($rd->submission_cmd_args, $rd->worker_cmd_args);
@@ -910,7 +910,7 @@ sub apply_tweaks {
                 foreach my $rc (@$resource_classes) {
                     my $tweakStructure;
                     $tweakStructure->{Object}->{Type} = "Resource class";
-                    $tweakStructure->{Action} = $self->{ACTION}->{substr($operator, 0, 1)};
+                    $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
                     my $rc_name = $rc->name;
                     $tweakStructure->{Object}->{Id} = $rc->dbID + 0;
                     $tweakStructure->{Object}->{Name} = $rc_name;
@@ -947,7 +947,7 @@ sub apply_tweaks {
 
         } else {
             my $tweakStructure;
-            $tweakStructure->{Error} = $self->{ERROR_MSG}->{PARSE_ERROR};
+            $tweakStructure->{Error} = $self->{TWEAK_ERROR_MSG}->{PARSE_ERROR};
             push @response, "Tweak.Error   \tFailed to parse the tweak\n";
             push @{$responseStructure->{Tweaks}}, $tweakStructure;
         }
