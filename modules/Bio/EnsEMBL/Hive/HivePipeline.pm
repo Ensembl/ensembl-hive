@@ -825,14 +825,14 @@ sub apply_tweaks {
 
                     if(my $rd = $self->collection_of( 'ResourceDescription' )->find_one_by('resource_class', $rc, 'meadow_type', $meadow_type)) {
                         my ($submission_cmd_args, $worker_cmd_args) = ($rd->submission_cmd_args, $rd->worker_cmd_args);
-                        print "Tweak.Changing\tresource_class[$rc_name].meadow :: "
+                        print "Tweak.Changing\tresource_class[$rc_name].$meadow_type :: "
                                 .stringify([$submission_cmd_args, $worker_cmd_args])." --> "
                                 .stringify([$new_submission_cmd_args, $new_worker_cmd_args])."\n";
 
                         $rd->submission_cmd_args(   $new_submission_cmd_args );
                         $rd->worker_cmd_args(       $new_worker_cmd_args     );
                     } else {
-                        print "Tweak.Adding  \tresource_class[$rc_name].meadow :: (missing values) --> "
+                        print "Tweak.Adding  \tresource_class[$rc_name].$meadow_type :: (missing values) --> "
                                 .stringify([$new_submission_cmd_args, $new_worker_cmd_args])."\n";
 
                         my ($rd) = $self->add_new_or_update( 'ResourceDescription',   # NB: add_new_or_update returns a list
