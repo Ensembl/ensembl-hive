@@ -200,6 +200,12 @@ sub new {       # construct an attached or a detached Pipeline object
         '#' => "DELETE",
     };
 
+    $self->{TWEAK_OBJECT_TYPE} = {
+        PIPELINE => "Pipeline",
+        ANALYSIS => "Analysis",
+        RESOURCE_CLASS => "Resource class",
+    };
+
     Bio::EnsEMBL::Hive::TheApiary->pipelines_collection->add( $self );
 
     return $self;
@@ -569,7 +575,7 @@ sub apply_tweaks {
             my ($param_name, $operator, $new_value_str) = ($1, $2, $3);
             my $tweakStructure;
             $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
-            $tweakStructure->{Object}->{Type} = 'Pipeline';
+            $tweakStructure->{Object}->{Type} =  $self->{TWEAK_OBJECT_TYPE}->{PIPELINE};
             $tweakStructure->{Object}->{Id} = undef;
             $tweakStructure->{Object}->{Name} = undef;
             $tweakStructure->{Return}->{Field} = $param_name;
@@ -614,7 +620,7 @@ sub apply_tweaks {
         } elsif($tweak=~/^pipeline\.(\w+)(\?|=(.+))$/) {
             my $tweakStructure;
             my ($attrib_name, $operator, $new_value_str) = ($1, $2, $3);
-            $tweakStructure->{Object}->{Type} = 'Pipeline';
+            $tweakStructure->{Object}->{Type} = $self->{TWEAK_OBJECT_TYPE}->{PIPELINE};
             $tweakStructure->{Object}->{Id} = undef;
             $tweakStructure->{Object}->{Name} = undef;
             $tweakStructure->{Return}->{Field} = $attrib_name;
@@ -651,7 +657,7 @@ sub apply_tweaks {
 
             foreach my $analysis (@$analyses) {
                 my $tweakStructure;
-                $tweakStructure->{Object}->{Type} = 'Analysis';
+                $tweakStructure->{Object}->{Type} = $self->{TWEAK_OBJECT_TYPE}->{ANALYSIS};
                 $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
                 my $analysis_name = $analysis->logic_name;
                 my $old_value = $analysis->parameters;
@@ -703,7 +709,7 @@ sub apply_tweaks {
 
             foreach my $analysis (@$analyses) {
                 my $tweakStructure;
-                $tweakStructure->{Object}->{Type} = "Analysis";
+                $tweakStructure->{Object}->{Type} = $self->{TWEAK_OBJECT_TYPE}->{ANALYSIS};
                 $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
                 my $analysis_name = $analysis->logic_name;
                 $tweakStructure->{Object}->{Id} = $analysis->dbID + 0;
@@ -784,7 +790,7 @@ sub apply_tweaks {
 
                 my $analysis_name = $analysis->logic_name;
                 my $tweakStructure;
-                $tweakStructure->{Object}->{Type} = 'Analysis';
+                $tweakStructure->{Object}->{Type} = $self->{TWEAK_OBJECT_TYPE}->{ANALYSIS};
                 $tweakStructure->{Object}->{Id} = $analysis->dbID + 0;
                 $tweakStructure->{Object}->{Name} = $analysis_name;
                 $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
@@ -879,7 +885,7 @@ sub apply_tweaks {
             if($operator eq '?') {
                 foreach my $rc (@$resource_classes) {
                     my $tweakStructure;
-                    $tweakStructure->{Object}->{Type} = "Resource class";
+                    $tweakStructure->{Object}->{Type} = $self->{TWEAK_OBJECT_TYPE}->{RESOURCE_CLASS};
                     my $rc_name = $rc->name;
                     $tweakStructure->{Object}->{Id} = $rc->dbID + 0;
                     $tweakStructure->{Object}->{Name} = $rc_name;
@@ -905,7 +911,7 @@ sub apply_tweaks {
 
                 foreach my $rc (@$resource_classes) {
                     my $tweakStructure;
-                    $tweakStructure->{Object}->{Type} = "Resource class";
+                    $tweakStructure->{Object}->{Type} = $self->{TWEAK_OBJECT_TYPE}->{RESOURCE_CLASS};
                     $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
                     my $rc_name = $rc->name;
                     $tweakStructure->{Object}->{Id} = $rc->dbID + 0;
