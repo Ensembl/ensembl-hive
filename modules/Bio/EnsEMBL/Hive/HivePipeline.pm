@@ -788,9 +788,9 @@ sub apply_tweaks {
                 $tweakStructure->{Object}->{Id} = $analysis->dbID + 0;
                 $tweakStructure->{Object}->{Name} = $analysis_name;
                 $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
+                $tweakStructure->{Return}->{Field} = $attrib_name;
                 if( $attrib_name eq 'resource_class' ) {
                     $tweakStructure->{Return}->{OldValue} = $analysis->resource_class ? $analysis->resource_class->name : undef;
-                    $tweakStructure->{Return}->{Field} = 'resource_class';
 
                     if($operator eq '?') {
                         $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
@@ -825,8 +825,6 @@ sub apply_tweaks {
                     }
 
                 } elsif( $attrib_name eq 'is_excluded' ) {
-                    $tweakStructure->{Return}->{Field} = 'is_excluded';
-
                     my $analysis_stats = $analysis->stats();
                     $tweakStructure->{Return}->{OldValue} = $analysis_stats->is_excluded();
                     if($operator eq '?') {
@@ -850,7 +848,6 @@ sub apply_tweaks {
                         }
                     }
                 } elsif($analysis->can($attrib_name)) {
-                    $tweakStructure->{Return}->{Field} = $attrib_name;
                     my $old_value = stringify($analysis->$attrib_name());
                     $tweakStructure->{Return}->{OldValue} = $old_value;
                     if($operator eq '?') {
@@ -866,7 +863,6 @@ sub apply_tweaks {
                         $need_write = 1;
                     }
                 } else {
-                    $tweakStructure->{Return}->{Field} = $attrib_name;
                     $tweakStructure->{Error} = $self->{TWEAK_ERROR_MSG}->{FIELD_ERROR};
                     push @response, "Tweak.Error   \tAnalysis does not support '$attrib_name' attribute\n";
                 }
