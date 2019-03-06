@@ -729,7 +729,7 @@ sub apply_tweaks {
                     }
 
                     if($operator eq '=' or $operator eq '+=') {     # create new rules
-                        $tweakStructure->{Return}->{NewValue} = $new_value;
+                        $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue} . $new_value;
                         Bio::EnsEMBL::Hive::Utils::PCL::parse_wait_for($self, $analysis, $new_value);
                         $need_write = 1;
                     }
