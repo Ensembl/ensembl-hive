@@ -589,6 +589,9 @@ sub apply_tweaks {
 
                     if($operator eq '=' or $operator eq '+=') {     # create new rules
                         Bio::EnsEMBL::Hive::Utils::PCL::parse_wait_for($self, $analysis, $new_value);
+                        foreach my $c_rule ( @{$analysis->control_rules_collection} ) {
+                            print "Tweak.Adding\t".$c_rule->toString."\n";
+                        }
                         $need_write = 1;
                     }
 
