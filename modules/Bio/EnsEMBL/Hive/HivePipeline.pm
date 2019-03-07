@@ -573,22 +573,22 @@ sub apply_tweaks {
 
         if($tweak=~/^pipeline\.param\[(\w+)\](\?|#|=(.+))$/) {
             my ($param_name, $operator, $new_value_str) = ($1, $2, $3);
+            my $pwp_collection  = $self->collection_of( 'PipelineWideParameters' );
+            my $hash_pair       = $pwp_collection->find_one_by('param_name', $param_name);
+            my $value = $hash_pair ? $hash_pair->{'param_value'} : undef;
             my $tweakStructure;
             $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
             $tweakStructure->{Object}->{Type} =  $self->{TWEAK_OBJECT_TYPE}->{PIPELINE};
             $tweakStructure->{Object}->{Id} = undef;
             $tweakStructure->{Object}->{Name} = undef;
             $tweakStructure->{Return}->{Field} = $param_name;
-            my $pwp_collection  = $self->collection_of( 'PipelineWideParameters' );
-            my $hash_pair       = $pwp_collection->find_one_by('param_name', $param_name);
+            $tweakStructure->{Return}->{OldValue} = $value;
+
             if($operator eq '?') {
-                my $value = $hash_pair ? $hash_pair->{'param_value'} : undef;
-                $tweakStructure->{Return}->{OldValue} = $value;
                 $tweakStructure->{Return}->{NewValue} = $value;
                 push @response, "Tweak.Show    \tpipeline.param[$param_name] ::\t"
 	                . ($hash_pair ? $hash_pair->{'param_value'} : '(missing_value)') . "\n";
             } elsif($operator eq '#') {
-                $tweakStructure->{Return}->{OldValue} = $hash_pair ? $hash_pair->{'param_value'} : undef;
                 $tweakStructure->{Return}->{NewValue} = undef;
                 if ($hash_pair) {
                     $need_write = 1;
@@ -603,12 +603,10 @@ sub apply_tweaks {
                 $new_value_str = stringify($new_value);
                 $tweakStructure->{Return}->{NewValue} = $new_value_str;
                 if($hash_pair) {
-                    $tweakStructure->{Return}->{OldValue} = $hash_pair->{'param_value'};
                     push @response, "Tweak.Changing\tpipeline.param[$param_name] ::\t$hash_pair->{'param_value'} --> $new_value_str\n";
 
                     $hash_pair->{'param_value'} = $new_value_str;
                 } else {
-                    $tweakStructure->{Return}->{OldValue} = undef;
                     push @response, "Tweak.Adding  \tpipeline.param[$param_name] ::\t(missing value) --> $new_value_str\n";
                     $self->add_new_or_update( 'PipelineWideParameters',
                         'param_name'    => $param_name,
@@ -618,8 +616,8 @@ sub apply_tweaks {
             }
           push @{$responseStructure->{Tweaks}}, $tweakStructure;
         } elsif($tweak=~/^pipeline\.(\w+)(\?|=(.+))$/) {
-            my $tweakStructure;
             my ($attrib_name, $operator, $new_value_str) = ($1, $2, $3);
+            my $tweakStructure;
             $tweakStructure->{Object}->{Type} = $self->{TWEAK_OBJECT_TYPE}->{PIPELINE};
             $tweakStructure->{Object}->{Id} = undef;
             $tweakStructure->{Object}->{Name} = undef;
@@ -628,13 +626,11 @@ sub apply_tweaks {
 
             if($self->can($attrib_name)) {
                 my $old_value = stringify( $self->$attrib_name() );
-
+                $tweakStructure->{Return}->{OldValue} = $old_value;
                 if($operator eq '?') {
-                    $tweakStructure->{Return}->{OldValue} = $old_value;
                     $tweakStructure->{Return}->{NewValue} = $old_value;
                     push @response, "Tweak.Show    \tpipeline.$attrib_name ::\t$old_value\n";
                 } else {
-                    $tweakStructure->{Return}->{OldValue} = $old_value;
                     $tweakStructure->{Return}->{NewValue} = $new_value_str;
                     push @response, "Tweak.Changing\tpipeline.$attrib_name ::\t$old_value --> $new_value_str\n";
 
@@ -656,16 +652,15 @@ sub apply_tweaks {
             $new_value_str = stringify( $new_value );
 
             foreach my $analysis (@$analyses) {
+                my $analysis_name = $analysis->logic_name;
+                my $old_value = $analysis->parameters;
+                my $param_hash  = destringify( $old_value );
                 my $tweakStructure;
                 $tweakStructure->{Object}->{Type} = $self->{TWEAK_OBJECT_TYPE}->{ANALYSIS};
                 $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
-                my $analysis_name = $analysis->logic_name;
-                my $old_value = $analysis->parameters;
-
                 $tweakStructure->{Object}->{Id} = $analysis->dbID + 0;
                 $tweakStructure->{Object}->{Name} = $analysis_name;
                 $tweakStructure->{Return}->{Field} = $param_name;
-                my $param_hash  = destringify( $old_value );
                 $tweakStructure->{Return}->{OldValue} =  exists($param_hash->{ $param_name }) ? stringify($param_hash->{ $param_name }) : undef;
 
                 if($operator eq '?') {
@@ -708,12 +703,12 @@ sub apply_tweaks {
             my $new_value = destringify( $new_value_str );
 
             foreach my $analysis (@$analyses) {
+                my $analysis_name = $analysis->logic_name;
                 my $tweakStructure;
                 $tweakStructure->{Object}->{Type} = $self->{TWEAK_OBJECT_TYPE}->{ANALYSIS};
                 $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
-                my $analysis_name = $analysis->logic_name;
                 $tweakStructure->{Object}->{Id} = $analysis->dbID + 0;
-                $tweakStructure->{Object}->{Name} = $analysis->logic_name;
+                $tweakStructure->{Object}->{Name} = $analysis_name;
                 $tweakStructure->{Return}->{Field} = $attrib_name;
                 if( $attrib_name eq 'wait_for' ) {
                     my $cr_collection   = $self->collection_of( 'AnalysisCtrlRule' );
@@ -735,7 +730,7 @@ sub apply_tweaks {
                     }
 
                     if($operator eq '=' or $operator eq '+=') {     # create new rules
-                        $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue} . $new_value;
+                        $tweakStructure->{Return}->{NewValue} = join(' ', $tweakStructure->{Return}->{OldValue}) . $new_value;
                         Bio::EnsEMBL::Hive::Utils::PCL::parse_wait_for($self, $analysis, $new_value);
                         $need_write = 1;
                     }
@@ -884,9 +879,9 @@ sub apply_tweaks {
 
             if($operator eq '?') {
                 foreach my $rc (@$resource_classes) {
+                    my $rc_name = $rc->name;
                     my $tweakStructure;
                     $tweakStructure->{Object}->{Type} = $self->{TWEAK_OBJECT_TYPE}->{RESOURCE_CLASS};
-                    my $rc_name = $rc->name;
                     $tweakStructure->{Object}->{Id} = $rc->dbID + 0;
                     $tweakStructure->{Object}->{Name} = $rc_name;
                     $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
@@ -910,10 +905,10 @@ sub apply_tweaks {
                 my ($new_submission_cmd_args, $new_worker_cmd_args) = (ref($new_value) eq 'ARRAY') ? @$new_value : ($new_value, '');
 
                 foreach my $rc (@$resource_classes) {
+                    my $rc_name = $rc->name;
                     my $tweakStructure;
                     $tweakStructure->{Object}->{Type} = $self->{TWEAK_OBJECT_TYPE}->{RESOURCE_CLASS};
                     $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
-                    my $rc_name = $rc->name;
                     $tweakStructure->{Object}->{Id} = $rc->dbID + 0;
                     $tweakStructure->{Object}->{Name} = $rc_name;
 
@@ -941,8 +936,8 @@ sub apply_tweaks {
                     }
                     $tweakStructure->{Return}->{Field} = $meadow_type;
                     $tweakStructure->{Return}->{NewValue} = stringify([$new_submission_cmd_args, $new_worker_cmd_args]);
-                    $need_write = 1;
                     push @{$responseStructure->{Tweaks}}, $tweakStructure;
+                    $need_write = 1;
                 }
             }
 
