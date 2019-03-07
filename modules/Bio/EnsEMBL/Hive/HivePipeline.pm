@@ -575,7 +575,7 @@ sub apply_tweaks {
             my ($param_name, $operator, $new_value_str) = ($1, $2, $3);
             my $pwp_collection  = $self->collection_of( 'PipelineWideParameters' );
             my $hash_pair       = $pwp_collection->find_one_by('param_name', $param_name);
-            my $value = $hash_pair ? $hash_pair->{'param_value'} : undef;
+            my $value           = $hash_pair ? $hash_pair->{'param_value'} : undef;
             my $tweakStructure;
             $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
             $tweakStructure->{Object}->{Type} =  $self->{TWEAK_OBJECT_TYPE}->{PIPELINE};
@@ -587,7 +587,7 @@ sub apply_tweaks {
             if($operator eq '?') {
                 $tweakStructure->{Return}->{NewValue} = $value;
                 push @response, "Tweak.Show    \tpipeline.param[$param_name] ::\t"
-	                . ($hash_pair ? $hash_pair->{'param_value'} : '(missing_value)') . "\n";
+                    . ($hash_pair ? $hash_pair->{'param_value'} : '(missing_value)') . "\n";
             } elsif($operator eq '#') {
                 $tweakStructure->{Return}->{NewValue} = undef;
                 if ($hash_pair) {
@@ -666,8 +666,8 @@ sub apply_tweaks {
                 if($operator eq '?') {
                     $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
                     push @response, "Tweak.Show    \tanalysis[$analysis_name].param[$param_name] ::\t"
-    	                . (exists($param_hash->{ $param_name }) ? stringify($param_hash->{ $param_name }) : '(missing value)')
-	                    ."\n";
+                        . (exists($param_hash->{ $param_name }) ? stringify($param_hash->{ $param_name }) : '(missing value)')
+                        ."\n";
                 } elsif($operator eq '#') {
                     $tweakStructure->{Return}->{NewValue} = undef;
                     push @response, "Tweak.Deleting\tanalysis[$analysis_name].param[$param_name] ::\t".stringify($param_hash->{ $param_name })." --> (missing value)\n";
