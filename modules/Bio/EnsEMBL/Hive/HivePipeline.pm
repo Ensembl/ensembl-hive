@@ -730,7 +730,8 @@ sub apply_tweaks {
                     }
 
                     if($operator eq '=' or $operator eq '+=') {     # create new rules
-                        $tweakStructure->{Return}->{NewValue} = join(' ', $tweakStructure->{Return}->{OldValue}) . $new_value;
+                        my $new_value_str = ref($new_value) eq 'ARRAY' ? join(' ', $new_value) : $new_value;
+                        $tweakStructure->{Return}->{NewValue} = join(' ', $tweakStructure->{Return}->{OldValue}) . $new_value_str;
                         Bio::EnsEMBL::Hive::Utils::PCL::parse_wait_for($self, $analysis, $new_value);
                         $need_write = 1;
                     }
