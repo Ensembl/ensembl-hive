@@ -586,7 +586,7 @@ sub apply_tweaks {
                 $tweakStructure->{Return}->{OldValue} = $value;
                 $tweakStructure->{Return}->{NewValue} = $value;
                 push @response, "Tweak.Show    \tpipeline.param[$param_name] ::\t"
-	               . ($hash_pair ? $hash_pair->{'param_value'} : '(missing_value)') . "\n";
+	                . ($hash_pair ? $hash_pair->{'param_value'} : '(missing_value)') . "\n";
             } elsif($operator eq '#') {
                 $tweakStructure->{Return}->{OldValue} = $hash_pair ? $hash_pair->{'param_value'} : undef;
                 $tweakStructure->{Return}->{NewValue} = undef;
@@ -671,8 +671,8 @@ sub apply_tweaks {
                 if($operator eq '?') {
                     $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
                     push @response, "Tweak.Show    \tanalysis[$analysis_name].param[$param_name] ::\t"
-    	               . (exists($param_hash->{ $param_name }) ? stringify($param_hash->{ $param_name }) : '(missing value)')
-	                   ."\n";
+    	                . (exists($param_hash->{ $param_name }) ? stringify($param_hash->{ $param_name }) : '(missing value)')
+	                    ."\n";
                 } elsif($operator eq '#') {
                     $tweakStructure->{Return}->{NewValue} = undef;
                     push @response, "Tweak.Deleting\tanalysis[$analysis_name].param[$param_name] ::\t".stringify($param_hash->{ $param_name })." --> (missing value)\n";
