@@ -48,7 +48,7 @@ A PipeConfig file defines the stucture of the pipeline, which is a graph whose n
 There are also other parameters of Analyses that control, for example:
 * how many Workers can simultaneously work on a given Analysis,
 * how many times a Job should be tried until it is considered failed,
-* what should be autimatically done with a Job if it needs more memory/time,
+* what should be automatically done with a Job if it needs more memory/time,
 etc.
 
 Available documentation
