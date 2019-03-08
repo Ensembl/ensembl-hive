@@ -713,7 +713,7 @@ sub apply_tweaks {
                 if( $attrib_name eq 'wait_for' ) {
                     my $cr_collection   = $self->collection_of( 'AnalysisCtrlRule' );
                     my $acr_collection  = $analysis->control_rules_collection;
-                    $tweakStructure->{Return}->{OldValue} = [map { $_->condition_analysis_url } @$acr_collection];
+                    $tweakStructure->{Return}->{OldValue} = join (' ', map { $_->condition_analysis_url } @$acr_collection);
                     if($operator eq '?') {
                         $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
                         push @response, "Tweak.Show    \tanalysis[$analysis_name].wait_for ::\t[".join(', ', map { $_->condition_analysis_url } @$acr_collection )."]\n";
@@ -731,7 +731,7 @@ sub apply_tweaks {
 
                     if($operator eq '=' or $operator eq '+=') {     # create new rules
                         my $new_value_str = ref($new_value) eq 'ARRAY' ? join(' ', $new_value) : $new_value;
-                        $tweakStructure->{Return}->{NewValue} = join(' ', $tweakStructure->{Return}->{OldValue}) . $new_value_str;
+                        $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue} . $new_value_str;
                         Bio::EnsEMBL::Hive::Utils::PCL::parse_wait_for($self, $analysis, $new_value);
                         $need_write = 1;
                     }
