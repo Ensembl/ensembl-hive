@@ -201,8 +201,8 @@ sub new {       # construct an attached or a detached Pipeline object
     };
 
     $self->{TWEAK_OBJECT_TYPE} = {
-        PIPELINE => "Pipeline",
-        ANALYSIS => "Analysis",
+        PIPELINE       => "Pipeline",
+        ANALYSIS       => "Analysis",
         RESOURCE_CLASS => "Resource class",
     };
 
