@@ -730,9 +730,11 @@ sub apply_tweaks {
                     }
 
                     if($operator eq '=' or $operator eq '+=') {     # create new rules
-                        my $new_value_str = ref($new_value) eq 'ARRAY' ? join(' ', $new_value) : $new_value;
-                        $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue} . $new_value_str;
                         Bio::EnsEMBL::Hive::Utils::PCL::parse_wait_for($self, $analysis, $new_value);
+                        my $new_analyses = $self->collection_of( 'Analysis' )->find_one_by( 'dbID' => $analysis->dbID) ;
+                        my $acr_collection  = $new_analyses->control_rules_collection;
+                        $tweakStructure->{Return}->{NewValue} = join (' ', map { $_->condition_analysis_url } @$acr_collection);
+
                         $need_write = 1;
                     }
 
