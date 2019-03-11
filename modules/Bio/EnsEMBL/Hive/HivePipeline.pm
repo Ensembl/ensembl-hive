@@ -734,7 +734,6 @@ sub apply_tweaks {
                         my $new_analyses = $self->collection_of( 'Analysis' )->find_one_by( 'dbID' => $analysis->dbID) ;
                         my $acr_collection  = $new_analyses->control_rules_collection;
                         $tweakStructure->{Return}->{NewValue} = join (' ', map { $_->condition_analysis_url } @$acr_collection);
-
                         $need_write = 1;
                     }
 
