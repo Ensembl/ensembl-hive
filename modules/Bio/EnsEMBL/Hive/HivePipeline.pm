@@ -730,7 +730,7 @@ sub apply_tweaks {
                     }
 
                     if($operator eq '=' or $operator eq '+=') {     # create new rules
-                        Bio::EnsEMBL::Hive::Utils::PCL::parse_wait_for($self, $analysis, $new_value);                        
+                        Bio::EnsEMBL::Hive::Utils::PCL::parse_wait_for($self, $analysis, $new_value);
                         my $acr_collection  = $analysis->control_rules_collection;
                         $tweakStructure->{Return}->{NewValue} = [map { $_->condition_analysis_url } @$acr_collection];
 
