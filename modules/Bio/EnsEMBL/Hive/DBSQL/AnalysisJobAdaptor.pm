@@ -587,131 +587,54 @@ sub reset_or_grab_job_by_dbID {
     return $job;
 }
 
-=head2 reset_or_grab_job_by_inputID
+=head2 reset_job_by_input_id_and_sync
 
-  Arg [1]    : string $analysis_id pattern
-  Arg [2]    : string $input_id pattern
-  Description: resets a job to to 'READY' or directly to 'CLAIMED' so it can be run again, and fetches it.
-               The retry_count will be set to 1 for previously run jobs (partially or wholly) to trigger PRE_CLEANUP for them,
-               but will not change retry_count if a job has never *really* started. $input_id can be a wildcard entry.
-  Returntype : Bio::EnsEMBL::Hive::AnalysisJob or undef
+  Arg [1]: string $input_id pattern
+  Arg [2]: array $analysis_id
+  Example:
+    my $job = $self->{'dba'}->get_AnalysisJobAdaptor->reset_job_by_input_id_and_sync($input_id_pattern, $analyses_pattern);
+  Description:
+    Reset jobs for the specified $input_id pattern and analyses_id pattern. $input_id can be a wildcard argument.
+  Returntype : none
+  Exceptions :
+  Caller     : beekeeper.pl
 
 =cut
 
-sub reset_or_grab_job_by_analysis_id_and_input_id {
-    my ($self, $analyses_pattern, $input_id_pattern) = @_;
+sub reset_job_by_input_id_and_sync {
+    my ($self, $input_id_pattern, @analyses_list) = @_;
+    $input_id_pattern =~ s/\%/\.*/g;
+    my $analysis;
+    my $jobs = $self->fetch_all_by_analysis_id_status(@analyses_list);
+    foreach my $job (@$jobs){
+         my $input_id = $job->input_id;
+         if ($input_id =~ /$input_id_pattern/) {
+                my $job_status = $job->status();
 
-    # Get list of job_id for given wildcard arguments
-    my $sql_get_job_id = qq{
-        SELECT job_id, status, analysis_id FROM job
-         WHERE input_id LIKE ? AND analysis_id LIKE ?
-    };
-   
-    my @values_get_job_id = ($input_id_pattern, $analyses_pattern);
+                if($job_status =~ $ALL_STATUSES_OF_RUNNING_JOBS) {
+                       die "Job is already in progress, cannot reset";
+                }
 
-    my $sth_get_job_id = $self->prepare( $sql_get_job_id ) or die "Unable to prepare" . $self->errstr;
-    my $return_code_job_id = $sth_get_job_id->execute(@values_get_job_id)
-        or die "Could not run\n\t$sql_get_job_id\nwith data:\n\t(".join(',', @values_get_job_id).')';
-    if (! $sth_get_job_id){
-            die "Could not find job_id and status for given input_id and analysis_pattern";
+                if(($job_status eq 'DONE') and my $controlled_semaphore = $job->controlled_semaphore) {
+                       $controlled_semaphore->increase_by( [ $job ] );
+                }
+                $analysis = $job->analysis;
+                $job->set_and_update_status('READY');
+                $analysis->stats->adaptor->increment_a_counter( $Bio::EnsEMBL::Hive::AnalysisStats::status2counter{$job->status}, 1, $job->analysis_id );
+
+                # Syncing stats. Copied from synchronize_AnalysisStats()
+                my $stats = $job->analysis->stats;
+                $stats->refresh();
+
+                my $job_counts = $stats->hive_pipeline->hive_use_triggers() ? undef : $self->fetch_job_counts_hashed_by_status( $stats->analysis_id );
+
+                $stats->recalculate_from_job_counts( $job_counts );
+
+                $stats->update;
+
+         }
     }
-    my ($job_id, $status, $analysis_id, @job_array);
-    while (my (@row) = $sth_get_job_id->fetchrow_array){
-       $job_id = $row[0];
-       $status = $row[1];
-       $analysis_id = $row[2];
-       my %final_input_id = %{fetch_input_ids_for_job_ids($self, $job_id)};
-       $self->reset_jobs_for_input_id($final_input_id{$job_id}, $status, $analysis_id);
-       my $job = $self->fetch_by_analysis_id_and_input_id($analysis_id, $final_input_id{$job_id});
-       push(@job_array, $job);
-    }
-    if (! $job_id){
-        die "Could not find a job for given input_id and analysis_pattern";
-    }
-    $sth_get_job_id->finish;
-    return @job_array;
 }
-
-sub reset_jobs_for_input_id {
-    my ($self, $input_id, $status, $analysis_id) = @_;
-
-    return if !scalar($status);  # No statuses to reset
-
-    my $input_id_filter = 'j.input_id ='."'$input_id'";
-    my $statuses_filter = 'AND j.status = '."'$status'";
-    my $analyses_filter = 'AND j.analysis_id = '.$analysis_id;
-
-    # Get the list of semaphores, and by how much their local_jobs_counter should be increased.
-    # Only DONE and PASSED_ON jobs of the matching analyses and statuses should be counted
-    #
-    my $sql1 = qq{
-        SELECT COUNT(*) AS local_delta, controlled_semaphore_id
-        FROM job j
-        WHERE controlled_semaphore_id IS NOT NULL
-              AND $input_id_filter $statuses_filter $analyses_filter AND status IN ($ALL_STATUSES_OF_COMPLETE_JOBS)
-        GROUP BY controlled_semaphore_id
-    };
-
-    # Run in a transaction to ensure we see a consistent state of the job
-    # statuses and semaphore counts.
-    $self->dbc->run_in_transaction( sub {
-
-        my $semaphore_adaptor = $self->db->get_SemaphoreAdaptor;
-
-        # Update all the semaphored jobs one by one
-        my $sth1 = $self->prepare($sql1);
-        $sth1->execute();
-        while (my ($local_delta, $semaphore_id) = $sth1->fetchrow_array()) {
-
-            my $semaphore = $semaphore_adaptor->fetch_by_dbID( $semaphore_id );
-            $semaphore->reblock_by( $local_delta );                                 # increase the local_jobs_counter, reblock recursively if needed
-        }
-        $sth1->finish;
-
-        # change fan jobs' statuses to 'READY', if they are themselves not SEMAPHORED
-        my $sql3 = ($self->dbc->driver eq 'mysql') ? qq{
-                UPDATE job j
-             LEFT JOIN semaphore s
-                    ON (j.job_id=s.dependent_job_id)
-                   SET j.retry_count = CASE WHEN j.status='READY' THEN 0 ELSE 1 END,
-                       j.status = }.$self->job_status_cast("CASE WHEN s.local_jobs_counter+s.remote_jobs_counter>0 THEN 'SEMAPHORED' ELSE 'READY' END").qq{
-                 WHERE $input_id_filter $statuses_filter $analyses_filter
-        } : ($self->dbc->driver eq 'pgsql') ? qq{
-                UPDATE job
-                   SET retry_count = CASE WHEN j.status='READY' THEN 0 ELSE 1 END,
-                       status = }.$self->job_status_cast("CASE WHEN s.local_jobs_counter+s.remote_jobs_counter>0 THEN 'SEMAPHORED' ELSE 'READY' END").qq{
-                  FROM job j
-             LEFT JOIN semaphore s
-                    ON (j.job_id=s.dependent_job_id)
-                 WHERE job.job_id=j.job_id AND $input_id_filter $statuses_filter $analyses_filter
-        } : qq{
-
-            REPLACE INTO job (job_id, prev_job_id, analysis_id, input_id, param_id_stack, accu_id_stack, role_id, status, retry_count, when_completed, runtime_msec, query_count, controlled_semaphore_id)
-                  SELECT j.job_id,
-                         j.prev_job_id,
-                         j.analysis_id,
-                         j.input_id,
-                         j.param_id_stack,
-                         j.accu_id_stack,
-                         j.role_id,
-                         CASE WHEN s.local_jobs_counter+s.remote_jobs_counter>0 THEN 'SEMAPHORED' ELSE 'READY' END,
-                         CASE WHEN j.status='READY' THEN 0 ELSE 1 END,
-                         j.when_completed,
-                         j.runtime_msec,
-                         j.query_count,
-                         j.controlled_semaphore_id
-                    FROM job j
-               LEFT JOIN semaphore s
-                      ON (j.job_id=s.dependent_job_id)
-                   WHERE $input_id_filter $statuses_filter $analyses_filter
-        };
-
-        $self->dbc->do($sql3);
-        $self->db->get_AnalysisStatsAdaptor->update_status($analysis_id, 'LOADING');
-
-    } ); # end of transaction
-}
-
 
 =head2 grab_jobs_for_role
 
