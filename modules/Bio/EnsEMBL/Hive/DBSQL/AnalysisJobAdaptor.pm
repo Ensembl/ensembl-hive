@@ -590,11 +590,11 @@ sub reset_or_grab_job_by_dbID {
 =head2 reset_job_by_input_id_and_sync
 
   Arg [1]: string $input_id pattern
-  Arg [2]: array $analysis_id
+  Arg [2]: array $analsyes_object_array
   Example:
-    my $job = $self->{'dba'}->get_AnalysisJobAdaptor->reset_job_by_input_id_and_sync($input_id_pattern, $analyses_pattern);
+    my $job = $self->{'dba'}->get_AnalysisJobAdaptor->reset_job_by_input_id_and_sync($input_id_pattern, $analsyes_object_array);
   Description:
-    Reset jobs for the specified $input_id pattern and analyses_id pattern. $input_id can be a wildcard argument.
+    Reset jobs for the specified $input_id pattern and $analsyis_object_array. $input_id can be a wildcard argument.
   Returntype : none
   Exceptions :
   Caller     : beekeeper.pl
@@ -603,35 +603,40 @@ sub reset_or_grab_job_by_dbID {
 
 sub reset_job_by_input_id_and_sync {
     my ($self, $input_id_pattern, @analyses_list) = @_;
+
+    #Convert MySQL wildcard pattern to Perl wildcard pattern
+    if ($input_id_pattern =~ /\A[^%]/) {
+        $input_id_pattern = '^'.$input_id_pattern;
+    }
+    if ($input_id_pattern =~ /[^%]\z/) {
+        $input_id_pattern = $input_id_pattern.'$';
+    }
     $input_id_pattern =~ s/\%/\.*/g;
+
     my $analysis;
     my $jobs = $self->fetch_all_by_analysis_id_status(@analyses_list);
-    foreach my $job (@$jobs){
+    foreach my $job (@$jobs) {
          my $input_id = $job->input_id;
+         $input_id_pattern = qr/$input_id_pattern/;
          if ($input_id =~ /$input_id_pattern/) {
                 my $job_status = $job->status();
-
-                if($job_status =~ $ALL_STATUSES_OF_RUNNING_JOBS) {
-                       die "Job is already in progress, cannot reset";
+                my $job_info = $job->toString;
+                if($job_status =~ /CLAIMED|SEMAPHORED/) {
+                       die "$job_info is $job_status, cannot reset";
                 }
 
-                if(($job_status eq 'DONE') and my $controlled_semaphore = $job->controlled_semaphore) {
-                       $controlled_semaphore->increase_by( [ $job ] );
-                }
-                $analysis = $job->analysis;
-                $job->set_and_update_status('READY');
-                $analysis->stats->adaptor->increment_a_counter( $Bio::EnsEMBL::Hive::AnalysisStats::status2counter{$job->status}, 1, $job->analysis_id );
-
-                # Syncing stats. Copied from synchronize_AnalysisStats()
-                my $stats = $job->analysis->stats;
-                $stats->refresh();
-
-                my $job_counts = $stats->hive_pipeline->hive_use_triggers() ? undef : $self->fetch_job_counts_hashed_by_status( $stats->analysis_id );
-
-                $stats->recalculate_from_job_counts( $job_counts );
-
-                $stats->update;
-
+                if ($job_status ne 'READY') {
+                   if(($job_status eq 'DONE') and my $controlled_semaphore = $job->controlled_semaphore) {
+                     $controlled_semaphore->increase_by( [ $job ] );
+                   }
+                   $analysis = $job->analysis;
+                   $analysis->stats->adaptor->increment_a_counter( $Bio::EnsEMBL::Hive::AnalysisStats::status2counter{$job->status}, -1, $job->analysis_id );
+                   $job->set_and_update_status('READY');
+                   $analysis->stats->adaptor->increment_a_counter( $Bio::EnsEMBL::Hive::AnalysisStats::status2counter{$job->status}, 1, $job->analysis_id );
+               }
+               else {
+                   warn "$job_info is $job_status, need not be reset";
+               }
          }
     }
 }
