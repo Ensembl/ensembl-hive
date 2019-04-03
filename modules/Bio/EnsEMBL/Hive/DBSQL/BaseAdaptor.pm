@@ -262,7 +262,14 @@ sub _table_info_loader {
         # warn "ColumnInfo [$table_name/$column_name] = $column_type\n";
 
         $column_set{$column_name}  = $column_type;
-        $size_limit{$column_name}  = $size_limit;
+
+        # PostgreSQL reports a COLUMN_SIZE of 4 for enums, which is not compatible with
+        # the way slicer does column size checking. Likewise, PostgreSQL reports
+        # a user-defined TYPE_NAME for enums, rather than 'enum'. Therefore, if
+        # the DB is PostgreSQL, only set size_limit for varchars
+        unless (($driver eq 'pgsql') && !($column_type eq 'character varying')) {
+            $size_limit{$column_name}  = $size_limit;
+        }
 
         if( ($column_name eq $table_name.'_id')
          or ($table_name eq 'analysis_base' and $column_name eq 'analysis_id') ) {    # a special case (historical)
