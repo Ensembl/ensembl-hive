@@ -47,25 +47,6 @@ sub object_class {
     die "Please define object_class() in your specific adaptor class to return the class name of your intended object";
 }
 
-
-sub slicer {    # take a slice of the object (if only we could inline in Perl!)
-    my ($self, $object, $fields) = @_;
-
-    my $autoinc_id      = $self->autoinc_id();
-    my $overflow_limit  = $self->overflow_limit();
-
-    return [ map { ($_ eq $autoinc_id)
-                    ? $object->dbID()
-                    : eval { my $value  = $object->$_();
-                             my $ol     = $overflow_limit->{$_};
-                             (defined($ol) and defined($value) and length($value)>$ol)
-                                ? $self->db->get_AnalysisDataAdaptor()->store_if_needed( $value )
-                                : $value
-                      }
-                 } @$fields ];
-}
-
-
 sub objectify { # turn the hashref into an object (if only we could inline in Perl!)
     my ($self, $hashref) = @_;
 

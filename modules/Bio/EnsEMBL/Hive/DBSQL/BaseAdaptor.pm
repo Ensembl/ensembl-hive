@@ -40,6 +40,7 @@ use strict;
 use warnings;
 no strict 'refs';   # needed to allow AUTOLOAD create new methods
 use DBI 1.6;        # the 1.6 functionality is important for detecting autoincrement fields and other magic.
+use Scalar::Util ('blessed');
 
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'throw');
 
@@ -138,6 +139,26 @@ sub overflow_limit {
     return $self->{_overflow_limit} || $self->default_overflow_limit();
 }
 
+=head2 size_limit
+
+Arg[1]      : (optional) Hashref with column names as keys and column size as values
+Description : Getter/setter for column size limits for the implementing adaptor.
+              If no size limit is set, this method will call _table_info_loader() to
+              get sizes from the database schema.
+Returntype  : Hashref
+
+=cut
+
+sub size_limit {
+    my $self = shift @_;
+
+    if(@_) {   # setter
+        $self->{_size_limit} = shift @_;
+    } elsif ( !defined( $self->{_size_limit} ) ) {
+        $self->_table_info_loader();
+    }
+    return $self->{_size_limit};
+}
 
 sub input_column_mapping {
     my $self = shift @_;
@@ -229,17 +250,19 @@ sub _table_info_loader {
     my $table_name  = $self->table_name();
 
     my %column_set  = ();
+    my %size_limit  = ();
     my $autoinc_id  = '';
     my @primary_key = $dbh->primary_key(undef, undef, $table_name);
 
     my $sth = $dbh->column_info(undef, undef, $table_name, '%');
     $sth->execute();
     while (my $row = $sth->fetchrow_hashref()) {
-        my ( $column_name, $column_type ) = @$row{'COLUMN_NAME', 'TYPE_NAME'};
+        my ( $column_name, $column_type, $size_limit ) = @$row{'COLUMN_NAME', 'TYPE_NAME', 'COLUMN_SIZE'};
 
         # warn "ColumnInfo [$table_name/$column_name] = $column_type\n";
 
         $column_set{$column_name}  = $column_type;
+        $size_limit{$column_name}  = $size_limit;
 
         if( ($column_name eq $table_name.'_id')
          or ($table_name eq 'analysis_base' and $column_name eq 'analysis_id') ) {    # a special case (historical)
@@ -249,6 +272,7 @@ sub _table_info_loader {
     $sth->finish;
 
     $self->column_set(  \%column_set );
+    $self->size_limit(  \%size_limit );
     $self->primary_key( \@primary_key );
     $self->autoinc_id(   $autoinc_id );
 }
@@ -552,6 +576,54 @@ sub check_and_dereference_analysis_data {
     }
 }
 
+sub slicer {
+    my ($self, $sliceable, $fields) = @_;
+
+    my $is_object = blessed($sliceable) ? 1 : 0;
+
+    my $autoinc_id;
+    if ($is_object) {
+        $autoinc_id      = $self->autoinc_id();
+    }
+    my $overflow_limit  = $self->overflow_limit();
+    my $size_limit      = $self->size_limit();
+
+    my @slice;
+    # keep track of any values needing overflow, so that overflow can
+    # be deferred until after checking all fields for size limit violations
+    my %needs_overflow;
+
+    for (my $i = 0; $i <= $#{$fields}; $i++) {
+        my $field = $fields->[$i];
+        my $value = $is_object ? $sliceable->$field() : $sliceable->{$field};
+        my $ol = $overflow_limit->{$field};
+        my $sl = $size_limit->{$field};
+
+        if ($is_object && $field eq $autoinc_id) {
+            $slice[$i] = $sliceable->dbID();
+        } elsif (defined($ol) and defined($value) and (length($value) > $ol)) {
+            # if overflow limit exists for this field, we can ignore
+            # any size limit since an excessively large field will be
+            # handled through overflow
+            $needs_overflow{$i} = $value;
+        } elsif (defined($sl) and defined($value) and (length($value) > $sl)) {
+            # if no overflow limit, then check size and generate a meaningful error
+            # as some RDBMS implementations fail silently or misleadingly when trying
+            # to store an oversize value
+            throw("length of value for column \"" . $field .
+                  "\" exceeds the maximum size, which is $sl");
+        } else {
+            $slice[$i] = $value;
+        }
+    }
+
+    foreach my $fields_index (keys(%needs_overflow)) {
+        $slice[$fields_index] =
+            $self->db->get_AnalysisDataAdaptor()->store_if_needed($needs_overflow{$fields_index});
+    }
+
+    return \@slice;
+}
 
 sub DESTROY { }   # to simplify AUTOLOAD
 

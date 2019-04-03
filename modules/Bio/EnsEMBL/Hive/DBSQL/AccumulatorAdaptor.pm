@@ -51,7 +51,6 @@ sub default_table_name {
 sub overflow_limit {
     return {
         'key_signature' => 255,
-        'struct_name'   => 255,
     };
 }
 

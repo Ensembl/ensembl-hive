@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2018] EMBL-European Bioinformatics Institute
+# Copyright [2016-2019] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,8 @@ use warnings;
 use Data::Dumper;
 use File::Temp qw{tempdir};
 
-use Test::More tests => 18;
+use Test::More tests => 20;
+use Test::Exception;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::ResourceClass;
@@ -145,12 +146,32 @@ my $new_accu = Bio::EnsEMBL::Hive::Accumulator->new(
 my $long_key_signature = 'ks' x 129;
 my $long_output_id = [ { 'key' => $long_key_signature,
                          $long_struct_name => 1, } ];
-$new_accu->dataflow(
-    $long_output_id,
-    $accu_fan_job,
+
+throws_ok { $new_accu->dataflow(
+                  $long_output_id,
+                  $accu_fan_job,)
+            } qr/length of value/,
+            "exception to insert of oversize struct name";
+
+is($ada_a->count_all(), 5, "Oversize struct name not inserted");
+
+my $short_struct_name = 'ssn';
+
+my $sslk_accu = Bio::EnsEMBL::Hive::Accumulator->new(
+    adaptor            => $acu_a,
+    struct_name        => $short_struct_name,
+    signature_template => '{key}',
 );
 
-is($ada_a->count_all(), 7, "Overflow for long struct_name and key_signature in accu");
+my $sslk_output_id = [ { 'key' => $long_key_signature,
+                         'ssn' => 1, } ];
+
+$sslk_accu->dataflow(
+    $sslk_output_id,
+    $accu_fan_job,);
+
+is($ada_a->count_all(), 6, "Oversize key signature overflow");
+
 
 # Test retrieval of overflow data
 
@@ -177,7 +198,7 @@ my $fetched_accu_hash = $fetched_accu_structures->{$accu_funnel_job->dbID};
 my $fetched_struct_name = (keys(%$fetched_accu_hash))[0];
 my $fetched_key_signature = (keys(%{$fetched_accu_hash->{$fetched_struct_name}}))[0];
 
-is ($fetched_struct_name, $long_struct_name, "fetched long struct_name from accu");
+is ($fetched_struct_name, $short_struct_name, "fetched short struct_name from accu");
 is ($fetched_key_signature, $long_key_signature, "fetched long key_signature from accu");
 
 done_testing();
