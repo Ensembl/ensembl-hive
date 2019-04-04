@@ -29,6 +29,7 @@ User documentation
 
    quickstart/install
    quickstart/quickstart
+   quickstart/tips
 
 .. toctree::
    :caption: Walkthrough
