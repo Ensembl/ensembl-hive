@@ -51,9 +51,9 @@ Writing modules
 * Use ``self->throw()`` and ``self->warning()``
 	so that error messages are inserted into the log_message table of the hive db; do not import ``Bio::EnsEMBL::Utils::Exception`` because it will replace throw and warning, and eHive won't be able to report anything
 * Use ``self->param_required()``
-	so that you don’t need to write your own parameter checks
+	so that you don't need to write your own parameter checks
 * Use ``self->input_job->autoflow(0)`` sparingly
-	because it’s confusing when your pipeline does non-standard things
+	because it's confusing when your pipeline does non-standard things
 
 Debugging
 +++++++++
