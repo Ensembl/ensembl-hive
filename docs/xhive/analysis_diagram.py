@@ -70,7 +70,7 @@ class HiveDiagramDirective(tables.ListTable):
         graphviz_node['options'] = {}
 
         table = [[[code_block_node], [graphviz_node]]]
-        table_node = self.build_table_from_list(table, 'auto', [50,50], 0, 0)
+        table_node = self.build_table_from_list(table, [50,50], 0, 0)
         return [table_node]
 
 
