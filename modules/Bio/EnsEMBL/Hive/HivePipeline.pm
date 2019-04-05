@@ -614,7 +614,8 @@ sub apply_tweaks {
                     );
                 }
             }
-          push @{$responseStructure->{Tweaks}}, $tweakStructure;
+            push @{$responseStructure->{Tweaks}}, $tweakStructure;
+
         } elsif($tweak=~/^pipeline\.(\w+)(\?|=(.+))$/) {
             my ($attrib_name, $operator, $new_value_str) = ($1, $2, $3);
             my $tweakStructure;
