@@ -89,6 +89,7 @@ sub stringify {
     local $Data::Dumper::Pair      = ' => ';    # make sure we always produce Perl-parsable structures, no matter what is set externally
     local $Data::Dumper::Maxdepth  = 0;         # make sure nobody can mess up stringification by setting a lower Maxdepth
     local $Data::Dumper::Deepcopy  = 1;         # avoid self-references in case the same structure is reused within params
+    local $Data::Dumper::Sparseseen= 1;         # optimized "seen" hash of scalars
 
     return Dumper($structure);
 }
