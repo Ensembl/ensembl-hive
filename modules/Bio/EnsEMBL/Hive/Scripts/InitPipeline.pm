@@ -62,7 +62,8 @@ sub init_pipeline {
 
     if($tweaks and @$tweaks) {
         print "> Applying tweaks.\n";
-        $pipeline->apply_tweaks( $tweaks );
+        my ($need_write, $msg_list_ref, $json) = $pipeline->apply_tweaks( $tweaks );
+        print join("\n", $msg_list_ref);
         print "\n";
     }
 

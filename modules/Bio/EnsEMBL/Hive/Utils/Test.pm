@@ -46,7 +46,7 @@ use Bio::EnsEMBL::Hive::Scripts::StandaloneJob;
 our @ISA         = qw(Exporter);
 our @EXPORT      = ();
 our %EXPORT_TAGS = ();
-our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker beekeeper generate_graph visualize_jobs db_cmd seed_pipeline get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls make_hive_db safe_drop_database all_source_files);
+our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker beekeeper generate_graph visualize_jobs db_cmd seed_pipeline tweak_pipeline get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls make_hive_db safe_drop_database all_source_files);
 
 our $VERSION = '0.00';
 
@@ -305,6 +305,24 @@ sub seed_pipeline {
 
 sub beekeeper {
     return _test_ehive_script('beekeeper', @_);
+}
+
+=head2 tweak_pipeline
+
+  Arg[1]      : String $url. The location of the database
+  Arg[2]      : Arrayref $args. Extra arguments given to beekeeper.pl
+  Arg[3]      : String $test_name (optional). The name of the test
+  Example     : tweak_pipeline($url, [$arg1, $arg2], 'Run tweak_pipeline with two arguments');
+  Description : Very generic function to run tweak_pipeline on the given database with the given arguments
+  Returntype  : None
+  Exceptions  : TAP-style
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub tweak_pipeline {
+    return _test_ehive_script('tweak_pipeline', @_);
 }
 
 

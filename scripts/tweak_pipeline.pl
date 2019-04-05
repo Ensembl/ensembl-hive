@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+use JSON qw(encode_json);
 
     # Finding out own path in order to reference own components (including own modules):
 use Cwd            ();
@@ -35,16 +36,16 @@ sub main {
         'reg_type=s'            => \$self->{'reg_type'},
         'reg_alias|reg_name=s'  => \$self->{'reg_alias'},
         'nosqlvc'             => \$self->{'nosqlvc'},     # using "nosqlvc" instead of "sqlvc!" for consistency with scripts where it is a propagated option
-
+        'json'                  => \$self->{'json'},
         'tweak|SET=s@'          => \$tweaks,
         'DELETE=s'              => sub { my ($opt_name, $opt_value) = @_; push @$tweaks, $opt_value.'#'; },
         'SHOW=s'                => sub { my ($opt_name, $opt_value) = @_; push @$tweaks, $opt_value.'?'; },
 
         'h|help'                => \$self->{'help'},
-    ) or die "Error in command line arguments\n";
+    ) or die "\nERROR: in command line arguments\n";
 
     if (@ARGV) {
-        die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
+        die "\nERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
     }
 
     if($self->{'help'}) {
@@ -65,9 +66,13 @@ sub main {
     } else {
         die "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
     }
-
     if(@$tweaks) {
-        my $need_write = $pipeline->apply_tweaks( $tweaks );
+        my ($need_write, $msg_list_ref, $response_structure) = $pipeline->apply_tweaks( $tweaks );
+
+        $response_structure->{URL} = $self->{'url'};
+        my $json = JSON->new->allow_nonref;
+
+        print $self->{'json'} ? $json->encode($response_structure) : join('', @$msg_list_ref);
         if ($need_write) {
             $pipeline->hive_dba()->dbc->requires_write_access();
             $pipeline->save_collections();
@@ -159,4 +164,3 @@ Shortcut to show a parameter value
 Please subscribe to the eHive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss eHive-related questions or to be notified of our updates
 
 =cut
-
