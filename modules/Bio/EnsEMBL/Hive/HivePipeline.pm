@@ -587,7 +587,7 @@ sub apply_tweaks {
             if($operator eq '?') {
                 $tweakStructure->{Return}->{NewValue} = $value;
                 push @response, "Tweak.Show    \tpipeline.param[$param_name] ::\t"
-                    . ($hash_pair ? $hash_pair->{'param_value'} : '(missing_value)') . "\n";
+                     . ($hash_pair ? $hash_pair->{'param_value'} : '(missing_value)') . "\n";
             } elsif($operator eq '#') {
                 $tweakStructure->{Return}->{NewValue} = undef;
                 if ($hash_pair) {
