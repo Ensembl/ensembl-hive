@@ -203,8 +203,10 @@ sub pipeline_name {
 sub runWorker_path {
     my $self = shift @_;
 
-    my $path = $self->config_get('RunWorkerPath') // $ENV{'EHIVE_ROOT_DIR'}.'/scripts/';
-    $path = $path . '/' unless $path =~ /\/$/;
+    my $path = $self->config_get('RunWorkerPath') // $ENV{'EHIVE_ROOT_DIR'}.'/scripts/'; 
+    if ( length($path ) { 
+      $path = $path . '/' unless $path =~ /\/$/; # add "/" as suffix if user forgot  
+    }
     return $path;
 }
 
