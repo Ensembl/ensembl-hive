@@ -72,7 +72,7 @@ sub main {
     my $unblock_semaphored_jobs     = 0;    # Mark SEMAPHORED jobs to READY
     my $forgive_failed_jobs         = 0;    # Mark FAILED jobs to DONE
     my $discard_ready_jobs          = 0;    # Mark READY jobs to DONE
-    my $reset_job_for_input_id      = 0;
+    my $reset_jobs_for_input_id      = 0;   # Mark DONE, PASSED_ON and FAILED jobs to READY
 
     $self->{'url'}                  = undef;
     $self->{'reg_conf'}             = undef;
@@ -159,7 +159,7 @@ sub main {
                'forgive_failed_jobs'    => \$forgive_failed_jobs,
                'unblock_semaphored_jobs'    => \$unblock_semaphored_jobs,
                'job_output=i'      => \$job_id_for_output,
-               'reset_job_for_input_id=s'  => \$reset_job_for_input_id,
+               'reset_jobs_for_input_id=s'  => \$reset_jobs_for_input_id,
     ) or die "Error in command line arguments\n";
 
     if (@ARGV) {
@@ -288,12 +288,12 @@ sub main {
 
     if($reset_job_id) { $queen->reset_job_by_dbID_and_sync($reset_job_id); }
 
-    if($reset_job_for_input_id and $self->{'analyses_pattern'}) {
-        my @analyses_list = $self->{'pipeline'}->collection_of('Analysis')->find_all_by_pattern( $self->{'analyses_pattern'});
-        $self->{'dba'}->get_AnalysisJobAdaptor->reset_job_by_input_id_and_sync($reset_job_for_input_id, @analyses_list);
+    if($reset_jobs_for_input_id and $self->{'analyses_pattern'}) {
+        my $analyses_list = $self->{'pipeline'}->collection_of('Analysis')->find_all_by_pattern( $self->{'analyses_pattern'});
+        $self->{'dba'}->get_AnalysisJobAdaptor->reset_job_by_input_id_and_sync($reset_jobs_for_input_id, $analyses_list);
     }
 
-    if($reset_job_for_input_id and ! $self->{'analyses_pattern'}) {
+    if($reset_jobs_for_input_id and ! $self->{'analyses_pattern'}) {
         die "Please use -reset_job_by_input_id in combination with -analyses_pattern <pattern>";
     }
 
