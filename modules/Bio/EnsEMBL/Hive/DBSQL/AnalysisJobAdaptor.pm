@@ -48,7 +48,7 @@ use warnings;
 use Bio::EnsEMBL::Hive::Cacheable;
 use Bio::EnsEMBL::Hive::Semaphore;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
-use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify', 'return_qr_pattern');
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
@@ -604,32 +604,30 @@ sub reset_or_grab_job_by_dbID {
 =cut
 
 sub reset_job_by_input_id_and_sync {
-    my ($self, $input_id_pattern, @analyses_list) = @_;
+    my ($self, $input_id_pattern, $analyses_list) = @_;
 
     #Convert MySQL wildcard pattern to Perl wildcard pattern
-    if ($input_id_pattern =~ /\A[^%]/) {
-        $input_id_pattern = '^'.$input_id_pattern;
-    }
-    if ($input_id_pattern =~ /[^%]\z/) {
-        $input_id_pattern = $input_id_pattern.'$';
-    }
-    $input_id_pattern =~ s/\%/\.*/g;
+    $input_id_pattern = return_qr_pattern($input_id_pattern);
 
     my $analysis;
-    my $jobs = $self->fetch_all_by_analysis_id_status(@analyses_list);
+    my $jobs = $self->fetch_all_by_analysis_id_status($analyses_list);
     foreach my $job (@$jobs) {
          my $input_id = $job->input_id;
-         $input_id_pattern = qr/$input_id_pattern/;
          if ($input_id =~ /$input_id_pattern/) {
                 my $job_status = $job->status();
                 my $job_info = $job->toString;
-                if($job_status =~ /CLAIMED|SEMAPHORED/) {
-                       die "$job_info is $job_status, cannot reset";
+                if($job_status =~ /$ALL_STATUSES_OF_RUNNING_JOBS|CLAIMED|SEMAPHORED/) {
+                   warn "$job_info is $job_status, cannot reset - skipping to next job";
+                   next;
                 }
 
+                #The job at this stage will be DONE, PASSED_ON, FAILED or READY
                 if ($job_status ne 'READY') {
                    if(($job_status eq 'DONE') and my $controlled_semaphore = $job->controlled_semaphore) {
                      $controlled_semaphore->increase_by( [ $job ] );
+                   }
+                   if(($job_status eq 'PASSED_ON') and my $controlled_semaphore = $job->controlled_semaphore) {
+                     $controlled_semaphore->decrease_by( [ $job ] );
                    }
                    $analysis = $job->analysis;
                    $analysis->stats->adaptor->increment_a_counter( $Bio::EnsEMBL::Hive::AnalysisStats::status2counter{$job->status}, -1, $job->analysis_id );

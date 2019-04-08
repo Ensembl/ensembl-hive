@@ -61,7 +61,7 @@ use Scalar::Util qw(looks_like_number);
 #use Bio::EnsEMBL::Hive::DBSQL::DBConnection;   # causes warnings that all exported functions have been redefined
 
 use Exporter 'import';
-our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module split_for_bash go_figure_dbc throw join_command_args whoami timeout print_aligned_fields);
+our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module split_for_bash go_figure_dbc throw join_command_args whoami timeout print_aligned_fields return_qr_pattern);
 
 no warnings ('once');   # otherwise the next line complains about $Carp::Internal being used just once
 $Carp::Internal{ (__PACKAGE__) }++;
@@ -503,6 +503,24 @@ sub print_aligned_fields {
         /ge;
         print $line, "\n";
     }
+}
+
+
+=head2 return_qr_pattern
+
+    Argument[0]: Wildcard pattern
+    Description: For the given pattern, the method will return the qr object pattern. It appends '^' and 			 '$' to the start and end of the pattern respectively. It replaces '%' with '.*' to make 			 it Perl compatible. 
+    Returns:     qr object of the input pattern
+
+=cut
+
+sub return_qr_pattern {
+    my $pattern = shift;
+
+    $pattern =~ s/\%/\.*/g;
+    $pattern = qr/^${pattern}$/;
+    return $pattern;
+
 }
 
 
