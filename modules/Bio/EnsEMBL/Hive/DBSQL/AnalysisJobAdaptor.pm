@@ -621,7 +621,7 @@ sub reset_job_by_input_id_and_sync {
                 next;
             }
     
-            else if($job_status =~ /READY/) {
+            elsif($job_status =~ /READY/) {
                 warn "$job_info is $job_status, need not be reset";
                 next;
             }
