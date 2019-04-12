@@ -51,13 +51,13 @@ sub init_logger {
         = delete @flags{qw(-log_level -json_logfile -text_logfile -json_screen -text_screen)};
 
     my $textLogging = $log_level ? $log_level : 'DEBUG, ';
-    $textLogging = $textLogging . ($text_screen && $text_screen ne '0' ? ' Screen, ' : '')
-    ;
-    $textLogging = $textLogging . 'TextLogfile';
+    $textLogging = ($text_screen && $text_screen eq '0' && !$text_logfile) ? 'OFF, Screen' : $textLogging;
+    $textLogging = $textLogging . ($text_screen && $text_screen ne '0' ? ' Screen, ' : '');
+    $textLogging = $textLogging . ($text_logfile ? 'TextLogfile' : '');
 
-    my  $jsonLogging = $json_screen ? 'DEBUG, ' : 'OFF, ';
-    $jsonLogging = $jsonLogging . ($json_screen && $json_screen ne '0' ? ' Screen, ' : '');
-    $jsonLogging = $jsonLogging . 'JsonLogfile';
+    my  $jsonLogging = ($json_screen || $json_logfile) ? 'DEBUG, ' : 'OFF, ';
+    $jsonLogging = $jsonLogging . ($json_screen ? ' Screen, ' : '');
+    $jsonLogging = $jsonLogging . ($json_logfile ?  'JsonLogfile' : '');
 
     $text_logfile = $text_logfile // 'text.log';
 
@@ -69,17 +69,19 @@ sub init_logger {
 
          log4perl.appender.TextLogfile          = Log::Log4perl::Appender::File
          log4perl.appender.TextLogfile.filename = $text_logfile
-         log4perl.appender.TextLogfile.layout   = Log::Log4perl::Layout::SimpleLayout
+         log4perl.appender.TextLogfile.layout   = Log::Log4perl::Layout::PatternLayout
+         log4perl.appender.TextLogfile.layout.ConversionPattern = \%m
 
          log4perl.appender.JsonLogfile          = Log::Log4perl::Appender::File
          log4perl.appender.JsonLogfile.filename = $json_logfile
-         log4perl.appender.JsonLogfile.layout   = Log::Log4perl::Layout::SimpleLayout
+         log4perl.appender.JsonLogfile.layout   = Log::Log4perl::Layout::PatternLayout
+         log4perl.appender.JsonLogfile.layout.ConversionPattern = \%m
 
          log4perl.appender.Screen               = Log::Log4perl::Appender::Screen
          log4perl.appender.Screen.stderr        = 0
+         log4perl.appender.Screen.layout        = Log::Log4perl::Layout::PatternLayout
+         log4perl.appender.Screen.layout.ConversionPattern = \%m
     );
-    print $conf;
-
     Log::Log4perl::init(\$conf);
     return;
 }

@@ -32,12 +32,7 @@ BEGIN {
 
 }
 
-my $formatter = Bio::EnsEMBL::Hive::Utils::Formatter->new();
-my $stdout = send_standard_msgs();
-is_valid_json $stdout;
-
-
-$formatter = Bio::EnsEMBL::Hive::Utils::Formatter->init_logger();
+my $formatter = Bio::EnsEMBL::Hive::Utils::Formatter->init_logger();
 
 
 done_testing();
