@@ -615,7 +615,7 @@ sub reset_job_by_input_id_and_sync {
         my $input_id = $job->input_id;
         if ($input_id =~ /$input_id_pattern/) {
             my $job_status = $job->status();
-            my $job_info = $job->toString;
+            my $job_info   = $job->toString;
             if($ALL_STATUSES_OF_RUNNING_JOBS =~ /'$job_status'/ | $job_status =~ /CLAIMED|SEMAPHORED/) {
                 warn "$job_info is $job_status, cannot reset - skipping to next job";
                 next;
