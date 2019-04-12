@@ -18,6 +18,7 @@ use Pod::Usage;
 use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::Utils ('load_file_or_module');
 use Bio::EnsEMBL::Hive::Utils::URL;
+use Bio::EnsEMBL::Hive::Utils::Logger;
 
 Bio::EnsEMBL::Hive::Utils::URL::hide_url_password();
 
@@ -35,8 +36,12 @@ sub main {
         'reg_conf|reg_file=s'   => \$self->{'reg_conf'},
         'reg_type=s'            => \$self->{'reg_type'},
         'reg_alias|reg_name=s'  => \$self->{'reg_alias'},
-        'nosqlvc'             => \$self->{'nosqlvc'},     # using "nosqlvc" instead of "sqlvc!" for consistency with scripts where it is a propagated option
-        'json'                  => \$self->{'json'},
+        'nosqlvc'               => \$self->{'nosqlvc'},     # using "nosqlvc" instead of "sqlvc!" for consistency with scripts where it is a propagated option
+        'json_screen'           => \$self->{'json_screen'},
+        'text_screen'           => \$self->{'text_screen'},
+        'log_level'             => \$self->{'log_level'},
+        'json_logfile'          => \$self->{'json_logfile'},
+        'text_logfile'          => \$self->{'text_logfile'},
         'tweak|SET=s@'          => \$tweaks,
         'DELETE=s'              => sub { my ($opt_name, $opt_value) = @_; push @$tweaks, $opt_value.'#'; },
         'SHOW=s'                => sub { my ($opt_name, $opt_value) = @_; push @$tweaks, $opt_value.'?'; },
@@ -67,12 +72,20 @@ sub main {
         die "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
     }
     if(@$tweaks) {
+
+        Bio::EnsEMBL::Hive::Utils::Logger->init_logger(
+            -log_level              => $self->{'log_level'},
+            -json_logfile           => $self->{'json_logfile'},
+            -text_logfile           => $self->{'text_logfile'},
+            -json_screen            => $self->{'json_screen'},
+            -text_screen            => $self->{'text_screen'},
+        );
+
         my ($need_write, $msg_list_ref, $response_structure) = $pipeline->apply_tweaks( $tweaks );
 
         $response_structure->{URL} = $self->{'url'};
         my $json = JSON->new->allow_nonref;
 
-        print $self->{'json'} ? $json->encode($response_structure) : join('', @$msg_list_ref);
         if ($need_write) {
             $pipeline->hive_dba()->dbc->requires_write_access();
             $pipeline->save_collections();
