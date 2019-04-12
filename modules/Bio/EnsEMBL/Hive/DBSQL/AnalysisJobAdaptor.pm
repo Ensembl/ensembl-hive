@@ -606,38 +606,41 @@ sub reset_or_grab_job_by_dbID {
 sub reset_job_by_input_id_and_sync {
     my ($self, $input_id_pattern, $analyses_list) = @_;
 
-    #Convert MySQL wildcard pattern to Perl wildcard pattern
+    # Convert MySQL wildcard pattern to Perl wildcard pattern
     $input_id_pattern = return_qr_pattern($input_id_pattern);
 
     my $analysis;
     my $jobs = $self->fetch_all_by_analysis_id_status($analyses_list);
     foreach my $job (@$jobs) {
-         my $input_id = $job->input_id;
-         if ($input_id =~ /$input_id_pattern/) {
-                my $job_status = $job->status();
-                my $job_info = $job->toString;
-                if($job_status =~ /$ALL_STATUSES_OF_RUNNING_JOBS|CLAIMED|SEMAPHORED/) {
-                   warn "$job_info is $job_status, cannot reset - skipping to next job";
-                   next;
-                }
+        my $input_id = $job->input_id;
+        if ($input_id =~ /$input_id_pattern/) {
+            my $job_status = $job->status();
+            my $job_info = $job->toString;
+            if($ALL_STATUSES_OF_RUNNING_JOBS =~ /'$job_status'/ | $job_status =~ /CLAIMED|SEMAPHORED/) {
+                warn "$job_info is $job_status, cannot reset - skipping to next job";
+                next;
+            }
+    
+            else if($job_status =~ /READY/) {
+                warn "$job_info is $job_status, need not be reset";
+                next;
+            }
 
-                #The job at this stage will be DONE, PASSED_ON, FAILED or READY
-                if ($job_status ne 'READY') {
-                   if(($job_status eq 'DONE') and my $controlled_semaphore = $job->controlled_semaphore) {
-                     $controlled_semaphore->increase_by( [ $job ] );
-                   }
-                   if(($job_status eq 'PASSED_ON') and my $controlled_semaphore = $job->controlled_semaphore) {
-                     $controlled_semaphore->decrease_by( [ $job ] );
-                   }
-                   $analysis = $job->analysis;
-                   $analysis->stats->adaptor->increment_a_counter( $Bio::EnsEMBL::Hive::AnalysisStats::status2counter{$job->status}, -1, $job->analysis_id );
-                   $job->set_and_update_status('READY');
-                   $analysis->stats->adaptor->increment_a_counter( $Bio::EnsEMBL::Hive::AnalysisStats::status2counter{$job->status}, 1, $job->analysis_id );
-               }
-               else {
-                   warn "$job_info is $job_status, need not be reset";
-               }
-         }
+            # The job at this stage will be DONE, PASSED_ON, FAILED
+            else {
+                if(($job_status eq 'DONE') and my $controlled_semaphore = $job->controlled_semaphore) {
+                    $controlled_semaphore->increase_by( [ $job ] );
+                }
+                if(($job_status eq 'PASSED_ON') and my $controlled_semaphore = $job->controlled_semaphore) {
+                    $controlled_semaphore->decrease_by( [ $job ] );
+                }
+                $analysis = $job->analysis;
+                $analysis->stats->adaptor->increment_a_counter( $Bio::EnsEMBL::Hive::AnalysisStats::status2counter{$job->status}, -1, $job->analysis_id );
+                $job->set_and_update_status('READY');
+                $analysis->stats->adaptor->increment_a_counter( $Bio::EnsEMBL::Hive::AnalysisStats::status2counter{$job->status}, 1, $job->analysis_id );
+            }
+               
+        }
     }
 }
 
