@@ -509,9 +509,9 @@ sub print_aligned_fields {
 =head2 return_qr_pattern
 
     Argument[0]: Wildcard pattern
-    Description: For the given pattern, the method will return the qr object pattern. 
-                 It appends '^' and '$' to the start and end of the pattern respectively. 
-                 It replaces '%' with '.*' to make it Perl compatible. 
+    Description: For the given pattern, the method will return the qr object pattern.
+                 It appends '^' and '$' to the start and end of the pattern respectively.
+                 It replaces '%' with '.*' to make it Perl compatible.
     Returns:     qr object of the input pattern
 
 =cut

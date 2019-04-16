@@ -72,7 +72,7 @@ sub main {
     my $unblock_semaphored_jobs     = 0;    # Mark SEMAPHORED jobs to READY
     my $forgive_failed_jobs         = 0;    # Mark FAILED jobs to DONE
     my $discard_ready_jobs          = 0;    # Mark READY jobs to DONE
-    my $reset_jobs_for_input_id     = 0;   # Mark DONE, PASSED_ON and FAILED jobs to READY
+    my $reset_jobs_for_input_id     = 0;    # Mark DONE, PASSED_ON and FAILED jobs to READY
 
     $self->{'url'}                  = undef;
     $self->{'reg_conf'}             = undef;
