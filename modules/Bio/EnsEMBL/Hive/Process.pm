@@ -704,9 +704,8 @@ sub worker_temp_directory_name {
 sub cleanup_worker_temp_directory {
     my $self = shift @_;
 
-    my $tmp_dir = $self->worker_temp_directory_name();
-    if(-e $tmp_dir) {
-        remove_tree($tmp_dir, {error => undef});
+    if(defined($self->{'_tmp_dir'}) and (-e $self->{'_tmp_dir'})) {
+        remove_tree($self->{'_tmp_dir'}, {error => undef});
     }
 }
 
