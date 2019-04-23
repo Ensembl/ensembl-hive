@@ -222,7 +222,7 @@ sub create_new_worker {
     }
 
     $worker->set_log_directory_name($hive_log_dir, $worker_log_dir);
-    $worker->set_temp_directory_name( $worker_base_temp_dir );
+    $worker->set_temp_directory_name( $worker_base_temp_dir || $meadow->config_get('BaseTempDirectory') );
 
     $worker->init;
 
@@ -572,6 +572,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
                     if( ($worker->status ne 'SUBMITTED')                 # There is no worker_temp_directory before specialization
                     and ($worker->meadow_user eq $this_meadow_user) ) {  # if I'm actually allowed to kill the worker...
+                            $worker->set_temp_directory_name( $this_meadow->config_get('BaseTempDirectory') );
                             $this_meadow->cleanup_temp_directory( $worker );
                     }
                 }
