@@ -204,16 +204,9 @@ In our case, Examl uses MPI and wants to share data via the filesystem too.
 In this specific Runnable, Examl is set to run in eHive's managed temporary
 directory, which by default is under /tmp which is not shared across nodes on
 our compute cluster.
-We have to override the eHive method to use a shared directory (``$self->param('examl_dir')``) instead.
+We have to override the eHive method to use a shared directory (``$self->o('examl_dir')``) instead.
 
-::
-
-      use Path::Tiny;
-
-      sub worker_temp_directory_name {
-          my $self = shift @_;
-          my $default_temp_directory_name = $self->SUPER::worker_temp_directory_name(@_);
-          my $name = path($default_temp_directory_name)->basename;
-          return $self->param('examl_dir')."/$name/";
-      }
+This can be done at the resource class level, by adding
+``"-worker_base_tmp_dir ".$self->o('examl_dir')`` to the
+``worker_cmd_args`` attribute of the resource-class
 
