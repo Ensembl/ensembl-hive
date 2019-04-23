@@ -84,7 +84,8 @@ Job (by removing some files, for instance), or to clean it up completely
 with ``$self->cleanup_worker_temp_directory``.
 
 By default, this directory will be put under /tmp, but it can be overriden
-by adding a ``worker_temp_directory_name`` method to the runnable. This can
+by setting the ``-worker_base_tmp_dir`` option for workers through their
+resource classes. This can
 be used to:
 
 - use a faster filesystem (although /tmp is usually local to the machine),

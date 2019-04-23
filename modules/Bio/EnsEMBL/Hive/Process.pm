@@ -678,17 +678,11 @@ sub worker_temp_directory {
     my $self = shift @_;
 
     unless(defined($self->{'_tmp_dir'}) and (-e $self->{'_tmp_dir'})) {
-        $self->{'_tmp_dir'} = $self->worker_temp_directory_name();
+        $self->{'_tmp_dir'} = $self->worker->temp_directory_name();
         make_path( $self->{'_tmp_dir'}, { mode => 0777 } );
         throw("unable to create a writable directory ".$self->{'_tmp_dir'}) unless(-w $self->{'_tmp_dir'});
     }
     return $self->{'_tmp_dir'};
-}
-
-sub worker_temp_directory_name {
-    my $self = shift @_;
-
-    return $self->worker->temp_directory_name;
 }
 
 

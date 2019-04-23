@@ -14,6 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# standaloneJob.pl eHive.examples.TestRunnable -language python3
+
+import os
+import subprocess
+
 import eHive
 
 class TestRunnable(eHive.BaseRunnable):
@@ -29,15 +34,20 @@ class TestRunnable(eHive.BaseRunnable):
         self.warning("Fetch the world !")
         print("alpha is", self.param_required('alpha'))
         print("beta is", self.param_required('beta'))
+        self.temp_dir = self.worker_temp_directory()
+        print("my directory name is", self.temp_dir)
 
     def run(self):
         self.warning("Run the world !")
         s = self.param('alpha') + self.param('beta')
         print("set gamma to", s)
         self.param('gamma', s)
+        self.greeting_path = os.path.join(self.temp_dir, "hello")
+        subprocess.check_call(["touch", self.greeting_path])
 
     def write_output(self):
         self.warning("Write to the world !")
         print("gamma is", self.param('gamma'))
         self.dataflow( {'gamma': self.param('gamma')}, 2 )
+        print("Greetings in place:", os.path.exists(self.greeting_path))
 

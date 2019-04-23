@@ -24,7 +24,7 @@ import unittest
 import warnings
 import traceback
 
-__version__ = "3.0"
+__version__ = "4.0"
 
 __doc__ = """
 This module mainly implements python's counterpart of GuestProcess. Read
@@ -219,12 +219,9 @@ class BaseRunnable(object):
 
     def worker_temp_directory(self):
         """Returns the full path of the temporary directory created by the worker.
-        Runnables can implement "worker_temp_directory_name()" to return the name
-        they would like to use
         """
         if self.__created_worker_temp_directory is None:
-            template_name = self.worker_temp_directory_name() if hasattr(self, 'worker_temp_directory_name') else None
-            self.__send_message('WORKER_TEMP_DIRECTORY', template_name)
+            self.__send_message('WORKER_TEMP_DIRECTORY', None)
             self.__created_worker_temp_directory = self.__read_message()['response']
         return self.__created_worker_temp_directory
 

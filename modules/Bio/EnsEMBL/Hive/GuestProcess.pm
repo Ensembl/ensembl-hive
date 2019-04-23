@@ -79,7 +79,7 @@ response from GuestProcess):
     ---> dbIDs of the jobs that have been created
 
     <--- WORKER_TEMP_DIRECTORY
-         // The content is the "worker_temp_directory_name" as defined in the runnable (or null otherwise)
+         // No content needed (ignored)
     ---> returns the temporary directory of the worker
 
     <--- JOB_END
@@ -135,7 +135,7 @@ use base ('Bio::EnsEMBL::Hive::Process');
 
 # -------------------------------------- <versioning of the GuestProcess interface> -------------------------------------------------------
 
-our $GUESTPROCESS_PROTOCOL_VERSION = '3';       # Make sure you change this number whenever an incompatible change is introduced
+our $GUESTPROCESS_PROTOCOL_VERSION = '4';       # Make sure you change this number whenever an incompatible change is introduced
 
 
 =head2 get_protocol_version
@@ -561,7 +561,6 @@ sub life_cycle {
             $self->send_response($d);
 
         } elsif ($event eq 'WORKER_TEMP_DIRECTORY') {
-            $self->{worker_temp_directory_name} = $content;
             my $wtd = $self->worker_temp_directory;
             $self->send_response($wtd);
 
@@ -598,33 +597,12 @@ sub life_cycle {
     }
 }
 
-=head2 worker_temp_directory_name
-
-  Example     : $process->worker_temp_directory_name();
-  Description : Returns the name of the temp directory for this module
-                The value in $self is initialized at the WORKER_TEMP_DIRECTORY
-                event above and returned to the caller if defined. This allows
-                runnables to redefine the name
-  Returntype  : string
-  Exceptions  : none
-
-=cut
-
-sub worker_temp_directory_name {
-    my $self = shift;
-    return $self->{worker_temp_directory_name} if $self->{worker_temp_directory_name};
-    return $self->SUPER::worker_temp_directory_name();
-}
-
-
-
 
 ### Summary of Process methods ###
 
 ## Have to be redefined
 # life_cycle
 # param_defaults
-# worker_temp_directory_name
 
 ## Needed, can be reused from the base class
 # worker_temp_directory

@@ -73,7 +73,7 @@ public abstract class BaseRunnable {
 	private static final String JOB_END_TYPE = "JOB_END";
 	private static final String OK = "OK";
 
-	public final static String VERSION = "3.1";
+	public final static String VERSION = "4.0";
 
 	protected final static Map<String, Object> DEFAULT_PARAMS = new HashMap<>();
 
@@ -317,21 +317,11 @@ public abstract class BaseRunnable {
 	 */
 	protected String workerTempDirectory() {
 		if (workerTempDirectory == null) {
-			sendEventMessage(WORKER_TEMP_DIRECTORY_TYPE,
-					getWorkerTemplateName());
+			sendEventMessage(WORKER_TEMP_DIRECTORY_TYPE, null);
 			workerTempDirectory = (String) (readMessageAndRespond()
 					.get(RESPONSE_KEY));
 		}
 		return workerTempDirectory;
-	}
-
-	/**
-	 * Override to provide a special template for the worker temporary directory
-	 * 
-	 * @return A String representing the template location for worker directories or null
-	 */
-	protected String getWorkerTemplateName() {
-		return null;
 	}
 
 	/**
