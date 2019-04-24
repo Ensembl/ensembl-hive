@@ -25,7 +25,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::Utils ('load_file_or_module');
-
+use Bio::EnsEMBL::Hive::Utils::Logger;
 
 sub init_pipeline {
     my ($file_or_module, $tweaks) = @_;
@@ -61,7 +61,8 @@ sub init_pipeline {
     $pipeconfig_object->add_objects_from_config( $pipeline );
 
     if($tweaks and @$tweaks) {
-        # TODO: init logger
+        # TODO: init logger properly
+        Bio::EnsEMBL::Hive::Utils::Logger->init_logger();
         print "> Applying tweaks.\n";
         my ($need_write, $json) = $pipeline->apply_tweaks( $tweaks );
     }
