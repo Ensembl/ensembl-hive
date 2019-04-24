@@ -36,8 +36,9 @@ package Bio::EnsEMBL::Hive::Valley;
 
 use strict;
 use warnings;
+use List::Util ('sum');
 use Sys::Hostname ('hostname');
-use Bio::EnsEMBL::Hive::Utils ('find_submodules');
+use Bio::EnsEMBL::Hive::Utils ('find_submodules', 'whoami');
 use Bio::EnsEMBL::Hive::Limiter;
 
 use base ('Bio::EnsEMBL::Hive::Configurable');
@@ -77,9 +78,9 @@ sub new {
     foreach my $meadow_class (@{ $self->loaded_meadow_drivers }) {
 
         if( $meadow_class->check_version_compatibility
-        and $meadow_class->name) {      # the assumption is if we can get a name, it is available
+        and (my $name = $meadow_class->name)) {      # the assumption is if we can get a name, it is available
 
-            my $meadow_object            = $meadow_class->new( $config );
+            my $meadow_object            = $meadow_class->new( $config, $name );
 
             $meadow_object->pipeline_name( $pipeline_name ) if($pipeline_name);
 
@@ -149,53 +150,34 @@ sub find_available_meadow_responsible_for_worker {
 sub whereami {
     my $self = shift @_;
 
-    my ($meadow_type, $meadow_name, $pid);
+    my $meadow_user = Bio::EnsEMBL::Hive::Utils::whoami();
+
     foreach my $meadow (@{ $self->get_available_meadow_list }) {
+        my $pid;
+        my $meadow_host;
         eval {
-            $pid         = $meadow->get_current_worker_process_id();
-            $meadow_type = $meadow->type();
-            $meadow_name = $meadow->cached_name();
+                # get_current_worker_process_id() is expected to die if the pid
+                # cannot be determined. With the eval{} and the unless{} it will
+                # skip the meadow and try the next one.
+            $pid            = $meadow->get_current_worker_process_id();
+            $meadow_host    = $meadow->get_current_hostname();
         };
         unless($@) {
-            last;
+            return ($meadow, $pid, $meadow_host, $meadow_user);
         }
     }
-    unless($pid) {
-        die "Could not determine the Meadow, please investigate";
-    }
-
-    my $meadow_host = hostname();
-    my $meadow_user = $ENV{'USER'} || getpwuid($<);
-
-    return ($meadow_type, $meadow_name, $pid, $meadow_host, $meadow_user);
+    die "Could not determine the Meadow, please investigate";
 }
 
 
-sub get_pending_worker_counts_by_meadow_type_rc_name {
-    my $self = shift @_;
-
-    my %pending_counts = ();
-    my $total_pending_all_meadows = 0;
-
-    foreach my $meadow (@{ $self->get_available_meadow_list }) {
-        my ($pending_this_meadow_by_rc_name, $total_pending_this_meadow) = ($meadow->count_pending_workers_by_rc_name());
-        $pending_counts{ $meadow->type } = $pending_this_meadow_by_rc_name;
-        $total_pending_all_meadows += $total_pending_this_meadow;
-    }
-
-    return (\%pending_counts, $total_pending_all_meadows);
-}
-
-
-sub count_running_workers_and_generate_limiters {
-    my ($self, $meadow_type_2_name_2_users) = @_;
+sub generate_limiters {
+    my ($self, $reconciled_worker_statuses) = @_;
 
     my $valley_running_worker_count             = 0;
     my %meadow_capacity_limiter_hashed_by_type  = ();
 
     foreach my $meadow (@{ $self->get_available_meadow_list }) {
-        my $meadow_users_of_interest = [keys %{ $meadow_type_2_name_2_users->{$meadow->type}{$meadow->cached_name} || {} }];
-        my $this_worker_count   = $meadow->count_running_workers( $meadow_users_of_interest );
+        my $this_worker_count   = scalar( @{ $reconciled_worker_statuses->{ $meadow->signature }{ 'RUN' } || [] } );
 
         $valley_running_worker_count                           += $this_worker_count;
 
@@ -209,5 +191,76 @@ sub count_running_workers_and_generate_limiters {
 
     return ($valley_running_worker_count, \%meadow_capacity_limiter_hashed_by_type);
 }
+
+
+=head2 query_worker_statuses
+
+    Arg[1] : Hashref {meadow_type}{meadow_name}{meadow_user}{process_id} => $db_status
+    Output : Hashref {meadow_signature}{meadow_status} => [process_ids]
+
+    Description : Queries the available meadows to get the (meadow) status of the given workers
+
+=cut
+
+sub query_worker_statuses {
+    my ($self, $db_registered_workers_from_all_meadows_deemed_alive) = @_;
+
+    my %reconciled_worker_statuses  = ();
+
+    foreach my $meadow (@{ $self->get_available_meadow_list }) {    # only go through the available meadows
+        my $db_registered_workers_this_meadow   = $db_registered_workers_from_all_meadows_deemed_alive->{$meadow->type}{$meadow->cached_name};
+        my $involved_users                      = [keys %$db_registered_workers_this_meadow];
+
+        next unless @$involved_users;
+
+        my %meadow_seen_worker_status           = map { ( $_->[0] => $_->[2] ) } @{ $meadow->status_of_all_our_workers( $involved_users ) };
+
+        my $worker_statuses_of_this_meadow      = $reconciled_worker_statuses{ $meadow->signature } = {};   # manually vivify every Meadow's subhash
+
+        while(my ($meadow_user, $db_user_subhash) = each %$db_registered_workers_this_meadow) { # start the reconciliation from the DB view and check it against Meadow view
+            while(my ($worker_pid, $db_worker_status) = each %$db_user_subhash) {
+                my $combined_status     = $meadow_seen_worker_status{$worker_pid}
+                                       // ( ($db_worker_status=~/^(?:SUBMITTED|DEAD)$/) ? $db_worker_status : 'LOST' );
+
+                push @{ $worker_statuses_of_this_meadow->{ $combined_status } }, $worker_pid;
+            }
+        }
+    }
+    return \%reconciled_worker_statuses;
+}
+
+
+sub status_of_all_our_workers_by_meadow_signature {
+    my ($self, $reconciled_worker_statuses) = @_;
+
+    my %signature_and_pid_to_worker_status = ();
+    foreach my $meadow (@{ $self->get_available_meadow_list }) {
+        my $meadow_signature = $meadow->signature;
+        $signature_and_pid_to_worker_status{ $meadow_signature } = {};
+
+        my $status_2_pid_list   = $reconciled_worker_statuses->{ $meadow_signature };
+        while(my ($status, $pid_list) = each %$status_2_pid_list) {
+            $signature_and_pid_to_worker_status{$meadow_signature}{$_} = $status for @$pid_list;
+        }
+    }
+    return \%signature_and_pid_to_worker_status;
+}
+
+
+sub cleanup_left_temp_directory {
+    my ($self, $worker) = @_;
+
+    # cleanup_left_temp_directory is called when garbage-collecting dead-workers,
+    # which is only possible for reachable meadows.
+    # This guarantees that $meadow is defined.
+    my $meadow = $self->available_meadow_hash->{$worker->meadow_type};
+
+    if ($meadow->config_get('CleanupTempDirectoryKilledWorkers')) {
+        print "GarbageCollector:\tCleaning-up /tmp\n";
+        my $rc = $meadow->run_on_host($worker->meadow_host, $worker->meadow_user, ['rm', '-rf', $worker->temp_directory_name]);
+        $worker->worker_say(sprintf("Error: could not clean %s's temp directory '%s': %s\n", $worker->meadow_host, $worker->temp_directory_name, $@)) if $rc;
+    }
+}
+
 
 1;

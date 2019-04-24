@@ -22,10 +22,10 @@ use Test::More;
 use Data::Dumper;
 
 eval "use Bio::EnsEMBL::Hive::Version 4.0";
-is($@ ? 0 : 1, 0, 'cannot import eHive 4.0');
+ok($@, 'cannot import eHive 4.0');
 
 eval "use Bio::EnsEMBL::Hive::Version 2.0";
-is($@ ? 0 : 1, 1, 'can import eHive 2.0');
+ok(!$@, 'can import eHive 2.0');
 
 is(Bio::EnsEMBL::Hive::Version::get_code_version(), $Bio::EnsEMBL::Hive::Version::VERSION, 'get_code_version() returns the code version');
 

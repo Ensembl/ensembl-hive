@@ -18,23 +18,18 @@
 use strict;
 use warnings;
 
-use Data::Dumper;
-use File::Temp qw{tempdir};
-
 use Test::Exception;
 use Test::More;
 
 use Bio::EnsEMBL::Hive::Utils qw(stringify);
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline get_test_urls);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 use Cwd            ();
 use File::Basename ();
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
-my $dir = tempdir CLEANUP => 1;
-
-my $ehive_test_pipeline_urls = $ENV{'EHIVE_TEST_PIPELINE_URLS'} || "sqlite:///${dir}/ehive_test_pipeline_db";
+my $ehive_test_pipeline_urls = get_test_urls();
 
 my $different_param_hash;
 
@@ -250,14 +245,14 @@ sub test_all_dataflows_with_var_template {
 
 
 
-foreach my $pipeline_url (split( /[\s,]+/, $ehive_test_pipeline_urls )) {
+foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
 
     subtest 'Test on '.$pipeline_url, sub {
         #plan tests => 17;
 
-        my $url         = init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf', [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
+        init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf', $pipeline_url);
         my $pipeline    = Bio::EnsEMBL::Hive::HivePipeline->new(
-            -url                        => $url,
+            -url                        => $pipeline_url,
             -disconnect_when_inactive   => 1,
         );
         my $hive_dba    = $pipeline->hive_dba;

@@ -65,6 +65,9 @@ sub param_defaults {
         return_codes_2_branches => {},      # Hash that maps some of the command return codes to branch numbers
         'use_bash_pipefail' => 0,           # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
         'use_bash_errexit'  => 0,           # When the command is composed of multiple commands (concatenated with a semi-colon), use "bash -o errexit" so that a failure will interrupt the whole script
+        'dataflow_file'     => undef,       # The path to a file that contains 1 line per dataflow event, in the form of a JSON object
+        'dataflow_branch'   => undef,       # The default branch for JSON dataflows
+        'timeout'           => undef,       # Maximum runtime of the command
     }
 }
 
@@ -84,13 +87,15 @@ sub param_defaults {
 sub run {
     my $self = shift;
  
-    my %transferred_options = map {$_ => $self->param($_)} qw(use_bash_pipefail use_bash_errexit);
-    my ($return_value, $stderr, $flat_cmd) = $self->run_system_command($self->param_required('cmd'), \%transferred_options);
+    my %transferred_options = map {$_ => $self->param($_)} qw(use_bash_pipefail use_bash_errexit timeout);
+    my ($return_value, $stderr, $flat_cmd, $stdout, $runtime_msec) = $self->run_system_command($self->param_required('cmd'), \%transferred_options);
 
     # To be used in write_output()
     $self->param('return_value', $return_value);
     $self->param('stderr', $stderr);
     $self->param('flat_cmd', $flat_cmd);
+    $self->param('stdout', $stdout);
+    $self->param('runtime_msec', $runtime_msec);
 }
 
 
@@ -105,14 +110,25 @@ sub write_output {
     my $self = shift;
 
     my $return_value = $self->param('return_value');
-    return unless $return_value;
 
+    ## Success
+    unless ($return_value) {
+        # FIXME branch number
+        $self->dataflow_output_ids_from_json($self->param('dataflow_file'), $self->param('dataflow_branch')) if $self->param('dataflow_file');
+        return;
+    }
+
+    ## Error processing
     my $stderr = $self->param('stderr');
     my $flat_cmd = $self->param('flat_cmd');
 
-    if ($return_value < 0) {
+    if ($return_value == -1) {
         # system() could not start, or wait() failed
         die sprintf( "Could not start '%s': %s\n", $flat_cmd, $stderr);
+
+    } elsif ($return_value == -2) {
+        $self->complete_early_if_branch_connected("The command was aborted because it exceeded the allowed runtime. Flowing to the -2 branch.\n", -2);
+        die "The command was aborted because it exceeded the allowed runtime, but there are no dataflow-rules on branch -2.\n";
 
     } elsif (not ($return_value >> 8)) {
         # The job has been killed. The best is to wait a bit that LSF kills
@@ -128,23 +144,40 @@ sub write_output {
         # We create a dataflow event depending on the exit code of the process.
         if (ref($self->param('return_codes_2_branches')) and exists $self->param('return_codes_2_branches')->{$return_value}) {
             my $branch_number = $self->param('return_codes_2_branches')->{$return_value};
-            $self->dataflow_output_id( $self->input_id, $branch_number );
-            $self->input_job->autoflow(0);
-            $self->complete_early(sprintf("The command exited with code %d, which is mapped to a dataflow on branch #%d.\n", $return_value, $branch_number));
+            $self->complete_early(sprintf("The command exited with code %d, which is mapped to a dataflow on branch #%d.\n", $return_value, $branch_number), $branch_number);
         }
 
         if ($stderr =~ /Exception in thread ".*" java.lang.OutOfMemoryError: Java heap space at/) {
-            my $job_ids = $self->dataflow_output_id( $self->input_id, -1 );
-            if (scalar(@$job_ids)) {
-                $self->input_job->autoflow(0);
-                $self->complete_early("Java heap space is out of memory. A job has been dataflown to the -1 branch.\n");
-            } else {
-                die $stderr;
-            }
+            $self->complete_early_if_branch_connected("Java heap space is out of memory. A job has been dataflown to the -1 branch.\n", -1);
+            die $stderr;
         }
 
         die sprintf( "'%s' resulted in an error code=%d\nstderr is: %s\n", $flat_cmd, $return_value, $stderr);
     }
+}
+
+
+######################
+## Internal methods ##
+######################
+
+=head2 complete_early_if_branch_connected
+
+  Arg[1]      : (string) message
+  Arg[2]      : (integer) branch number
+  Description : Wrapper around complete_early that first checks that the
+                branch is connected to something.
+  Returntype  : void if the branch is not connected. Otherwise doesn't return
+
+=cut
+
+sub complete_early_if_branch_connected {
+    my ($self, $message, $branch_code) = @_;
+
+    # just return if no corresponding gc_dataflow rule has been defined
+    return unless $self->input_job->analysis->dataflow_rules_by_branch->{$branch_code};
+
+    $self->complete_early($message, $branch_code);
 }
 
 1;

@@ -106,6 +106,10 @@ sub graph {
             'concentrate'   => 'true',
             'pad'           => $self->config_get('Pad') || 0,
         );
+
+        # Defined on its own because it should not be in the dot output but
+        # Bio::EnsEMBL::Hive::Utils::GraphViz->new passes all its parameters to dot
+        $self->{'_graph'}->{'SORT'} = 1;
     }
     return $self->{'_graph'};
 }
@@ -168,15 +172,22 @@ sub _accu_sink_node_name {
 sub _cluster_name {
     my ($df_rule) = @_;
 
-    return UNIVERSAL::isa($df_rule, 'Bio::EnsEMBL::Hive::DataflowRule') ? _midpoint_name($df_rule) : ($df_rule || '');
+    return ( UNIVERSAL::isa($df_rule, 'Bio::EnsEMBL::Hive::DataflowRule') ? 'cl_'._midpoint_name($df_rule) : ($df_rule || 'cl_noname') );
 }
 
+
+our %_midpoint_ref_to_temp_id;
 
 sub _midpoint_name {
     my ($df_rule) = @_;
 
-    if($df_rule and scalar($df_rule)=~/\((\w+)\)/) {     # a unique id of a df_rule assuming dbIDs are not available
-        return 'dfr_'.$1.'_mp';
+    if (UNIVERSAL::isa($df_rule, 'Bio::EnsEMBL::Hive::DataflowRule')) {
+        my $dfr_id = $df_rule->dbID || $_midpoint_ref_to_temp_id{scalar($df_rule)};
+        unless ($dfr_id) {
+            $dfr_id = 'p'.(scalar(keys %_midpoint_ref_to_temp_id) + 1);   # a unique id of a df_rule when dbIDs are not available;
+            $_midpoint_ref_to_temp_id{scalar($df_rule)} = $dfr_id;
+        }
+        return 'dfr_'.$dfr_id.'_mp';
     } else {
         throw("Wrong argument to _midpoint_name");
     }
@@ -196,6 +207,8 @@ sub build {
     my ($self) = @_;
 
     my $main_pipeline    = $self->pipeline;
+
+    $self->{'_foreign_analyses'} = {};
 
     foreach my $source_analysis ( @{ $main_pipeline->get_source_analyses } ) {
             # run the recursion in each component that has a non-cyclic start:
@@ -229,12 +242,17 @@ sub build {
     }
 
     my %cluster_2_nodes = ();
+    $self->graph->cluster_2_nodes( \%cluster_2_nodes );
 
     if( $self->config_get('DisplayDetails') ) {
-        foreach my $pipeline ( $main_pipeline, values %{Bio::EnsEMBL::Hive::TheApiary->pipelines_collection} ) {
-            my $pipelabel_node_name = $self->_add_pipeline_label( $pipeline );
+        foreach my $pipeline ( Bio::EnsEMBL::Hive::TheApiary->pipelines_collection->list ) {
+            my $pipeline_cluster_name   = _cluster_name( $pipeline->hive_pipeline_name );
+            $self->graph->cluster_2_attributes->{ $pipeline_cluster_name }{ 'cluster_label' } = $pipeline_cluster_name;
+            $self->graph->cluster_2_attributes->{ $pipeline_cluster_name }{ 'style' } = 'bold,filled';
 
-            push @{$cluster_2_nodes{ $pipeline->hive_pipeline_name } }, $pipelabel_node_name;
+            $self->graph->cluster_2_attributes->{ $pipeline_cluster_name }{ 'fill_colour_pair' } = ($pipeline == $main_pipeline)
+                ? [$self->config_get('Box', 'MainPipeline', 'ColourScheme'),  $self->config_get('Box', 'MainPipeline', 'ColourOffset')]
+                : [$self->config_get('Box', 'OtherPipeline', 'ColourScheme'), $self->config_get('Box', 'OtherPipeline', 'ColourOffset')];
         }
     }
 
@@ -250,7 +268,24 @@ sub build {
                 my $choice      = (scalar(@$df_targets)!=1) || defined($df_targets->[0]->on_condition);
 
                 if(@$fan_dfrs or $choice) {
-                    push @{$cluster_2_nodes{ _cluster_name( $df_rule->{'_funnel_dfr'} ) }}, _midpoint_name( $df_rule ); # top-level funnels define clusters (top-level "boxes")
+                        # top-level funnels define clusters (top-level "boxes"):
+                    push @{$cluster_2_nodes{ _cluster_name( $df_rule->{'_funnel_dfr'} ) }}, _midpoint_name( $df_rule );
+
+                    my $box_needed = 0;
+                    foreach my $fan_dfr (@$fan_dfrs) {
+                        my $fan_targets = $fan_dfr->get_my_targets; # FIXME: ->get_my_targets() may be too computationally-expensive to run so may times?
+                        foreach my $fan_target (@$fan_targets) {
+                            my $target_object = $fan_target->to_analysis;
+                            if( $target_object->{'_funnel_dfr'} eq $df_rule
+#                            or  $target_object->hive_pipeline ne $fan_dfr->hive_pipeline    # crossing the pipeline boundary
+                            ) {
+                                $box_needed = 1;
+                            }
+                        }
+                    }
+                    if( $box_needed ) {
+                        push @{$cluster_2_nodes{ _cluster_name( $df_rule->{'_funnel_dfr'} ) }}, _cluster_name( $df_rule );
+                    }
 
                     foreach my $fan_dfr (@$fan_dfrs) {
                         push @{$cluster_2_nodes{ _cluster_name( $fan_dfr->{'_funnel_dfr'} ) } }, _midpoint_name( $fan_dfr ); # midpoints of rules that have a funnel live inside "boxes"
@@ -271,11 +306,7 @@ sub build {
             } # /foreach group
         }
 
-        $self->graph->cluster_2_nodes( \%cluster_2_nodes );
-        $self->graph->main_pipeline_name( $main_pipeline->hive_pipeline_name );
-        $self->graph->semaphore_bgcolour(       [$self->config_get('Box', 'Semaphore', 'ColourScheme'),     $self->config_get('Box', 'Semaphore', 'ColourOffset')] );
-        $self->graph->main_pipeline_bgcolour(   [$self->config_get('Box', 'MainPipeline', 'ColourScheme'),  $self->config_get('Box', 'MainPipeline', 'ColourOffset')] );
-        $self->graph->other_pipeline_bgcolour(  [$self->config_get('Box', 'OtherPipeline', 'ColourScheme'), $self->config_get('Box', 'OtherPipeline', 'ColourOffset')] );
+        $self->graph->nested_bgcolour( [$self->config_get('Box', 'Semaphore', 'ColourScheme'),     $self->config_get('Box', 'Semaphore', 'ColourOffset')] );
     }
 
     return $self->graph();
@@ -323,23 +354,6 @@ sub _propagate_allocation {
 }
 
 
-sub _add_pipeline_label {
-    my ($self, $pipeline) = @_;
-
-    my $node_fontname       = $self->config_get('Node', 'Details', 'Font');
-    my $pipeline_label      = $pipeline->display_name;
-    my $pipelabel_node_name = 'pipelabel_'.$pipeline->hive_pipeline_name;
-
-    $self->graph()->add_node( $pipelabel_node_name,
-        shape     => 'plaintext',
-        fontname  => $node_fontname,
-        label     => $pipeline_label,
-    );
-
-    return $pipelabel_node_name;
-}
-
-
 sub _add_analysis_node {
     my ($self, $analysis) = @_;
 
@@ -356,6 +370,7 @@ sub _add_analysis_node {
     my $analysis_style                                    = $analysis->can_be_empty() ? 'dashed, filled' : 'filled' ;
     my $node_fontname                                     = $self->config_get('Node', 'AnalysisStatus', $analysis_status, 'Font');
     my $display_stats                                     = $self->config_get('DisplayStats');
+    my $display_dbIDs                                     = $self->config_get('DisplayDBIDs');
     my $hive_pipeline                                     = $self->pipeline;
 
     my $colspan = 0;
@@ -375,7 +390,7 @@ sub _add_analysis_node {
     }
 
     $colspan ||= 1;
-    my $analysis_label  = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.$colspan.'">'.$analysis->relative_display_name( $hive_pipeline ).' ('.($analysis->dbID || 'unstored').')</td></tr>';
+    my $analysis_label  = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.$colspan.'">'.$analysis->relative_display_name( $hive_pipeline ).($display_dbIDs ? ' ('.($analysis->dbID || 'unstored').')' : '').'</td></tr>';
     if( $display_stats ) {
         $analysis_label    .= qq{<tr><td colspan="$colspan"> </td></tr>};
         if( $display_stats eq 'barchart') {
@@ -386,6 +401,8 @@ sub _add_analysis_node {
     }
 
     if( my $job_limit = $self->config_get('DisplayJobs') ) {
+        my $display_job_length = $self->config_get('DisplayJobLength');
+
         if(my $job_adaptor = $analysis->adaptor && $analysis->adaptor->db->get_AnalysisJobAdaptor) {
             my @jobs = sort {$a->dbID <=> $b->dbID} @{ $job_adaptor->fetch_some_by_analysis_id_limit( $analysis->dbID, $job_limit+1 )};
             $analysis->jobs_collection( \@jobs );
@@ -401,12 +418,10 @@ sub _add_analysis_node {
 
         $analysis_label    .= '<tr><td colspan="'.$colspan.'"> </td></tr>';
         foreach my $job (@jobs) {
-            my $input_id = $job->input_id;
+            my $input_id = $self->graph->protect_string_for_display( $job->input_id, $display_job_length, 1 );
             my $status   = $job->status;
             my $job_id   = $job->dbID || 'unstored';
-            $input_id=~s/\>/&gt;/g;
-            $input_id=~s/\</&lt;/g;
-            $input_id=~s/\{|\}//g;
+
             $analysis_label    .= qq{<tr><td align="left" colspan="$colspan" bgcolor="}.$self->config_get('Node', 'JobStatus', $status, 'Colour').qq{">$job_id [$status]: $input_id</td></tr>};
         }
 
@@ -417,8 +432,7 @@ sub _add_analysis_node {
     $analysis_label    .= '</table>>';
   
     $self->graph->add_node( $this_analysis_node_name,
-        shape       => 'record',
-        comment     => qq{new_shape:$analysis_shape},
+        shape       => $analysis_shape,
         style       => $analysis_style,
         fillcolor   => $analysis_status_colour,
         fontname    => $node_fontname,
@@ -558,7 +572,6 @@ sub _twopart_arrow {
 
        $df_targets        ||= $df_rule->get_my_targets;
     my $choice              = (scalar(@$df_targets)!=1) || defined($df_targets->[0]->on_condition);
-    #my $label               = scalar(@$df_targets)==1 ? 'Filter' : 'Switch';
     my $tablabel            = qq{<<table border="0" cellborder="0" cellspacing="0" cellpadding="1">i<tr><td></td></tr>};
 
     my $targets_grouped_by_condition = $df_rule->get_my_targets_grouped_by_condition( $df_targets );
@@ -567,17 +580,10 @@ sub _twopart_arrow {
 
         my $condition = $targets_grouped_by_condition->[$i]->[0];
 
-        if($display_cond_length) {
-            if(defined($condition)) {
-                $condition=~s{^(.{$display_cond_length}).+}{$1 \.\.\.};     # shorten down to $display_cond_length characters
-
-                $condition=~s{&}{&amp;}g;   # Since we are in HTML context now, ampersands should be escaped (first thing after trimming)
-                $condition=~s{"}{&quot;}g;  # should fix a string display bug for pre-2.16 GraphViz'es
-                $condition=~s{<}{&lt;}g;
-                $condition=~s{>}{&gt;}g;
-            }
-        } else {
-            $condition &&= 'condition_'.$i;
+        if(defined($condition)) {
+            $condition = $display_cond_length
+                       ? $graph->protect_string_for_display( $condition, $display_cond_length )   # trim and protect it
+                       : 'condition_'.$i;                                           # override it completely with a numbered label
         }
         $tablabel .= qq{<tr><td port="cond_$i">}.((defined $condition) ? "WHEN $condition" : $choice ? 'ELSE' : '')."</td></tr>";
     }
@@ -585,8 +591,7 @@ sub _twopart_arrow {
 
     $graph->add_node( $midpoint_name,   # midpoint itself
         $choice ? (
-            shape       => 'record',
-            comment     => qq{new_shape:$switch_shape},
+            shape       => $switch_shape,
             style       => $switch_style,
             fillcolor   => $switch_colour,
             fontname    => $switch_font,
@@ -698,11 +703,13 @@ sub _add_table_node {
 
     my $table_label = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.($columns||1).'">'. $naked_table->relative_display_name( $hive_pipeline ) .'</td></tr>';
 
-    if( $self->config_get('DisplayData') and $columns) {
+    if( $data_limit and $columns) {
+        my $display_column_length = $self->config_get('DisplayColumnLength');
+
         $table_label .= '<tr><td colspan="'.$columns.'"> </td></tr>';
         $table_label .= '<tr>'.join('', map { qq{<td bgcolor="$table_header_colour" border="1">$_</td>} } @column_names).'</tr>';
         foreach my $row (@$table_data) {
-            $table_label .= '<tr>'.join('', map { qq{<td>$_</td>} } @{$row}{@column_names}).'</tr>';
+            $table_label .= '<tr>'.join('', map { '<td>'.$self->graph->protect_string_for_display($_,  $display_column_length).'</td>' } @{$row}{@column_names}).'</tr>';
         }
         if($hit_limit) {
             $table_label  .= qq{<tr><td colspan="$columns">[ more data ]</td></tr>};
@@ -711,8 +718,7 @@ sub _add_table_node {
     $table_label .= '</table>>';
 
     $self->graph()->add_node( $this_table_node_name,
-        shape       => 'record',
-        comment     => qq{new_shape:$table_shape},
+        shape       => $table_shape,
         style       => $table_style,
         fillcolor   => $table_colour,
         fontname    => $table_fontname,

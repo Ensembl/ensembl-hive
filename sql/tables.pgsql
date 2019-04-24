@@ -7,13 +7,6 @@
             -i $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/sql/tables.pgsql -d Hive -intro $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/docs/hive_schema.inc \
             -sort_headers 0 -sort_tables 0 -o $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/docs/hive_schema.html
 
-
-    Adding the following line into the header of the previous output will make it look prettier:
-        <link rel="stylesheet" type="text/css" media="all" href="ehive_doc.css" />
-
-
-
-
 LICENSE
 
     Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -38,18 +31,19 @@ CONTACT
 /**
 @header Pipeline structure
 @colour #C70C09
+@desc   Tables to store the structure of the pipeline (i.e. the analyses and the dataflow-rules between them)
 */
 
 /**
 @table  hive_meta
 
-@colour #000000
+@colour #C70C09
 
 @desc This table keeps several important hive-specific pipeline-wide key-value pairs
         such as hive_sql_schema_version, hive_use_triggers and hive_pipeline_name.
 
-@column meta_key        the KEY of KEY-VALUE pairs (primary key)
-@column meta_value      the VALUE of KEY-VALUE pairs
+@column meta_key        the key of key-value pairs (primary key)
+@column meta_value      the value of key-value pairs
 */
 
 CREATE TABLE hive_meta (
@@ -62,13 +56,13 @@ CREATE TABLE hive_meta (
 /**
 @table  pipeline_wide_parameters
 
-@colour #000000
+@colour #C70C09
 
 @desc This table contains a simple hash between pipeline_wide_parameter names and their values.
-      The same data used to live in 'meta' table until both the schema and the API were finally separated from Ensembl Core.
+      The same data used to live in "meta" table until both the schema and the API were finally separated from Ensembl Core.
 
-@column param_name      the KEY of KEY-VALUE pairs (primary key)
-@column param_value     the VALUE of KEY-VALUE pairs
+@column param_name      the key of key-value pairs (primary key)
+@column param_value     the value of key-value pairs
 */
 
 CREATE TABLE pipeline_wide_parameters (
@@ -92,14 +86,18 @@ CREATE        INDEX ON pipeline_wide_parameters (param_value);
 @column logic_name              the name of the Analysis object
 @column module                  the name of the module / package that runs this Analysis
 @column language                the language of the module, if not Perl
-@column parameters              a stingified hash of parameters common to all jobs of the Analysis
+@column parameters              a stringified hash of parameters common to all jobs of the Analysis
 @column resource_class_id       link to the resource_class table
 @column failed_job_tolerance    % of tolerated failed Jobs
 @column max_retry_count         how many times a job of this Analysis will be retried (unless there is no point)
 @column can_be_empty            if TRUE, this Analysis will not be blocking if/while it doesn't have any jobs
-@column priority                an Analysis with higher priority will be more likely chosen on Worker's specialization
+@column priority                an Analysis with higher priority will be more likely chosen on Worker's specialisation
 @column meadow_type             if defined, forces this Analysis to be run only on the given Meadow
 @column analysis_capacity       if defined, limits the number of Workers of this particular Analysis that are allowed to run in parallel
+@column hive_capacity           a reciprocal limiter on the number of Workers running at the same time (dependent on Workers of other Analyses)
+@column batch_size              how many jobs are claimed in one claiming operation before Worker starts executing them
+@column comment                 human-readable textual description of the analysis
+@column tags                    machine-readable list of tags useful for grouping analyses together
 */
 
 CREATE TABLE analysis_base (
@@ -110,11 +108,15 @@ CREATE TABLE analysis_base (
     parameters              TEXT,
     resource_class_id       INTEGER     NOT NULL,
     failed_job_tolerance    INTEGER     NOT NULL DEFAULT 0,
-    max_retry_count         INTEGER     NOT NULL DEFAULT 3,
+    max_retry_count         INTEGER,
     can_be_empty            SMALLINT    NOT NULL DEFAULT 0,
     priority                SMALLINT    NOT NULL DEFAULT 0,
     meadow_type             VARCHAR(255)          DEFAULT NULL,
     analysis_capacity       INTEGER              DEFAULT NULL,
+    hive_capacity           INTEGER              DEFAULT NULL,
+    batch_size              INTEGER     NOT NULL DEFAULT 1,
+    comment                 TEXT        NOT NULL DEFAULT '',
+    tags                    TEXT        NOT NULL DEFAULT '',
 
     UNIQUE  (logic_name)
 );
@@ -127,12 +129,10 @@ CREATE TABLE analysis_base (
 
 @desc   Parallel table to analysis_base which provides high level statistics on the
         state of an analysis and it's jobs.  Used to provide a fast overview, and to
-        provide final approval of 'DONE' which is used by the blocking rules to determine
+        provide final approval of "DONE" which is used by the blocking rules to determine
         when to unblock other analyses.  Also provides
 
 @column analysis_id             foreign-keyed to the corresponding analysis_base entry
-@column batch_size              how many jobs are claimed in one claiming operation before Worker starts executing them
-@column hive_capacity           a reciprocal limiter on the number of Workers running at the same time (dependent on Workers of other Analyses)
 @column status                  cached state of the Analysis
 
 @column total_job_count         total number of Jobs of this Analysis
@@ -143,25 +143,19 @@ CREATE TABLE analysis_base (
 
 @column num_running_workers     number of running Workers of this Analysis
 
-@column behaviour               whether hive_capacity is set or is dynamically calculated based on timers
-@column input_capacity          used to compute hive_capacity in DYNAMIC mode
-@column output_capacity         used to compute hive_capacity in DYNAMIC mode
-
-@column avg_msec_per_job        weighted average used to compute DYNAMIC hive_capacity
-@column avg_input_msec_per_job  weighted average used to compute DYNAMIC hive_capacity
-@column avg_run_msec_per_job    weighted average used to compute DYNAMIC hive_capacity
-@column avg_output_msec_per_job weighted average used to compute DYNAMIC hive_capacity
+@column avg_msec_per_job        weighted average
+@column avg_input_msec_per_job  weighted average
+@column avg_run_msec_per_job    weighted average
+@column avg_output_msec_per_job weighted average
 
 @column when_updated            when this entry was last updated
 @column sync_lock               a binary lock flag to prevent simultaneous updates
+@column is_excluded             set to exclude analysis from beekeeper scheduling
 */
 
 CREATE TYPE analysis_status AS ENUM ('BLOCKED', 'LOADING', 'SYNCHING', 'EMPTY', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED');
-CREATE TYPE analysis_behaviour AS ENUM ('STATIC', 'DYNAMIC');
 CREATE TABLE analysis_stats (
     analysis_id             INTEGER     NOT NULL,
-    batch_size              INTEGER     NOT NULL DEFAULT 1,
-    hive_capacity           INTEGER              DEFAULT NULL,
     status                  analysis_status NOT NULL DEFAULT 'EMPTY',
 
     total_job_count         INTEGER     NOT NULL DEFAULT 0,
@@ -172,10 +166,6 @@ CREATE TABLE analysis_stats (
 
     num_running_workers     INTEGER     NOT NULL DEFAULT 0,
 
-    behaviour               analysis_behaviour NOT NULL DEFAULT 'STATIC',
-    input_capacity          INTEGER     NOT NULL DEFAULT 4,
-    output_capacity         INTEGER     NOT NULL DEFAULT 4,
-
     avg_msec_per_job        INTEGER              DEFAULT NULL,
     avg_input_msec_per_job  INTEGER              DEFAULT NULL,
     avg_run_msec_per_job    INTEGER              DEFAULT NULL,
@@ -183,6 +173,7 @@ CREATE TABLE analysis_stats (
 
     when_updated            TIMESTAMP            DEFAULT NULL,
     sync_lock               SMALLINT    NOT NULL DEFAULT 0,
+    is_excluded             SMALLINT    NOT NULL DEFAULT 0,
 
     PRIMARY KEY (analysis_id)
 );
@@ -246,10 +237,10 @@ CREATE TABLE dataflow_target (
 @colour #C70C09
 
 @desc   These rules define a higher level of control.
-        These rules are used to turn whole anlysis nodes on/off (READY/BLOCKED).
-        If any of the condition_analyses are not 'DONE' the ctrled_analysis is set to BLOCKED.
-        When all conditions become 'DONE' then ctrled_analysis is set to READY
-        The workers switch the analysis.status to 'WORKING' and 'DONE'.
+        These rules are used to turn whole analysis nodes on/off (READY/BLOCKED).
+        If any of the condition_analyses are not "DONE" the ctrled_analysis is set to BLOCKED.
+        When all conditions become "DONE" then ctrled_analysis is set to READY
+        The workers switch the analysis.status to "WORKING" and "DONE".
         But any moment if a condition goes false, the analysis is reset to BLOCKED.
 
 @column analysis_ctrl_rule_id  internal ID
@@ -269,6 +260,7 @@ CREATE TABLE analysis_ctrl_rule (
 /**
 @header Resources
 @colour #FF7504
+@desc   Tables used to describe the resources needed by each analysis
 */
 
 /**
@@ -314,8 +306,9 @@ CREATE TABLE resource_description (
 
 
 /**
-@header Job-related
+@header Job tracking
 @colour #1D73DA
+@desc   Tables to list all the jobs of each analysis, and their dependencies
 */
 
 /**
@@ -323,7 +316,7 @@ CREATE TABLE resource_description (
 
 @colour #1D73DA
 
-@desc The job is the heart of this system.  It is the kiosk or blackboard
+@desc The job table is the heart of this system.  It is the kiosk or blackboard
     where workers find things to do and then post work for other works to do.
     These jobs are created prior to work being done, are claimed by workers,
     are updated as the work is done, with a final update on completion.
@@ -340,8 +333,7 @@ CREATE TABLE resource_description (
 @column when_completed          when the job was completed
 @column runtime_msec            how long did it take to execute the job (or until the moment it failed)
 @column query_count             how many SQL queries were run during this job
-@column semaphore_count         if this count is >0, the job is conditionally blocked (until this count drops to 0 or below). Default=0 means "nothing is blocking me by default".
-@column semaphored_job_id       the job_id of job S that is waiting for this job to decrease S's semaphore_count. Default=NULL means "I'm not blocking anything by default".
+@column controlled_semaphore_id the dbID of the semaphore that is controlled by this job (and whose counter it will decrement by 1 upon successful completion)
 */
 
 CREATE TYPE job_status AS ENUM ('SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP','DONE','FAILED','PASSED_ON');
@@ -359,13 +351,53 @@ CREATE TABLE job (
     runtime_msec            INTEGER              DEFAULT NULL,
     query_count             INTEGER              DEFAULT NULL,
 
-    semaphore_count         INTEGER     NOT NULL DEFAULT 0,
-    semaphored_job_id       INTEGER              DEFAULT NULL,
+    controlled_semaphore_id INTEGER              DEFAULT NULL,      -- terminology: fan jobs CONTROL semaphores; funnel jobs or remote semaphores DEPEND ON (local) semaphores
 
     UNIQUE (input_id, param_id_stack, accu_id_stack, analysis_id)   -- to avoid repeating tasks
 );
 CREATE INDEX ON job (analysis_id, status, retry_count); -- for claiming jobs
 CREATE INDEX ON job (role_id, status);                  -- for fetching and releasing claimed jobs
+
+/*
+-- PostgreSQL is lacking INSERT IGNORE, so we need a RULE to silently
+-- discard the insertion of duplicated entries in the job table
+CREATE OR REPLACE RULE job_table_ignore_duplicate_inserts AS
+    ON INSERT TO job
+    WHERE EXISTS (
+	SELECT 1
+	FROM job
+	WHERE job.input_id=NEW.input_id AND job.param_id_stack=NEW.param_id_stack AND job.accu_id_stack=NEW.accu_id_stack AND job.analysis_id=NEW.analysis_id)
+    DO INSTEAD NOTHING;
+*/
+
+
+/**
+@table  semaphore
+
+@colour #1D73DA
+
+@desc The semaphore table is our primary inter-job dependency relationship.
+        Any job may control up to one semaphore, but the semaphore can be controlled by many jobs.
+        This includes remote jobs, so the semaphore keeps two counters - one for local blockers, one for remote ones.
+        As soon as both counters reach zero, the semaphore unblocks one dependent job -
+        either a local one, or through a chain of dependent remote semaphores.
+
+@column semaphore_id            autoincrement id
+@column local_jobs_counter      the number of local jobs that control this semaphore
+@column remote_jobs_counter     the number of remote semaphores that control this one
+@column dependent_job_id        either NULL or points at a local job to be unblocked when the semaphore opens (exclusive with dependent_semaphore_url)
+@column dependent_semaphore_url either NULL or points at a remote semaphore to be decremented when this semaphore opens (exclusive with dependent_job_id)
+*/
+
+CREATE TABLE semaphore (
+    semaphore_id                SERIAL PRIMARY KEY,
+    local_jobs_counter          INTEGER             DEFAULT 0,
+    remote_jobs_counter         INTEGER             DEFAULT 0,
+    dependent_job_id            INTEGER             DEFAULT NULL,                                   -- Both should never be NULLs at the same time,
+    dependent_semaphore_url     VARCHAR(255)        DEFAULT NULL,                                   --  we expect either one or the other to be set.
+
+    UNIQUE (dependent_job_id)                                                                       -- make sure two semaphores do not block the same job
+);
 
 
 /**
@@ -379,8 +411,8 @@ CREATE INDEX ON job (role_id, status);                  -- for fetching and rele
         There is max one entry per job_id and retry.
 
 @column job_id             foreign key
-@column role_id            links to the Role that claimed this job
 @column retry              copy of retry_count of job as it was run
+@column role_id            links to the Role that claimed this job
 @column stdout_file        path to the job's STDOUT log
 @column stderr_file        path to the job's STDERR log
 */
@@ -404,22 +436,22 @@ CREATE INDEX ON job_file (role_id);
 
 @desc   Accumulator for funneled dataflow.
 
-@column sending_job_id     semaphoring job in the "box"
-@column receiving_job_id   semaphored job outside the "box"
-@column struct_name        name of the structured parameter
-@column key_signature      locates the part of the structured parameter
-@column value              value of the part
+@column sending_job_id          semaphoring job in the "box"
+@column receiving_semaphore_id  semaphore just outside the "box"
+@column struct_name             name of the structured parameter
+@column key_signature           locates the part of the structured parameter
+@column value                   value of the part
 */
 
 CREATE TABLE accu (
     sending_job_id          INTEGER,
-    receiving_job_id        INTEGER     NOT NULL,
+    receiving_semaphore_id  INTEGER      NOT NULL,
     struct_name             VARCHAR(255) NOT NULL,
     key_signature           VARCHAR(255) NOT NULL,
     value                   TEXT
 );
 CREATE INDEX ON accu (sending_job_id);
-CREATE INDEX ON accu (receiving_job_id);
+CREATE INDEX ON accu (receiving_semaphore_id);
 
 
 /**
@@ -446,8 +478,9 @@ CREATE INDEX ON analysis_data (md5sum);
 
 
 /**
-@header execution tables
+@header Execution
 @colour #24DA06
+@desc   Tables to track the agents operating the eHive system
 */
 
 /**
@@ -462,13 +495,15 @@ CREATE INDEX ON analysis_data (md5sum);
 
 @column worker_id           unique ID of the Worker
 @column meadow_type         type of the Meadow it is running on
-@column meadow_name         name of the Meadow it is running on (for meadow_type=='LOCAL' it is the same as meadow_host)
+@column meadow_name         name of the Meadow it is running on (for "LOCAL" meadows it is the same as meadow_host)
 @column meadow_host         execution host name
 @column meadow_user         scheduling/execution user name (within the Meadow)
-@column process_id          identifies the Worker process on the Meadow (for 'LOCAL' is the OS PID)
+@column process_id          identifies the Worker process on the Meadow (for "LOCAL" is the OS PID)
 @column resource_class_id   links to Worker's resource class
 @column work_done           how many jobs the Worker has completed successfully
 @column status              current status of the Worker
+@column beekeeper_id        beekeeper that created this worker
+@column when_submitted      when the Worker was submitted by a Beekeeper
 @column when_born           when the Worker process was started
 @column when_checked_in     when the Worker last checked into the database
 @column when_seen           when the Worker was last seen by the Meadow
@@ -477,25 +512,67 @@ CREATE INDEX ON analysis_data (md5sum);
 @column log_dir             if defined, a filesystem directory where this Worker's output is logged
 */
 
-CREATE TYPE worker_cod AS ENUM ('NO_ROLE', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'RELOCATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'UNKNOWN');
 CREATE TABLE worker (
     worker_id               SERIAL PRIMARY KEY,
     meadow_type             VARCHAR(255) NOT NULL,
     meadow_name             VARCHAR(255) NOT NULL,
-    meadow_host             VARCHAR(255) NOT NULL,
+    meadow_host             VARCHAR(255)         DEFAULT NULL,
     meadow_user             VARCHAR(255)         DEFAULT NULL,
     process_id              VARCHAR(255) NOT NULL,
     resource_class_id       INTEGER              DEFAULT NULL,
     work_done               INTEGER      NOT NULL DEFAULT 0,
-    status                  VARCHAR(255) NOT NULL DEFAULT 'READY',  -- expected values: 'SPECIALIZATION','COMPILATION','READY','JOB_LIFECYCLE','DEAD'
-    when_born               TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    status                  VARCHAR(255) NOT NULL DEFAULT 'READY',  -- expected values: 'SUBMITTED','SPECIALIZATION','COMPILATION','READY','JOB_LIFECYCLE','DEAD'
+    beekeeper_id            INTEGER      DEFAULT NULL,
+    when_submitted          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    when_born               TIMESTAMP            DEFAULT NULL,
     when_checked_in         TIMESTAMP            DEFAULT NULL,
     when_seen               TIMESTAMP            DEFAULT NULL,
     when_died               TIMESTAMP            DEFAULT NULL,
-    cause_of_death          worker_cod           DEFAULT NULL,
+    cause_of_death          VARCHAR(255)         DEFAULT NULL,      -- expected values: 'NO_ROLE', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'RELOCATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'LIMBO', 'UNKNOWN'
     log_dir                 VARCHAR(255)         DEFAULT NULL
 );
 CREATE INDEX ON worker (meadow_type, meadow_name, process_id);
+
+
+/**
+@table beekeeper
+
+@colour #24DA06
+
+@desc Each row in this table corresponds to a beekeeper process that is running
+      or has run on this pipeline.
+
+@column beekeeper_id       unique ID for this beekeeper
+@column meadow_host        hostname of machine where beekeeper started
+@column meadow_user        username under which this beekeeper ran or is running
+@column process_id         process_id of the beekeeper
+@column is_blocked         beekeeper will not submit workers if this flag is set
+@column cause_of_death     reason this beekeeper exited
+@column sleep_minutes      sleep interval in minutes
+@column analyses_pattern   restricting analyses_pattern, if given
+@column loop_limit         loop limit if given
+@column loop_until         beekeeper's policy for responding to possibly loop-ending events
+@column options            all options passed to the beekeeper
+@column meadow_signatures  signatures for all meadows this beekeeper can submit to
+*/
+
+CREATE TYPE beekeeper_cod  AS ENUM ('ANALYSIS_FAILED', 'DISAPPEARED', 'JOB_FAILED', 'LOOP_LIMIT', 'NO_WORK', 'TASK_FAILED');
+CREATE TYPE beekeeper_lu   AS ENUM ('ANALYSIS_FAILURE', 'FOREVER', 'JOB_FAILURE', 'NO_WORK');
+CREATE TABLE beekeeper (
+       beekeeper_id             SERIAL          PRIMARY KEY,
+       meadow_host              VARCHAR(255)	NOT NULL,
+       meadow_user              VARCHAR(255)    NOT NULL,
+       process_id               VARCHAR(255)    NOT NULL,
+       is_blocked               SMALLINT        NOT NULL DEFAULT 0,
+       cause_of_death           beekeeper_cod   NULL,
+       sleep_minutes            REAL            NULL,
+       analyses_pattern         TEXT            NULL,
+       loop_limit               INTEGER         NULL,
+       loop_until               beekeeper_lu    NOT NULL,
+       options                  TEXT            NULL,
+       meadow_signatures        TEXT            NULL
+);
+CREATE INDEX ON beekeeper (meadow_host, meadow_user, process_id);
 
 
 /**
@@ -504,12 +581,12 @@ CREATE INDEX ON worker (meadow_type, meadow_name, process_id);
 @colour #24DA06
 
 @desc Entries of this table correspond to Role objects of the API.
-        When a Worker specializes, it acquires a Role,
+        When a Worker specialises, it acquires a Role,
         which is a temporary link between the Worker and a resource-compatible Analysis.
 
 @column role_id             unique ID of the Role
-@column worker_id           the specialized Worker
-@column analysis_id         the Analysis into which the Worker specialized
+@column worker_id           the specialised Worker
+@column analysis_id         the Analysis into which the Worker specialised
 @column when_started        when this Role started
 @column when_finished       when this Role finished. NULL may either indicate it is still running or was killed by an external force.
 @column attempted_jobs      counter of the number of attempts
@@ -533,6 +610,7 @@ CREATE        INDEX role_analysis_id_idx ON role (analysis_id);
 /**
 @header Logging and monitoring
 @colour #F4D20C
+@desc   Tables to store messages and feedback from the execution of the pipeline
 */
 
 /**
@@ -546,13 +624,13 @@ CREATE        INDEX role_analysis_id_idx ON role (analysis_id);
 	support post-mortem inspection of resource usage
 
 @column          worker_id  links to the worker table
-@column        exit_status  meadow-dependent, in case of LSF it's usually 'done' (normal) or 'exit' (abnormal)
+@column        exit_status  meadow-dependent, in case of LSF it's usually "done" (normal) or "exit" (abnormal)
 @column           mem_megs  how much memory the Worker process used
 @column          swap_megs  how much swap the Worker process used
 @column        pending_sec  time spent by the process in the queue before it became a Worker
 @column            cpu_sec  cpu time (in seconds) used by the Worker process. It is often lower than the walltime because of time spent in I/O waits, but it can also be higher if the process is multi-threaded
 @column       lifespan_sec  walltime (in seconds) used by the Worker process. It is often higher than the sum of its jobs' "runtime_msec" because of the overhead from the Worker itself
-@column   exception_status  meadow-specific flags, in case of LSF it can be 'underrun', 'overrun' or 'idle'
+@column   exception_status  meadow-specific flags, in case of LSF it can be "underrun", "overrun" or "idle"
 */
 
 CREATE TABLE worker_resource_usage (
@@ -581,29 +659,33 @@ CREATE TABLE worker_resource_usage (
 
 @column log_message_id  an autoincremented primary id of the message
 @column         job_id  the id of the job that threw the message (or NULL if it was outside of a message)
-@column        role_id  the 'current' role
-@column      worker_id  the 'current' worker
+@column        role_id  the "current" role
+@column      worker_id  the "current" worker
+@column   beekeeper_id  beekeeper that generated this message
 @column    when_logged  when the message was thrown
 @column          retry  retry_count of the job when the message was thrown (or NULL if no job)
 @column         status  of the job or worker when the message was thrown
 @column            msg  string that contains the message
-@column       is_error  binary flag
+@column  message_class  type of message
 */
 
+CREATE TYPE msg_class AS ENUM ('INFO', 'PIPELINE_CAUTION', 'PIPELINE_ERROR', 'WORKER_CAUTION', 'WORKER_ERROR');
 CREATE TABLE log_message (
     log_message_id          SERIAL PRIMARY KEY,
     job_id                  INTEGER              DEFAULT NULL,
     role_id                 INTEGER              DEFAULT NULL,
     worker_id               INTEGER              DEFAULT NULL,
+    beekeeper_id            INTEGER              DEFAULT NULL,
     when_logged             TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     retry                   INTEGER              DEFAULT NULL,
     status                  VARCHAR(255) NOT NULL DEFAULT 'UNKNOWN',
     msg                     TEXT,
-    is_error                SMALLINT
-
+    message_class           msg_class            NOT NULL DEFAULT 'INFO'
 );
 CREATE INDEX ON log_message (worker_id);
 CREATE INDEX ON log_message (job_id);
+CREATE INDEX ON log_message (beekeeper_id);
+CREATE INDEX ON log_message (message_class);
 
 
 /**
@@ -616,8 +698,6 @@ CREATE INDEX ON log_message (job_id);
 @column when_logged             when this snapshot was taken
 
 @column analysis_id             foreign-keyed to the corresponding analysis_base entry
-@column batch_size              how many jobs are claimed in one claiming operation before Worker starts executing them
-@column hive_capacity           a reciprocal limiter on the number of Workers running at the same time (dependent on Workers of other Analyses)
 @column status                  cached state of the Analysis
 
 @column total_job_count         total number of Jobs of this Analysis
@@ -628,25 +708,20 @@ CREATE INDEX ON log_message (job_id);
 
 @column num_running_workers     number of running Workers of this Analysis
 
-@column behaviour               whether hive_capacity is set or is dynamically calculated based on timers
-@column input_capacity          used to compute hive_capacity in DYNAMIC mode
-@column output_capacity         used to compute hive_capacity in DYNAMIC mode
-
-@column avg_msec_per_job        weighted average used to compute DYNAMIC hive_capacity
-@column avg_input_msec_per_job  weighted average used to compute DYNAMIC hive_capacity
-@column avg_run_msec_per_job    weighted average used to compute DYNAMIC hive_capacity
-@column avg_output_msec_per_job weighted average used to compute DYNAMIC hive_capacity
+@column avg_msec_per_job        weighted average
+@column avg_input_msec_per_job  weighted average
+@column avg_run_msec_per_job    weighted average
+@column avg_output_msec_per_job weighted average
 
 @column when_updated            when this entry was last updated
 @column sync_lock               a binary lock flag to prevent simultaneous updates
+@column is_excluded             set to exclude analysis from beekeeper scheduling
 */
 
 CREATE TABLE analysis_stats_monitor (
     when_logged             TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     analysis_id             INTEGER     NOT NULL,
-    batch_size              INTEGER     NOT NULL DEFAULT 1,
-    hive_capacity           INTEGER              DEFAULT NULL,
     status                  analysis_status NOT NULL DEFAULT 'EMPTY',
 
     total_job_count         INTEGER     NOT NULL DEFAULT 0,
@@ -657,17 +732,14 @@ CREATE TABLE analysis_stats_monitor (
 
     num_running_workers     INTEGER     NOT NULL DEFAULT 0,
 
-    behaviour               analysis_behaviour NOT NULL DEFAULT 'STATIC',
-    input_capacity          INTEGER     NOT NULL DEFAULT 4,
-    output_capacity         INTEGER     NOT NULL DEFAULT 4,
-
     avg_msec_per_job        INTEGER              DEFAULT NULL,
     avg_input_msec_per_job  INTEGER              DEFAULT NULL,
     avg_run_msec_per_job    INTEGER              DEFAULT NULL,
     avg_output_msec_per_job INTEGER              DEFAULT NULL,
 
     when_updated            TIMESTAMP            DEFAULT NULL,
-    sync_lock               SMALLINT    NOT NULL DEFAULT 0
+    sync_lock               SMALLINT    NOT NULL DEFAULT 0,
+    is_excluded             SMALLINT    NOT NULL DEFAULT 0
 
 );
 

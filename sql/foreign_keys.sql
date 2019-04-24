@@ -39,11 +39,10 @@ ALTER TABLE dataflow_rule           ADD FOREIGN KEY (funnel_dataflow_rule_id)   
 ALTER TABLE dataflow_target         ADD FOREIGN KEY (source_dataflow_rule_id)   REFERENCES dataflow_rule(dataflow_rule_id);
 
 ALTER TABLE accu                    ADD FOREIGN KEY (sending_job_id)            REFERENCES job(job_id)                          ON DELETE CASCADE;
-ALTER TABLE accu                    ADD FOREIGN KEY (receiving_job_id)          REFERENCES job(job_id)                          ON DELETE CASCADE;
 ALTER TABLE job                     ADD CONSTRAINT  job_prev_job_id_fkey        FOREIGN KEY (prev_job_id)           REFERENCES job(job_id)                  ON DELETE CASCADE;
-ALTER TABLE job                     ADD CONSTRAINT  job_semaphored_job_id_fkey  FOREIGN KEY (semaphored_job_id)     REFERENCES job(job_id)                  ON DELETE CASCADE;
 ALTER TABLE job_file                ADD CONSTRAINT  job_file_job_id_fkey        FOREIGN KEY (job_id)                REFERENCES job(job_id)                  ON DELETE CASCADE;
 ALTER TABLE log_message             ADD FOREIGN KEY (job_id)                    REFERENCES job(job_id)                          ON DELETE CASCADE;
+ALTER TABLE semaphore               ADD CONSTRAINT  semaphore_dependent_job_id_fkey     FOREIGN KEY (dependent_job_id)          REFERENCES job(job_id)              ON DELETE CASCADE;
 
 ALTER TABLE analysis_base           ADD FOREIGN KEY (resource_class_id)         REFERENCES resource_class(resource_class_id);
 ALTER TABLE resource_description    ADD FOREIGN KEY (resource_class_id)         REFERENCES resource_class(resource_class_id);
@@ -57,3 +56,8 @@ ALTER TABLE log_message             ADD FOREIGN KEY (worker_id)                 
 ALTER TABLE role                    ADD FOREIGN KEY (worker_id)                 REFERENCES worker(worker_id)                    ON DELETE CASCADE;
 ALTER TABLE worker_resource_usage   ADD FOREIGN KEY (worker_id)                 REFERENCES worker(worker_id)                    ON DELETE CASCADE;
 
+ALTER TABLE log_message             ADD FOREIGN KEY (beekeeper_id)              REFERENCES beekeeper(beekeeper_id)              ON DELETE CASCADE;
+ALTER TABLE worker                  ADD FOREIGN KEY (beekeeper_id)              REFERENCES beekeeper(beekeeper_id)              ON DELETE CASCADE;
+
+ALTER TABLE job                     ADD CONSTRAINT job_controlled_semaphore_id_fkey     FOREIGN KEY (controlled_semaphore_id)   REFERENCES semaphore(semaphore_id)  ON DELETE CASCADE;
+ALTER TABLE accu                    ADD CONSTRAINT accu_receiving_semaphore_id_fkey     FOREIGN KEY (receiving_semaphore_id)    REFERENCES semaphore(semaphore_id)  ON DELETE CASCADE;

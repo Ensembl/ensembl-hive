@@ -6,7 +6,7 @@
 
 =head1 SYNOPSIS
 
-    use Bio::EnsEMBL::Hive::Version 2.4;
+    use Bio::EnsEMBL::Hive::Version 2.5;
 
 =head1 DESCRIPTION
 
@@ -38,11 +38,57 @@ package Bio::EnsEMBL::Hive::Version;
 use strict;
 use warnings;
 
-our $VERSION = '2.4';
+use Bio::EnsEMBL::Hive::Meadow;
+use Bio::EnsEMBL::Hive::Valley;
+use Bio::EnsEMBL::Hive::GuestProcess;
+use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
+
+use Exporter 'import';
+our @EXPORT_OK = qw(get_code_version report_versions);
+
+
+our $VERSION = '2.5';
 
 sub get_code_version {
 
     return $VERSION;
 }
+
+
+sub report_versions {
+    print "CodeVersion\t".get_code_version()."\n";
+    print "CompatibleHiveDatabaseSchemaVersion\t".Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version()."\n";
+
+    print "MeadowInterfaceVersion\t".Bio::EnsEMBL::Hive::Meadow->get_meadow_major_version()."\n";
+    my $meadow_class_path = Bio::EnsEMBL::Hive::Valley->meadow_class_path;
+    foreach my $meadow_class (sort @{ Bio::EnsEMBL::Hive::Valley->loaded_meadow_drivers }) {
+        $meadow_class=~/^${meadow_class_path}::(.+)$/;
+        my $meadow_driver   = $1;
+        my $meadow_version  = $meadow_class->get_meadow_version;
+        my $compatible      = $meadow_class->check_version_compatibility;
+        my $status          = $compatible
+                                ? ( $meadow_class->name
+                                    ? 'available'
+                                    : 'unavailable'
+                                   )
+                                : 'incompatible';
+        print '',join("\t", 'Meadow::'.$meadow_driver, $meadow_version, $status)."\n";
+    }
+
+    print "GuestLanguageInterfaceVersion\t".Bio::EnsEMBL::Hive::GuestProcess->get_protocol_version()."\n";
+    my $registered_wrappers = Bio::EnsEMBL::Hive::GuestProcess->_get_all_registered_wrappers;
+    foreach my $language (sort keys %$registered_wrappers) {
+        my $wrapper_path = $registered_wrappers->{$language};
+        my $status = 'unavailable';
+        my $language_version;
+        if (-s $wrapper_path and -x $wrapper_path) {
+            $language_version = `$wrapper_path version 2> /dev/null`;
+            chomp $language_version;
+            $status = Bio::EnsEMBL::Hive::GuestProcess->check_version_compatibility($language_version) ? 'available' : 'incompatible';
+        }
+        print join("\t", "GuestLanguage[$language]", $language_version || 'N/A', $status)."\n";
+    }
+}
+
 
 1;

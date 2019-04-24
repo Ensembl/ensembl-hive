@@ -40,18 +40,12 @@ package Bio::EnsEMBL::Hive::DBSQL::ResourceClassAdaptor;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Hive::ResourceClass;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
 
 sub default_table_name {
     return 'resource_class';
-}
-
-
-sub default_insertion_method {
-    return 'INSERT_IGNORE';
 }
 
 

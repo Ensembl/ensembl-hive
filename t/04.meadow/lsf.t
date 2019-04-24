@@ -21,7 +21,7 @@ use warnings;
 use Cwd;
 use File::Basename;
 
-use Test::More tests => 22;
+use Test::More tests => 23;
 use Test::Exception;
 
 use Bio::EnsEMBL::Hive::Utils::Config;
@@ -32,12 +32,16 @@ BEGIN {
 
 # Need EHIVE_ROOT_DIR to access the default config file
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
-my @config_files = Bio::EnsEMBL::Hive::Utils::Config->default_config_files();
-my $config = Bio::EnsEMBL::Hive::Utils::Config->new(@config_files);
+my $config = Bio::EnsEMBL::Hive::Utils::Config->new();
+
+throws_ok {
+    local $ENV{'PATH'} = $ENV{'EHIVE_ROOT_DIR'}.'/t/04.meadow/deceptive_bin:'.$ENV{'PATH'};
+    my $valley = Bio::EnsEMBL::Hive::Valley->new($config, 'LSF');
+} qr/Meadow 'LSF' does not seem to be available on this machine, please investigate at/, 'No LSF meadow if "lsid" is not present (or does not behave well';
 
 # WARNING: the data in this script must be in sync with what the fake
 # binaries output
-$ENV{'PATH'} = $ENV{'EHIVE_ROOT_DIR'}.'/t/04.meadow/fake_bin:'.$ENV{'PATH'};
+local $ENV{'PATH'} = $ENV{'EHIVE_ROOT_DIR'}.'/t/04.meadow/fake_bin:'.$ENV{'PATH'};
 
 my $test_pipeline_name = 'tracking_homo_sapiens_funcgen_81_38_hive';
 my $test_meadow_name = 'test_clUster';
@@ -63,60 +67,57 @@ subtest 'get_current_worker_process_id()' => sub
 };
 
 is_deeply(
-    [$lsf_meadow->count_pending_workers_by_rc_name],
-    [ { 'normal_30GB_2cpu' => 2, 'normal_10gb' => 7 }, 9 ],
-    'count_pending_workers_by_rc_name()',
-);
-
-is($lsf_meadow->count_running_workers, 26, 'count_running_workers()');
-is($lsf_meadow->count_running_workers(['il4']), 24, 'count_running_workers("il4")');
-
-is_deeply(
     $lsf_meadow->status_of_all_our_workers,
-    {
-        '2068349[1]' => 'RUN',
-        '2067769[11]' => 'RUN',
-        '2067765[4]' => 'RUN',
-        '2067754[31]' => 'RUN',
-        '2068245' => 'RUN',
-        '2067754[27]' => 'RUN',
-        '2067769[2]' => 'RUN',
-        '2068349[2]' => 'RUN',
-        '2067769[14]' => 'RUN',
-        '2067754[32]' => 'RUN',
-        '2067754[34]' => 'RUN',
-        '2067754[7]' => 'RUN',
-        '2067769[10]' => 'RUN',
-        '2067769[3]' => 'PEND',
-        '2067769[9]' => 'RUN',
-        '2067769[17]' => 'PEND',
-        '2067754[14]' => 'RUN',
-        '2067769[4]' => 'PEND',
-        '2067769[6]' => 'PEND',
-        '2068410' => 'PEND',
-        '2067769[19]' => 'PEND',
-        '2067769[18]' => 'PEND',
-        '2067754[30]' => 'RUN',
-        '2067769[12]' => 'RUN',
-        '2067754[26]' => 'RUN',
-        '2067765[13]' => 'RUN',
-        '2068463' => 'PEND',
-        '2067769[13]' => 'RUN',
-        '2067769[15]' => 'RUN',
-        '2067769[16]' => 'RUN',
-        '2067769[8]' => 'RUN',
-        '2067754[28]' => 'RUN',
-        '2067754[33]' => 'RUN',
-        '2067769[5]' => 'PEND',
-        '276335[13]' => 'RUN',
-    },
+    [
+        [ '6388676', 'jt8', 'RUN' ],
+        [ '1997948', 'tc9', 'RUN' ],
+        [ '2067769[9]', 'il4', 'RUN' ],
+        [ '2067769[10]', 'il4', 'RUN' ],
+        [ '2067769[11]', 'il4', 'RUN' ],
+        [ '2067769[12]', 'il4', 'RUN' ],
+        [ '2067769[13]', 'il4', 'RUN' ],
+        [ '2037301', 'il4', 'RUN' ],
+        [ '2067769[8]', 'il4', 'RUN' ],
+        [ '2067754[26]', 'il4', 'RUN' ],
+        [ '2067754[27]', 'il4', 'RUN' ],
+        [ '2067754[28]', 'il4', 'RUN' ],
+        [ '2067754[30]', 'il4', 'RUN' ],
+        [ '2067754[31]', 'il4', 'RUN' ],
+        [ '2067754[32]', 'il4', 'RUN' ],
+        [ '2067754[33]', 'il4', 'RUN' ],
+        [ '2067754[34]', 'il4', 'RUN' ],
+        [ '2067765[4]', 'il4', 'RUN' ],
+        [ '2067765[13]', 'il4', 'RUN' ],
+        [ '2068245', 'mm14', 'RUN' ],
+        [ '2068410', 'il4', 'PEND' ],
+        [ '2067769[14]', 'il4', 'RUN' ],
+        [ '2067769[15]', 'il4', 'RUN' ],
+        [ '2068463', 'mm14', 'PEND' ],
+        [ '2067754[14]', 'il4', 'RUN' ],
+        [ '2068349[2]', 'il4', 'RUN' ],
+        [ '2067769[16]', 'il4', 'RUN' ],
+        [ '2067769[17]', 'il4', 'PEND' ],
+        [ '2067769[18]', 'il4', 'PEND' ],
+        [ '2067769[19]', 'il4', 'PEND' ],
+        [ '2067769[6]', 'il4', 'PEND' ],
+        [ '2067769[3]', 'il4', 'PEND' ],
+        [ '2067769[4]', 'il4', 'PEND' ],
+        [ '2067769[5]', 'il4', 'PEND' ],
+        [ '2068349[1]', 'il4', 'RUN' ],
+        [ '2067754[7]', 'il4', 'RUN' ],
+        [ '2067769[2]', 'il4', 'RUN' ],
+        [ '276335[13]', 'tmpseq', 'RUN' ]
+    ],
     'status_of_all_our_workers()',
 );
 
 is_deeply(
     $lsf_meadow->status_of_all_our_workers(["mm14"]),
-    { '2068245' => 'RUN', '2068463' => 'PEND' },
-    'status_of_all_our_workers("mm14")',
+    [
+        [ '2068245', 'mm14', 'RUN' ],
+        [ '2068463', 'mm14', 'PEND' ]
+    ],
+    'status_of_all_our_workers(["mm14"])',
 );
 
 use Bio::EnsEMBL::Hive::Worker;
@@ -140,20 +141,24 @@ my $worker = Bio::EnsEMBL::Hive::Worker->new();
     ok(!$lsf_meadow->check_worker_is_alive_and_mine($worker), 'A missing process');
 }
 
+my $submitted_pids;
 lives_ok( sub {
     local $ENV{EHIVE_EXPECTED_BSUB} = '-o /dev/null -e /dev/null -J tracking_homo_sapiens_funcgen_81_38_hive-Hive-/resource_class/-56 /rc_args/ /worker_cmd/';
-    $lsf_meadow->submit_workers('/worker_cmd/', 1, 56, '/resource_class/', '/rc_args/');
-}, 'Can submit 1 worker');
+    $submitted_pids = $lsf_meadow->submit_workers_return_meadow_pids('/worker_cmd/', 1, 56, '/resource_class/', '/rc_args/');
+}, 'Can submit something');
+is_deeply($submitted_pids, [12345], 'Returned the correct pid');
 
 lives_ok( sub {
     local $ENV{EHIVE_EXPECTED_BSUB} = '-o /dev/null -e /dev/null -J tracking_homo_sapiens_funcgen_81_38_hive-Hive-/resource_class/-56[1-4] /rc_args/ /worker_cmd/';
-    $lsf_meadow->submit_workers('/worker_cmd/', 4, 56, '/resource_class/', '/rc_args/');
-}, 'Can submit 4 workers');
+    $submitted_pids = $lsf_meadow->submit_workers_return_meadow_pids('/worker_cmd/', 4, 56, '/resource_class/', '/rc_args/');
+}, 'Can submit something');
+is_deeply($submitted_pids, ['12345[1]', '12345[2]', '12345[3]', '12345[4]'], 'Returned the correct pids');
 
 lives_ok( sub {
     local $ENV{EHIVE_EXPECTED_BSUB} = '-o /submit_log_dir//log_/resource_class/_%J_%I.out -e /submit_log_dir//log_/resource_class/_%J_%I.err -J tracking_homo_sapiens_funcgen_81_38_hive-Hive-/resource_class/-56 /rc_args/ /worker_cmd/';
-    $lsf_meadow->submit_workers('/worker_cmd/', 1, 56, '/resource_class/', '/rc_args/', '/submit_log_dir/');
-}, 'Can submit 1 worker with a submit_log_dir');
+    $submitted_pids = $lsf_meadow->submit_workers_return_meadow_pids('/worker_cmd/', 1, 56, '/resource_class/', '/rc_args/', '/submit_log_dir/');
+}, 'Can submit something with a submit_log_dir');
+is_deeply($submitted_pids, [12345], 'Returned the correct pid');
 
 my $expected_bacct = {
     '2581807[1]' => {
@@ -165,7 +170,9 @@ my $expected_bacct = {
         'mem_megs' => 28,
         'cpu_sec' => '2.74',
         'exit_status' => 'done',
-        'swap_megs' => 144
+        'swap_megs' => 144,
+        'when_born' => '2015-11-26 14:25:09',
+        'meadow_host' => 'bc-25-1-10',
     },
     '2581801[48]' => {
         'when_died' => '2015-11-26 14:25:16',
@@ -176,7 +183,9 @@ my $expected_bacct = {
         'cause_of_death' => undef,
         'cpu_sec' => '2.61',
         'exit_status' => 'done',
-        'swap_megs' => 269
+        'swap_megs' => 269,
+        'when_born' => '2015-11-26 14:24:57',
+        'meadow_host' => 'bc-27-2-07',
     },
     '3194397[75]' => {
         'cpu_sec' => '6.97',
@@ -187,7 +196,9 @@ my $expected_bacct = {
         'when_died' => '2015-12-02 13:53:29',
         'cause_of_death' => 'MEMLIMIT',
         'exit_status' => 'exit/TERM_MEMLIMIT',
-        'mem_megs' => 102
+        'mem_megs' => 102,
+        'when_born' => '2015-12-02 13:52:34',
+        'meadow_host' => 'bc-31-2-11',
     },
 };
 

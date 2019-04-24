@@ -50,7 +50,7 @@ sub default_table_name {
 
 
 sub default_insertion_method {
-    return 'INSERT_IGNORE';
+    return 'INSERT';
 }
 
 
@@ -234,16 +234,15 @@ sub _table_info_loader {
     my $self = shift @_;
 
     my $dbc         = $self->dbc();
-    my $dbh         = $dbc->db_handle();
     my $driver      = $dbc->driver();
     my $dbname      = $dbc->dbname();
     my $table_name  = $self->table_name();
 
     my %column_set  = ();
     my $autoinc_id  = '';
-    my @primary_key = $dbh->primary_key(undef, undef, $table_name);
+    my @primary_key = $dbc->primary_key(undef, undef, $table_name);
 
-    my $sth = $dbh->column_info(undef, undef, $table_name, '%');
+    my $sth = $dbc->column_info(undef, undef, $table_name, '%');
     $sth->execute();
     while (my $row = $sth->fetchrow_hashref()) {
         my ( $column_name, $column_type ) = @$row{'COLUMN_NAME', 'TYPE_NAME'};
@@ -266,7 +265,7 @@ sub _table_info_loader {
 
 
 sub count_all {
-    my ($self, $constraint, $key_list) = @_;
+    my ($self, $constraint, $key_list, @bind_values) = @_;
 
     my $table_name      = $self->table_name();
     my $driver          = $self->dbc->driver();
@@ -285,7 +284,7 @@ sub count_all {
     # warn "SQL: $sql\n";
 
     my $sth = $self->prepare($sql);
-    $sth->execute;
+    $sth->execute(@bind_values);
 
     my $result_struct;  # will be autovivified to the correct data structure
 
@@ -350,17 +349,16 @@ sub fetch_all {
             }
         }
         my $object = $value_column
-            ? $hashref->{$value_column}
-            : $self->objectify($hashref);
-
-        if(UNIVERSAL::can($object, 'seconds_since_last_fetch')) {
-            $object->seconds_since_last_fetch(0);
-        }
+            ? ( (ref($value_column) eq 'ARRAY')
+                    ? { map { ($_ => $hashref->{$_}) } @$value_column } # project to a subhash
+                    : $hashref->{$value_column}                         # project to just one field
+              )
+            : $self->objectify($hashref);                               # keep the whole object
 
         if($one_per_key) {
-            $$pptr = $object;
+            $$pptr = $object;                                           # just return the one value (either the key_list is unique or override)
         } else {
-            push @$$pptr, $object;
+            push @$$pptr, $object;                                      # return a list of values that potentially share the same key_list
         }
     }
     $sth->finish;  
@@ -435,11 +433,24 @@ sub update {    # update (some or all) non_primary columns from the primary
         throw("There are no dependent columns to update, as everything seems to belong to the primary key");
     }
 
-    my $sql = "UPDATE $table_name SET ".join(', ', map { "$_=?" } @$columns_to_update)." WHERE $primary_key_constraint";
+    my @placeholders = ();
+    my @values = ();
+    foreach my $idx (0..scalar(@$columns_to_update)-1) {
+        my ($column_name, $value) = ($columns_to_update->[$idx], $values_to_update->[$idx]);
+
+        if($column_name =~ /^when_/ and defined($value) and $value eq 'CURRENT_TIMESTAMP') {
+            push @placeholders, $column_name.'=CURRENT_TIMESTAMP';
+        } else {
+            push @placeholders, $column_name.'=?';
+            push @values, $value;
+        }
+    }
+
+    my $sql = "UPDATE $table_name SET ".join(', ', @placeholders)." WHERE $primary_key_constraint";
     # warn "SQL: $sql\n";
     my $sth = $self->prepare($sql);
-    # warn "VALUES_TO_UPDATE: ".join(', ', map { "'$_'" } @$values_to_update)."\n";
-    $sth->execute( @$values_to_update);
+    # warn "VALUES_TO_UPDATE: ".join(', ', map { "'$_'" } @values)."\n";
+    $sth->execute( @values);
 
     $sth->finish();
 }
@@ -510,6 +521,15 @@ sub check_object_present_in_db_by_content {    # return autoinc_id/undef if the 
 }
 
 
+sub class_specific_execute {
+    my ($self, $object, $sth, $values) = @_;
+
+    my $return_code = $sth->execute( @$values );
+
+    return $return_code;
+}
+
+
 sub store {
     my ($self, $object_or_list) = @_;
 
@@ -526,7 +546,9 @@ sub store {
     $insertion_method           =~ s/_/ /g;
     if($driver eq 'sqlite') {
         $insertion_method =~ s/INSERT IGNORE/INSERT OR IGNORE/ig;
-    } elsif($driver eq 'pgsql') {   # FIXME! temporary hack
+    } elsif($driver eq 'pgsql') {
+        # Rules have been created to mimic the behaviour INSERT IGNORE / REPLACE
+        # Here we can do fall-back to a standard INSERT
         $insertion_method = 'INSERT';
     }
 
@@ -552,10 +574,12 @@ sub store {
             my $values_being_stored = $self->slicer( $object, $columns_being_stored );
             # warn "STORED_VALUES: ".stringify($values_being_stored)."\n";
 
-            my $return_code = $this_sth->execute( @$values_being_stored )
+            my $return_code = $self->class_specific_execute($object, $this_sth, $values_being_stored )
                     # using $return_code in boolean context allows to skip the value '0E0' ('no rows affected') that Perl treats as zero but regards as true:
                 or throw("Could not store fields\n\t{$column_key}\nwith data:\n\t(".join(',', @$values_being_stored).')');
+
             if($return_code > 0) {     # <--- for the same reason we have to be explicitly numeric here
+                # FIXME: does this work if the "MySQL server has gone away" ?
                 my $liid = $autoinc_id && $self->dbc->db_handle->last_insert_id(undef, undef, $table_name, $autoinc_id);
                 $self->mark_stored($object, $liid );
                 ++$stored_this_time;
@@ -567,6 +591,25 @@ sub store {
     }
 
     return ($object_or_list, $stored_this_time);
+}
+
+
+sub _multi_column_filter {
+    my ($self, $filter_string, $filter_values, $column_set) = @_;
+
+        # NB: this filtering happens BEFORE any possible overflow via analysis_data, so will not be done on overflow_columns
+    my $filter_components = $filter_string && [ split(/_AND_/i, $filter_string) ];
+    if($filter_components) {
+        foreach my $column_name ( @$filter_components ) {
+            unless($column_set->{$column_name}) {
+                throw("unknown column '$column_name'");
+            }
+        }
+    }
+
+    my $filter_sql = $filter_components && join(' AND ', map { defined($filter_values->[$_]) ? "$filter_components->[$_]='$filter_values->[$_]'" : $filter_components->[$_].' IS NULL' } 0..scalar(@$filter_components)-1);
+
+    return $filter_sql;
 }
 
 
@@ -583,16 +626,6 @@ sub AUTOLOAD {
 
         my ($self) = @_;
         my $column_set = $self->column_set();
-
-            # NB: this filtering happens BEFORE any possible overflow via analysis_data, so will not be done on overflow_columns
-        my $filter_components = $filter_string && [ split(/_AND_/i, $filter_string) ];
-        if($filter_components) {
-            foreach my $column_name ( @$filter_components ) {
-                unless($column_set->{$column_name}) {
-                    throw("unknown column '$column_name'");
-                }
-            }
-        }
 
         my $key_components = $key_string && [ split(/_AND_/i, $key_string) ];
         if($key_components) {
@@ -611,7 +644,7 @@ sub AUTOLOAD {
         *$AUTOLOAD = sub {
             my $self = shift @_;
             return $self->fetch_all(
-                $filter_components && join(' AND ', map { "$filter_components->[$_]='$_[$_]'" } 0..scalar(@$filter_components)-1),
+                $self->_multi_column_filter($filter_string, \@_, $column_set),
                 !$all,
                 $key_components,
                 $value_column
@@ -626,15 +659,6 @@ sub AUTOLOAD {
         my ($self) = @_;
         my $column_set = $self->column_set();
 
-        my $filter_components = $filter_string && [ split(/_AND_/i, $filter_string) ];
-        if($filter_components) {
-            foreach my $column_name ( @$filter_components ) {
-                unless($column_set->{$column_name}) {
-                    throw("unknown column '$column_name'");
-                }
-            }
-        }
-
         my $key_components = $key_string && [ split(/_AND_/i, $key_string) ];
         if($key_components) {
             foreach my $column_name ( @$key_components ) {
@@ -648,25 +672,27 @@ sub AUTOLOAD {
         *$AUTOLOAD = sub {
             my $self = shift @_;
             return $self->count_all(
-                $filter_components && join(' AND ', map { "$filter_components->[$_]='$_[$_]'" } 0..scalar(@$filter_components)-1),
+                $self->_multi_column_filter($filter_string, \@_, $column_set),
                 $key_components,
             );
         };
         goto &$AUTOLOAD;    # restart the new method
 
     } elsif($AUTOLOAD =~ /::remove_all_by_(\w+)$/) {
-        my $filter_name = $1;
+        my $filter_string   = $1;
 
         my ($self) = @_;
         my $column_set = $self->column_set();
 
-        if($column_set->{$filter_name}) {
-#            warn "Setting up '$AUTOLOAD' method\n";
-            *$AUTOLOAD = sub { my ($self, $filter_value) = @_; return $self->remove_all("$filter_name='$filter_value'"); };
-            goto &$AUTOLOAD;    # restart the new method
-        } else {
-            throw("unknown column '$filter_name'");
-        }
+#        warn "Setting up '$AUTOLOAD' method\n";
+        *$AUTOLOAD = sub {
+            my $self = shift @_;
+            return $self->remove_all(
+                $self->_multi_column_filter($filter_string, \@_, $column_set),
+            );
+        };
+        goto &$AUTOLOAD;    # restart the new method
+
     } elsif($AUTOLOAD =~ /::update_(\w+)$/) {
         my @columns_to_update = split(/_AND_/i, $1);
 #        warn "Setting up '$AUTOLOAD' method\n";

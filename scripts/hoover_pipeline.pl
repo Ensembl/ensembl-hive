@@ -11,13 +11,14 @@ BEGIN {
     unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
 }
 
-
 use Getopt::Long qw(:config no_auto_abbrev);
+use Pod::Usage;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
-use Bio::EnsEMBL::Hive::Utils ('script_usage');
+use Bio::EnsEMBL::Hive::Utils::URL;
 
+Bio::EnsEMBL::Hive::Utils::URL::hide_url_password();
 
 sub main {
     my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $before_datetime, $days_ago, $help);
@@ -28,7 +29,7 @@ sub main {
             'reg_conf|regfile|reg_file=s' => \$reg_conf,
             'reg_type=s'                  => \$reg_type,
             'reg_alias|regname|regname=s' => \$reg_alias,
-            'nosqlvc=i'                   => \$nosqlvc,      # using "=i" instead of "!" for consistency with scripts where it is a propagated option
+            'nosqlvc'                   => \$nosqlvc,      # using "nosqlvc" instead of "sqlvc!" for consistency with scripts where it is a propagated option
 
                 # specify the threshold datetime:
             'before_datetime=s'     => \$before_datetime,
@@ -42,7 +43,9 @@ sub main {
         die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
     }
 
-    if ($help) { script_usage(0); };
+    if ($help) {
+        pod2usage({-exitvalue => 0, -verbose => 2});
+    }
 
     my $hive_dba;
     if($url or $reg_alias) {
@@ -53,9 +56,9 @@ sub main {
                 -reg_alias                      => $reg_alias,
                 -no_sql_schema_version_check    => $nosqlvc,
         );
+        $hive_dba->dbc->requires_write_access();
     } else {
-        warn "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
-        script_usage(1);
+        die "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
     }
 
     my $threshold_datetime_expression;
@@ -118,7 +121,7 @@ __DATA__
 
 =head1 NAME
 
-    hoover_pipeline.pl
+hoover_pipeline.pl
 
 =head1 SYNOPSIS
 
@@ -126,34 +129,61 @@ __DATA__
 
 =head1 DESCRIPTION
 
-    hoover_pipeline.pl is a script used to remove old 'DONE' jobs from a continuously running pipeline database
+hoover_pipeline.pl is a script used to remove old "DONE" Jobs from a continuously running pipeline database
 
 =head1 USAGE EXAMPLES
 
-        # delete all jobs that have been 'DONE' for at least a week (default threshold) :
+        # delete all Jobs that have been "DONE" for at least a week (default threshold) :
 
     hoover_pipeline.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult"
 
 
-        # delete all jobs that have been 'DONE' for at least a given number of days
+        # delete all Jobs that have been "DONE" for at least a given number of days
 
     hoover_pipeline.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" -days_ago 3
 
 
-        # delete all jobs 'DONE' before a specific datetime:
+        # delete all Jobs "DONE" before a specific datetime:
 
     hoover_pipeline.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" -before_datetime "2013-02-14 15:42:50"
 
 =head1 OPTIONS
 
-    -reg_conf <path>          : path to a Registry configuration file
-    -reg_type <string>        : type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
-    -reg_alias <string>       : species/alias name for the Hive DBAdaptor
-    -url <url string>         : url defining where hive database is located
-    -nosqlvc <0|1>            : skip sql version check if 1
-    -before_datetime <string> : delete jobs 'DONE' before a specific time
-    -days_ago <num>           : delete jobs that have been 'DONE' for at least <num> days
-    -h | -help                : show this help message
+=over
+
+=item --reg_conf <path>
+
+path to a Registry configuration file
+
+=item --reg_type <string>
+
+type of the registry entry ("hive", "core", "compara", etc - defaults to "hive")
+
+=item --reg_alias <string>
+
+species/alias name for the eHive DBAdaptor
+
+=item --url <url string>
+
+URL defining where eHive database is located
+
+=item --nosqlvc
+
+"No SQL Version Check" - set if you want to force working with a database created by a potentially schema-incompatible API
+
+=item --before_datetime <string>
+
+delete Jobs "DONE" before a specific time
+
+=item --days_ago <num>
+
+delete Jobs that have been "DONE" for at least <num> days
+
+=item -h, --help
+
+show this help message
+
+=back
 
 =head1 LICENSE
 
@@ -171,7 +201,7 @@ __DATA__
 
 =head1 CONTACT
 
-    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the eHive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss eHive-related questions or to be notified of our updates
 
 =cut
 

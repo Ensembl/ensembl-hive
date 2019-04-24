@@ -42,6 +42,7 @@ BEGIN {
     is( $url_hash->{'host'},   'hostname',      'hostname correct' );
     is( $url_hash->{'port'},   3306,            'port number correct' );
     is( $url_hash->{'dbname'}, 'databasename',  'database name correct' );
+    is( Bio::EnsEMBL::Hive::Utils::URL::hash_to_url($url_hash), $url, 'hash_to_url returns original url');
 }
 
 {       # OLD+NEW style simple sqlite URL:
@@ -54,6 +55,7 @@ BEGIN {
 
     is( $url_hash->{'driver'}, 'sqlite',       'driver correct' );
     is( $url_hash->{'dbname'}, 'databasename', 'database name correct' );
+    is( Bio::EnsEMBL::Hive::Utils::URL::hash_to_url($url_hash), $url, 'hash_to_url returns original url');
 }
 
 {       # OLD+NEW style degenerate analysis URL (just the analysis name)
@@ -65,6 +67,7 @@ BEGIN {
     isa_ok( $url_hash, 'HASH' );
 
     is_deeply( $url_hash, { 'unambig_url'   => ':///', 'query_params'  => { 'object_type' => 'Analysis', 'logic_name' => 'this_analysis_name' } },  'simple analysis name correct' );
+    is( Bio::EnsEMBL::Hive::Utils::URL::hash_to_url($url_hash), $url, 'hash_to_url returns original url');
 }
 
 #------------------------------------[OLD]---------------------------------------------------
@@ -151,6 +154,7 @@ BEGIN {
 
     is( $url_hash->{'driver'}, 'sqlite',                        'driver correct' );
     is( $url_hash->{'dbname'}, 'path/to/database_name.sqlite',  'database path correct' );
+    is( Bio::EnsEMBL::Hive::Utils::URL::hash_to_url($url_hash), $url, 'hash_to_url returns original url');
 }
 
 {       # NEW style local table URL:
@@ -162,6 +166,7 @@ BEGIN {
     isa_ok( $url_hash, 'HASH' );
 
     is_deeply( $url_hash->{'query_params'}, { 'object_type' => 'NakedTable', 'table_name' => 'final_result' }, 'query_params hash correct' );
+    is( Bio::EnsEMBL::Hive::Utils::URL::hash_to_url($url_hash), $url, 'hash_to_url returns original url');
 }
 
 {       # NEW style accu URL:
@@ -178,6 +183,8 @@ BEGIN {
             'accu_address'          => '{digit}',
             'accu_input_variable'   => 'partial_product',
     }, 'query_params hash correct' );
+    ## The order of keys is not deterministic, so little hope of getting the same order back, skipping:
+    # is( Bio::EnsEMBL::Hive::Utils::URL::hash_to_url($url_hash), $url, 'hash_to_url returns original url');
 }
 
 {       # NEW style registry DB URL:
@@ -192,6 +199,7 @@ BEGIN {
     is( $url_hash->{'user'},   'core',                                                              'registry type correct' );
     is( $url_hash->{'host'},   'homo_sapiens',                                                      'registry alias correct' );
     is( $url_hash->{'dbname'}, '~/work/ensembl-compara/scripts/pipeline/production_reg_conf.pl',    'registry filename correct' );
+    is( Bio::EnsEMBL::Hive::Utils::URL::hash_to_url($url_hash), $url, 'hash_to_url returns original url');
 }
 
 
@@ -210,6 +218,7 @@ BEGIN {
     is( $url_hash->{'port'},         12345,                                             'port number correct' );
     is( $url_hash->{'dbname'},      'other_pipeline',                                   'database name correct' );
     is_deeply( $url_hash->{'query_params'}, { 'object_type' => 'Analysis', 'logic_name' => 'foreign_analysis' }, 'query_params hash correct' );
+    is( Bio::EnsEMBL::Hive::Utils::URL::hash_to_url($url_hash), $url, 'hash_to_url returns original url');
 }
 
 
@@ -228,6 +237,7 @@ BEGIN {
     is( $url_hash->{'port'},         12345,                                             'port number correct' );
     is( $url_hash->{'dbname'},      'other_pipeline',                                   'database name correct' );
     is_deeply( $url_hash->{'query_params'}, { 'object_type' => 'NakedTable', 'table_name' => 'foreign_table' }, 'query_params hash correct' );
+    is( Bio::EnsEMBL::Hive::Utils::URL::hash_to_url($url_hash), $url, 'hash_to_url returns original url');
 }
 
 
@@ -242,6 +252,7 @@ BEGIN {
     is( $url_hash->{'driver'},      'sqlite',                                           'driver correct' );
     is( $url_hash->{'dbname'},      'other_directory/other_pipeline',                   'database path correct' );
     is_deeply( $url_hash->{'query_params'}, { 'object_type' => 'NakedTable', 'table_name' => 'foreign_table' }, 'query_params hash correct' );
+    is( Bio::EnsEMBL::Hive::Utils::URL::hash_to_url($url_hash), $url, 'hash_to_url returns original url');
 }
 
 #------------------------------------[COLLISION!]---------------------------------------------------
@@ -274,6 +285,7 @@ BEGIN {
     is( $url_hash->{'host'},        'where.co.uk',                                      'hostname correct' );
     is( $url_hash->{'port'},         12345,                                             'port number correct' );
     is( $url_hash->{'dbname'},      '',                                                 'database name correct' );
+    is( Bio::EnsEMBL::Hive::Utils::URL::hash_to_url($url_hash), $url, 'hash_to_url returns original url');
 }
 
 {       # NEW style database server URL (db_name-less) without a trailing slash:
@@ -290,6 +302,10 @@ BEGIN {
     is( $url_hash->{'host'},        'where.co.uk',                                      'hostname correct' );
     is( $url_hash->{'port'},         12345,                                             'port number correct' );
     is( $url_hash->{'dbname'},      undef,                                              'database name correct' );
+
+    # hash_to_url can't tell whether the original url had a slash or not,
+    # arbitrarily chooses to leave off the slash when reconstructing from hash components
+    is( Bio::EnsEMBL::Hive::Utils::URL::hash_to_url($url_hash), $url . '/', 'hash_to_url returns original url');
 }
 
 {       # NEW style sqlite URL with an absolute path:
@@ -303,6 +319,7 @@ BEGIN {
     is( $url_hash->{'driver'}, 'sqlite',       'driver correct' );
     is( $url_hash->{'dbname'}, '/var/folders/1k/qdbfbdls6nn98pqzbdkcsnfc0000gn/T/eR81O_qhbH/ehive_server_pipeline_db', 'database path correct' );
     is_deeply( $url_hash->{'query_params'}, { 'object_type' => 'Analysis', 'logic_name' => 'part_multiply' }, 'query params correct' );
+    is( Bio::EnsEMBL::Hive::Utils::URL::hash_to_url($url_hash), $url, 'hash_to_url returns original url');
 }
 
 {       # NEW style sqlite URL with a relative path:
@@ -316,6 +333,7 @@ BEGIN {
     is( $url_hash->{'driver'}, 'sqlite',       'driver correct' );
     is( $url_hash->{'dbname'}, 'relative/path/to/ehive_server_pipeline_db', 'database path correct' );
     is_deeply( $url_hash->{'query_params'}, { 'object_type' => 'Analysis', 'logic_name' => 'part_multiply' }, 'query params correct' );
+    is( Bio::EnsEMBL::Hive::Utils::URL::hash_to_url($url_hash), $url, 'hash_to_url returns original url');
 }
 
 done_testing();

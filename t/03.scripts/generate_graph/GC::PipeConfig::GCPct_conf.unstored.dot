@@ -1,0 +1,41 @@
+digraph test {
+	ratio="compress"; concentrate = "true"; name = "AnalysisWorkflow"; pad = "1.0";
+	analysis_calc_overall_percentage [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">calc_overall_percentage (unstored)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_chunk_sequences [fillcolor="green", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">chunk_sequences (unstored)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="green" width="100%">1r</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_count_atgc [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">count_atgc (unstored)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
+	dfr_p1_mp [fixedsize="1", height="0.01", label="dfr_p1_mp", shape="point", width="0.01"];
+	dfr_p2_mp [fixedsize="1", height="0.01", label="dfr_p2_mp", shape="point", width="0.01"];
+	sink_dfr_p1_mp [fillcolor="darkgreen", fontcolor="white", fontname="Courier", label="Accu", shape="invhouse", style="filled"];
+	table_final_result [fillcolor="orange", fontcolor="black", fontname="Courier", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">final_result</td></tr></table>>, shape="tab", style="filled"];
+	analysis_calc_overall_percentage -> table_final_result [color="blue", fontcolor="blue", fontname="Helvetica", label="#1\n"];
+	analysis_chunk_sequences -> dfr_p1_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#1"];
+	analysis_chunk_sequences -> dfr_p2_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#2"];
+	analysis_count_atgc -> sink_dfr_p1_mp [arrowtail="crow", color="darkgreen", dir="both", fontcolor="darkgreen", fontname="Helvetica", label="#1\n=> at_count[]:=at_count", style="dashed"];
+	analysis_count_atgc -> sink_dfr_p1_mp [arrowtail="crow", color="darkgreen", dir="both", fontcolor="darkgreen", fontname="Helvetica", label="#1\n=> gc_count[]:=gc_count", style="dashed"];
+	dfr_p1_mp -> analysis_calc_overall_percentage [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
+	dfr_p2_mp -> analysis_count_atgc [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
+	dfr_p2_mp -> dfr_p1_mp [arrowhead="tee", arrowtail="crow", color="red", dir="both", style="dashed"];
+
+subgraph cluster_gcpct {
+	label="gcpct";
+	style="bold,filled";
+	colorscheme="pastel19";
+	fillcolor="3";
+	color="";
+	analysis_calc_overall_percentage;
+	analysis_chunk_sequences;
+	subgraph cluster_cl_dfr_p1_mp {
+		label="";
+		style="filled";
+		colorscheme="blues9";
+		fillcolor="2";
+		color="2";
+		analysis_count_atgc;
+		sink_dfr_p1_mp;
+		sink_dfr_p1_mp;
+	}
+	dfr_p1_mp;
+	dfr_p2_mp;
+	table_final_result;
+}
+}

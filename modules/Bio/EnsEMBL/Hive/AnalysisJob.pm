@@ -40,11 +40,11 @@ package Bio::EnsEMBL::Hive::AnalysisJob;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify', 'throw');
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
+use Bio::EnsEMBL::Hive::TheApiary;
 
-use base (  'Bio::EnsEMBL::Hive::Cacheable',# mainly to inherit hive_pipeline() method
-            'Bio::EnsEMBL::Hive::Storable', # inherit dbID(), adaptor() and new() methods
+use base (  'Bio::EnsEMBL::Hive::Storable', # inherit dbID(), adaptor() and new() methods, but also hive_pipeline()
             'Bio::EnsEMBL::Hive::Params',   # inherit param management functionality
          );
 
@@ -54,6 +54,8 @@ use base (  'Bio::EnsEMBL::Hive::Cacheable',# mainly to inherit hive_pipeline() 
     prev_job_id / prev_job
 
     analysis_id / analysis
+
+    controlled_semaphore_id / controlled_semaphore
 
 =cut
 
@@ -91,8 +93,7 @@ sub role_id {
 sub status {
     my $self = shift;
     $self->{'_status'} = shift if(@_);
-    $self->{'_status'} = ( ($self->semaphore_count>0) ? 'SEMAPHORED' : 'READY' ) unless(defined($self->{'_status'}));
-    return $self->{'_status'};
+    return $self->{'_status'} || 'READY';
 }
 
 sub retry_count {
@@ -122,18 +123,6 @@ sub query_count {
     return $self->{'_query_count'};
 }
 
-sub semaphore_count {
-    my $self = shift;
-    $self->{'_semaphore_count'} = shift if(@_);
-    $self->{'_semaphore_count'} = 0 unless(defined($self->{'_semaphore_count'}));
-    return $self->{'_semaphore_count'};
-}
-
-sub semaphored_job_id {
-    my $self = shift;
-    $self->{'_semaphored_job_id'} = shift if(@_);
-    return $self->{'_semaphored_job_id'};
-}
 
 sub set_and_update_status {
     my ($self, $status ) = @_;
@@ -202,9 +191,10 @@ sub transient_error {       # Job should set this to 1 prior to dying (or before
                             # It may also set it to 0 prior to dying (or before running code that might cause death)
                             # if it believes that there is no point in re-trying (say, if the parameters are wrong).
                             # The Worker will check the flag and make necessary adjustments to the database state.
+                            # Errors are considered transient by default
     my $self = shift;
     $self->{'_transient_error'} = shift if(@_);
-    return $self->{'_transient_error'};
+    return ($self->{'_transient_error'} // 1);
 }
 
 sub incomplete {            # Job should set this to 0 prior to throwing if the job is done,
@@ -225,34 +215,52 @@ sub died_somewhere {
 ##-----------------[/indicators to the Worker]-------------------------------
 
 
-sub load_parameters {
-    my ($self, $runnable_object) = @_;
-
-    my @params_precedence = ();
-
-    push @params_precedence, $runnable_object->param_defaults if($runnable_object);
-
-    push @params_precedence, $self->hive_pipeline->params_as_hash;
+sub load_stack_and_accu {
+    my ( $self ) = @_;
 
     if(my $job_adaptor = $self->adaptor) {
         my $job_id          = $self->dbID;
         my $accu_adaptor    = $job_adaptor->db->get_AccumulatorAdaptor;
 
-        $self->accu_hash( $accu_adaptor->fetch_structures_for_job_ids( $job_id )->{ $job_id } );
-
-        push @params_precedence, $self->analysis->parameters if($self->analysis);
-
         if($self->param_id_stack or $self->accu_id_stack) {
             my $input_ids_hash      = $job_adaptor->fetch_input_ids_for_job_ids( $self->param_id_stack, 2, 0 );     # input_ids have lower precedence (FOR EACH ID)
             my $accu_hash           = $accu_adaptor->fetch_structures_for_job_ids( $self->accu_id_stack, 2, 1 );     # accus have higher precedence (FOR EACH ID)
             my %input_id_accu_hash  = ( %$input_ids_hash, %$accu_hash );
-            push @params_precedence, @input_id_accu_hash{ sort { $a <=> $b } keys %input_id_accu_hash }; # take a slice. Mmm...
+            $self->{'_unsubstituted_stack_items'} = [ @input_id_accu_hash{ sort { $a <=> $b } keys %input_id_accu_hash } ];   # take a slice. Mmm...
         }
+
+        $self->accu_hash( $accu_adaptor->fetch_structures_for_job_ids( $job_id )->{ $job_id } );
     }
+}
 
-    push @params_precedence, $self->input_id, $self->accu_hash;
 
+sub load_parameters {
+    my ($self, $runnable_object) = @_;
+
+    $self->load_stack_and_accu();
+
+    my @params_precedence = (
+        $runnable_object ?                      $runnable_object->param_defaults : (),
+                                                $self->hive_pipeline->params_as_hash,
+        $self->analysis ?                       $self->analysis->parameters : (),
+        $self->{'_unsubstituted_stack_items'} ? @{ $self->{'_unsubstituted_stack_items'}} : (),
+                                                $self->input_id,
+                                                $self->accu_hash,
+    );
+
+    my $prev_transient_error = $self->transient_error(); # make a note of previously set transience status
+    $self->transient_error(0);
     $self->param_init( @params_precedence );
+    $self->transient_error($prev_transient_error);
+}
+
+
+sub flattened_stack_and_accu {      # here we assume $self->load_stack_and_accu() has already been called by $self->load_parameters()
+    my ( $self, $overriding_hash, $extend_param_stack ) = @_;
+
+    return $self->fuse_param_hashes( $extend_param_stack ? (@{$self->{'_unsubstituted_stack_items'}}, $self->input_id) : (),
+                                $self->accu_hash,
+                                $overriding_hash );
 }
 
 
@@ -346,12 +354,12 @@ sub dataflow_output_id {
 
                 foreach my $df_target (@$df_targets) {
 
-                    my $extend_param_stack = $hive_use_param_stack || $df_target->extend_param_stack;   # this boolean is target-specific
+                    my $extend_param_stack  = $hive_use_param_stack || $df_target->extend_param_stack;                      # this boolean is df_target-specific
+                    my $default_param_hash  = $extend_param_stack ? {} : $input_id;                                         # this is what undefs will turn into
 
-                        # by default replicate the parameters of the parent in the child (undef becomes {}+stack or $input_id, depending on INPUT_PLUS)
-                    my @pre_substituted_output_ids = map { $_ // ($extend_param_stack ? {} : $input_id) } @$filtered_output_ids;
+                    my @pre_substituted_output_ids = map { $_ // $default_param_hash } @$filtered_output_ids;
 
-                        # parameter substitution into input_id_template is rule-specific
+                        # parameter substitution into input_id_template is also df_target-specific:
                     my $output_ids_for_this_rule;
                     if(my $template_string = $df_target->input_id_template()) {
                         my $template_hash = destringify($template_string);
@@ -360,7 +368,17 @@ sub dataflow_output_id {
                         $output_ids_for_this_rule = \@pre_substituted_output_ids;
                     }
 
-                    my ($stored_listref) = $df_target->to_analysis->dataflow( $output_ids_for_this_rule, $self, $extend_param_stack, $df_rule );
+                    my $target_object       = $df_target->to_analysis;
+                    my $same_db_dataflow    = $self->analysis->hive_pipeline == $target_object->hive_pipeline;
+
+                    unless($same_db_dataflow) {
+                        my $prev_transient_error = $self->transient_error(); # make a note of previously set transience status
+                        $self->transient_error(0);
+                        @$output_ids_for_this_rule = map { $self->flattened_stack_and_accu( $_, $extend_param_stack ); } @$output_ids_for_this_rule;
+                        $self->transient_error($prev_transient_error);
+                    }
+
+                    my ($stored_listref) = $target_object->dataflow( $output_ids_for_this_rule, $self, $same_db_dataflow, $extend_param_stack, $df_rule );
 
                     push @output_job_ids, @$stored_listref;
 
@@ -370,6 +388,15 @@ sub dataflow_output_id {
     } # /foreach my $df_rule
 
     return \@output_job_ids;
+}
+
+
+sub url_query_params {
+     my ($self) = @_;
+
+     return {
+        'job_id'                => $self->dbID,
+     };
 }
 
 
@@ -383,6 +410,12 @@ sub toString {
     return 'Job dbID='.($self->dbID || '(NULL)')." analysis=$analysis_label, input_id='".$self->input_id."', status=".$self->status.", retry_count=".$self->retry_count;
 }
 
+
+sub fetch_local_blocking_semaphore {    # ToDo: we may want to perform smart caching in future
+    my $self = shift @_;
+
+    return $self->adaptor->db->get_SemaphoreAdaptor->fetch_by_dependent_job_id( $self->dbID );
+}
 
 1;
 

@@ -1,0 +1,48 @@
+────────────────────[ (unstored long_mult_client) ]────────────────────
+
+take_b_apart
+ │  ║
+ │  ║
+ │  ║#2
+ │  ║
+ │  ║ WHEN #digit#>5
+ │├─╚═> {"digit" => "#digit#","take_time" => "#take_time#"}
+ │  ║    │
+ │  ║    V
+ │  ║   ehive_test_server/part_multiply
+ │  ║    │
+ │  ║    │
+ │  ║    │#1
+ │  ║    │
+ │  ║    V
+ │  ║   <<-- ehive_test_server/partial_product{digit}:=product
+ │  ║
+ │  ║ WHEN #digit#>1 && #digit#<=5
+ │├─╚═> part_multiply
+ │       │
+ │       │
+ │       │#1
+ │       │
+ │       V
+ │      <<-- partial_product{digit}:=product
+ │
+ │
+ │#1
+ │
+ │ WHEN #a_multiplier#>=#b_multiplier#
+ └─▻ ehive_test_server/add_together
+ │   │
+ │   │
+ │   │#1
+ │   │
+ │   V
+ │  [[ ehive_test_server/final_result ]]
+ │
+ │ ELSE
+ └─▻ add_together
+     │
+     │
+     │#1
+     │
+     V
+    [[ final_result ]]

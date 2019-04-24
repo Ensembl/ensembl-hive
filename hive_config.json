@@ -7,7 +7,15 @@
         "SubmitWorkersMax"  : 50
     },
     "Meadow" : {
+        "REMARKS" : {
+            "RunWorkerPath" : "The path of runWorker.pl . When null or missing, beekeeper will use $EHIVE_ROOT_DIR or its own path. When RunWorkerPath is '', beekeeper assumes runWorker.pl is in $PATH"
+        },
+        "CleanupTempDirectoryKilledWorkers" : 0,
+        "MaxLimboSeconds"                   : 10,
+        "MaxRegistrationSeconds"            : 30,
+        "CanSubmitJobArrays"                : 1,
         "LOCAL" : {
+            "MaxRegistrationSeconds"        : 60,
             "TotalRunningWorkersMax"   : 2,
             "my-quadcore-desktop" : {
                 "TotalRunningWorkersMax"   : 4
@@ -24,16 +32,21 @@
                 "TotalRunningWorkersMax"    : 5000
             },
             "EBI" : {
-                "SubmissionOptions"  : ""
+                "SubmissionOptions"  : "",
+                "TotalRunningWorkersMax"    : 10000
             }
         },
         "SGE" : {
             "SubmissionOptions"         : "",
-            "TotalRunningWorkersMax"    : 2000,
+            "TotalRunningWorkersMax"    : 2000
         },
-        "CONDOR" : {
+        "HTCondor" : {
             "SubmissionOptions"         : "",
-            "TotalRunningWorkersMax"    : 500,
+            "TotalRunningWorkersMax"    : 500
+        },
+        "PBSPro" : {
+            "SubmissionOptions"         : "",
+            "TotalRunningWorkersMax"    : 500
         }
     },
     "Graph" : {
@@ -91,7 +104,7 @@
                 "Colour"        : "blueviolet",
                 "Font"          : "Courier",
                 "FontColour"    : "white"
-            },
+            }
         },
         "Edge" : {
             "Font"        : "Helvetica",
@@ -108,7 +121,10 @@
 
         "DisplayStats"          : "barchart",
         "DisplayJobs"           : 0,
+        "DisplayJobLength"      : 64,
         "DisplayData"           : 0,
+        "DisplayDBIDs"          : 1,
+        "DisplayColumnLength"   : 32,
         "DisplayConditionLength": 64,
         "DisplayInputIDTemplate": 1,
 

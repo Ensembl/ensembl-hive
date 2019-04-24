@@ -48,7 +48,7 @@ use warnings;
 use Bio::EnsEMBL::Hive::Utils ('throw');
 use Bio::EnsEMBL::Hive::TheApiary;
 
-use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
+use base ( 'Bio::EnsEMBL::Hive::Storable' );
 
 
 sub unikey {    # override the default from Cacheable parent
@@ -83,8 +83,8 @@ sub condition_analysis_url {
         }
     } elsif( !$self->{'_condition_analysis_url'} and my $condition_analysis=$self->{'_condition_analysis'} ) {
 
-        my $ref_dba = $self->ctrled_analysis && $self->ctrled_analysis->adaptor && $self->ctrled_analysis->adaptor->db;
-        $self->{'_condition_analysis_url'} = $condition_analysis->url( $ref_dba );  # the URL may be shorter if DBA is the same for source and target
+        my $ref_pipeline = $self->ctrled_analysis && $self->ctrled_analysis->hive_pipeline;
+        $self->{'_condition_analysis_url'} = $condition_analysis->relative_url( $ref_pipeline );    # the URL may be shorter if hive_pipeline is the same for source and target
     }
 
     return $self->{'_condition_analysis_url'};
@@ -102,7 +102,7 @@ sub condition_analysis_url {
 =cut
 
 sub condition_analysis {
-    my ($self, $analysis) = @_;
+    my ($self, $analysis, $no_die) = @_;
 
     if( defined $analysis ) {
         unless ($analysis->isa('Bio::EnsEMBL::Hive::Analysis')) {
@@ -113,7 +113,7 @@ sub condition_analysis {
 
     if( !$self->{'_condition_analysis'} and my $condition_analysis_url = $self->condition_analysis_url ) {   # lazy-load through TheApiary
 
-        $self->{'_condition_analysis'} = Bio::EnsEMBL::Hive::TheApiary->find_by_url( $condition_analysis_url, $self->hive_pipeline );
+        $self->{'_condition_analysis'} = Bio::EnsEMBL::Hive::TheApiary->find_by_url( $condition_analysis_url, $self->hive_pipeline, $no_die );
     }
 
     return $self->{'_condition_analysis'};

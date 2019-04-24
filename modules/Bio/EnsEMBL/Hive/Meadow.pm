@@ -35,13 +35,14 @@ package Bio::EnsEMBL::Hive::Meadow;
 
 use strict;
 use warnings;
+use Sys::Hostname ('hostname');
 
 use base ('Bio::EnsEMBL::Hive::Configurable');
 
 
 # -------------------------------------- <versioning of the Meadow interface> -------------------------------------------------------
 
-our $MEADOW_MAJOR_VERSION = '3';                # Make sure you change this number whenever an incompatible change is introduced
+our $MEADOW_MAJOR_VERSION = '5';                # Make sure you change this number whenever an incompatible change is introduced
 
 
 sub get_meadow_major_version {
@@ -78,14 +79,22 @@ sub check_version_compatibility {
 =cut
 
 sub new {
-    my ($class, $config) = @_;
+    my ($class, $config, $name) = @_;
 
     my $self = bless {}, $class;
 
-    $self->config( $config );
-    $self->context( [ 'Meadow', $self->type, $self->cached_name ] );
+    $self->{'_name'} = $name;       # Record the name given to avoid querying the meadow once more
+    $self->_init_meadow($config);
 
     return $self;
+}
+
+
+sub _init_meadow {
+    my ($self, $config) = @_;
+
+    $self->config( $config );
+    $self->context( [ 'Meadow', $self->type, $self->cached_name ] );
 }
 
 
@@ -105,10 +114,10 @@ sub cached_name {
 
     my $name;
 
-    unless( ref($self) and $name = $self->{'_name'} ) {
+    unless( ref($self) and $name = $self->{'_name'} ) {     # unless the name was storable AND stored in the object
 
-        if($name = $self->name() and ref($self) ) {
-            $self->{'_name'} = $name;
+        if($name = $self->name() and ref($self) ) {         # ... get the not-yet-stored name and if it is storable
+            $self->{'_name'} = $name;                       # ... ... then store it in the object
         }
     }
 
@@ -136,6 +145,18 @@ sub type {
 }
 
 
+=head2 get_current_hostname
+
+    Title   :  get_current_hostname
+    Function:  Returns the "current" hostname (most UNIX-based Meadows will simply use this base method)
+
+=cut
+
+sub get_current_hostname {
+    return hostname();
+}
+
+
 =head2 signature
 
     Title   :  signature
@@ -150,6 +171,7 @@ sub signature {
     return $self->type.'/'.$self->cached_name;
 }
 
+
 =head2 pipeline_name
 
     Title   :  pipeline_name
@@ -159,7 +181,6 @@ sub signature {
 
 =cut
 
-
 sub pipeline_name {
     my $self = shift @_;
 
@@ -167,6 +188,24 @@ sub pipeline_name {
         $self->{'_pipeline_name'} = shift @_;
     }
     return $self->{'_pipeline_name'};
+}
+
+
+=head2 runWorker_path
+
+    Title   :  runWorker_path
+    Function:  Getter for the path to runWorker.pl
+               This is now set in the JSON config file. When missing or set to null,
+               defaults to $EHIVE_ROOT_DIR/scripts
+
+=cut
+
+sub runWorker_path {
+    my $self = shift @_;
+
+    my $path = $self->config_get('RunWorkerPath') // $ENV{'EHIVE_ROOT_DIR'}.'/scripts/';
+    $path = $path . '/' unless $path =~ /\/$/;
+    return $path;
 }
 
 
@@ -235,48 +274,16 @@ sub get_current_worker_process_id {
 }
 
 
-=head2 count_pending_workers_by_rc_name
-
-    Title   :  count_pending_workers_by_rc_name
-    Function:  Called by the scheduler to decide how many more workers to
-               submit for each resource-class.
-
-=cut
-
-sub count_pending_workers_by_rc_name {
-    my ($self) = @_;
-
-    die "Please use a derived method";
-}
-
-
-=head2 count_running_workers
-
-    Title   :  count_running_workers
-    Function:  Called by the scheduler to decide the number of additional
-               workers that can be submitted (within the defined
-               capacities).
-
-=cut
-
-sub count_running_workers {
-    my ($self, $meadow_users_of_interest) = @_;
-
-    die "Please use a derived method";
-}
-
-
 =head2 status_of_all_our_workers
 
     Title   :  status_of_all_our_workers
-    Function:  Returns a hashref that maps workers' process_id to their status.
-               Statuses are mainly free-text strings. Only "UNKWN" is a special
-               status that beekeeper can understand.
-               Typical statuses are "RUN", "PEND", "SSUSP", "UNKWN"
+    Function:  Returns an arrayref of arrayrefs [worker_pid, meadow_user, status, rc_name]
+               listing the workers that this Meadow can see.
+               Allowed statuses are "RUN", "PEND", "SSUSP", "UNKWN"
 
 =cut
 
-sub status_of_all_our_workers { # returns a hashref
+sub status_of_all_our_workers { # returns an arrayref
     my ($self, $meadow_users_of_interest) = @_;
 
     die "Please use a derived method";
@@ -363,6 +370,7 @@ sub get_report_entries_for_process_ids {
 
 =cut
 
+
 sub get_report_entries_for_time_interval {
     my ($self, $from_time, $to_time, $username) = @_;
 
@@ -372,17 +380,36 @@ sub get_report_entries_for_time_interval {
 }
 
 
-=head2 submit_workers
+=head2 submit_workers_return_meadow_pids
 
-    Title   :  submit_workers
-    Function:  Submit $required_worker_count workers with the command $worker_cmd
+    Title   :  submit_workers_return_meadow_pids
+    Function:  Submit $required_worker_count workers with the command $worker_cmd and return the meadow-specific worker_pids
 
 =cut
 
-sub submit_workers {
+sub submit_workers_return_meadow_pids {
     my ($self, $worker_cmd, $required_worker_count, $iteration, $rc_name, $rc_specific_submission_cmd_args, $submit_log_subdir) = @_;
 
     die "Please use a derived method";
+}
+
+
+=head2 run_on_host
+
+    Title   :  run_on_host
+    Function:  Runs an arbitrary commands on the given host. The host is expected to belong to the meadow and be reachable
+
+=cut
+
+sub run_on_host {
+    my ($self, $meadow_host, $meadow_user, $command) = @_;
+    # By default we trust the network, but this can be switched off in the config file
+    my @extra_args = $self->config_get('StrictHostKeyChecking') ? () : qw(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null);
+    # Several hard-coded parameters here:
+    # - BatchMode=yes disables human interaction (no password asked)
+    # - ServerAliveInterval=30 tells ssh that the server must answer within 30 seconds
+    # - timeout 3m means that the whole command must complete within 3 minutes
+    return system('timeout', '3m', 'ssh', @extra_args, '-o', 'BatchMode=yes', '-o', 'ServerAliveInterval=30', sprintf('%s@%s', $meadow_user, $meadow_host), @$command);
 }
 
 1;

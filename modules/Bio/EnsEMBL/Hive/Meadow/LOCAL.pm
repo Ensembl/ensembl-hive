@@ -33,19 +33,40 @@ package Bio::EnsEMBL::Hive::Meadow::LOCAL;
 
 use strict;
 use warnings;
-use Sys::Hostname;
+use Cwd ('cwd');
+use Bio::EnsEMBL::Hive::Utils ('split_for_bash');
+
+# --------------------------------------------------------------------------------------------------------------------
+# <hack> What follows is a hack to extend the built-in exec() function that is called by Proc::Daemon .
+#        The extended version also understands an ARRAYref as valid input and turns it into a LIST.
+#        Thanks to this we can avoid calling an extra shell to interpret the command line being daemonized.
+# --------------------------------------------------------------------------------------------------------------------
+
+BEGIN {
+    *Proc::Daemon::exec = sub {
+        return ( ref($_[0]) eq 'ARRAY' ) ? CORE::exec( @{$_[0]} ) : CORE::exec( @_ );
+    };
+}
+
+use Proc::Daemon 0.23;   # NB: this line absolutely must come after the BEGIN block that redefines exec(), or the trick will fail.
+
+# --------------------------------------------------------------------------------------------------------------------
+# </hack>
+# --------------------------------------------------------------------------------------------------------------------
+
 
 use base ('Bio::EnsEMBL::Hive::Meadow');
 
 
-our $VERSION = '3.0';       # Semantic version of the Meadow interface:
+our $VERSION = '5.0';       # Semantic version of the Meadow interface:
                             #   change the Major version whenever an incompatible change is introduced,
                             #   change the Minor version whenever the interface is extended, but compatibility is retained.
 
 
 sub name {  # also called to check for availability; for the moment assume LOCAL meadow is always available
+    my ($self) = @_;
 
-    return (split(/\./, hostname))[0];     # only take the first name
+    return (split(/\./, $self->get_current_hostname() ))[0];     # only take the first name
 }
 
 
@@ -55,47 +76,25 @@ sub get_current_worker_process_id {
     return $$;
 }
 
-
-sub count_pending_workers_by_rc_name {
-    my ($self) = @_;
-
-    return ({}, 0);     # LOCAL has no concept of pending workers
-}
-
+sub deregister_local_process {}   # Nothing to do
 
 sub _command_line_to_extract_all_running_workers {
     my ($self) = @_;
 
         # Make sure we have excluded both 'awk' itself and commands like "less runWorker.pl" :
-    return q{ps x -o state,pid,command -w -w | awk '(/runWorker.pl/ && ($3 ~ /perl[[:digit:].]*$/) )'};
+    return q{ps ex -o state,user,pid,command -w -w | awk '((/runWorker.pl/ || /beekeeper.pl/) && ($4 ~ /perl[[:digit:].]*$/) )'};
 }
 
 
-sub count_running_workers {
-    my $self = shift @_;
-
-    my $cmd = $self->_command_line_to_extract_all_running_workers . ' | wc -l';
-    my $run_count = qx/$cmd/;
-    chomp($run_count);
-
-    return $run_count;
-}
-
-
-sub status_of_all_our_workers { # returns a hashref
+sub status_of_all_our_workers { # returns an arrayref
     my ($self) = @_;
 
     my $cmd = $self->_command_line_to_extract_all_running_workers;
+    my $job_name_prefix = $self->job_name_prefix();
 
-        # FIXME: if we want to incorporate Meadow->pipeline_name() filtering here,
-        #        a dummy parameter to the runWorker.pl should probably be introduced
-        #        for 'ps' to be able to externally differentiate between local workers
-        #        working for different hives
-        #        (but at the moment such a feature is unlikely to be be in demand).
-
-    my %status_hash = ();
+    my @status_list = ();
     foreach my $line (`$cmd`) {
-        my ($pre_status, $worker_pid, $job_name) = split(/\s+/, $line);
+        my ($pre_status, $meadow_user, $worker_pid, @job_name) = split(/\s+/, $line);
 
         my $status = {
             'R' => 'RUN',   # running
@@ -111,9 +110,16 @@ sub status_of_all_our_workers { # returns a hashref
 
         # Note: you can locally 'kill -19' a worker to suspend it and 'kill -18' a worker to resume it
 
-        $status_hash{$worker_pid} = $status;
+        # Exclude workers from other pipelines
+        if (join(' ', @job_name) =~ / EHIVE_SUBMISSION_NAME=(\S+)/) {
+            unless ($1 =~ /^$job_name_prefix/) {
+                next;
+            }
+        }
+
+        push @status_list, [$worker_pid, $meadow_user, $status];
     }
-    return \%status_hash;
+    return \@status_list;
 }
 
 
@@ -121,8 +127,7 @@ sub check_worker_is_alive_and_mine {
     my ($self, $worker) = @_;
 
     my $wpid = $worker->process_id();
-    my $cmd = qq{ps x | grep $wpid | grep -v 'grep $wpid'};
-    my $is_alive_and_mine = qx/$cmd/;
+    my $is_alive_and_mine = kill 0, $wpid;
 
     return $is_alive_and_mine;
 }
@@ -135,25 +140,40 @@ sub kill_worker {
 }
 
 
-sub submit_workers {
+sub submit_workers_return_meadow_pids {
     my ($self, $worker_cmd, $required_worker_count, $iteration, $rc_name, $rc_specific_submission_cmd_args, $submit_log_subdir) = @_;
 
-    my ($submit_stdout_file, $submit_stderr_file);
+    my $worker_cmd_components = [ split_for_bash($worker_cmd) ];
 
-    if($submit_log_subdir) {
-        $submit_stdout_file = $submit_log_subdir . "/log_${rc_name}_${iteration}_\$\$.out";
-        $submit_stderr_file = $submit_log_subdir . "/log_${rc_name}_${iteration}_\$\$.err";
-    } else {
-        $submit_stdout_file = '/dev/null';
-        $submit_stderr_file = '/dev/null';
+    my $job_name = $self->job_array_common_name($rc_name, $iteration);
+    $ENV{EHIVE_SUBMISSION_NAME} = $job_name;
+
+    my @children_pids = ();
+
+    print "Spawning [ ".$self->signature." ] x$required_worker_count \t\t$worker_cmd\n";
+
+    foreach my $idx (1..$required_worker_count) {
+
+        my $child_pid = Proc::Daemon::Init( {
+            $submit_log_subdir ? (
+                child_STDOUT => $submit_log_subdir . "/log_${iteration}_${rc_name}_${idx}_$$.out",
+                child_STDERR => $submit_log_subdir . "/log_${iteration}_${rc_name}_${idx}_$$.err",
+            ) : (),     # both STD streams are sent to /dev/null by default
+            work_dir     => cwd(),
+            exec_command => [ $worker_cmd_components ],     # the AoA format is supported thanks to the BEGIN hack introduced in the beginning of this module.
+        } );
+
+        push @children_pids, $child_pid;
     }
 
-    my $cmd = "$worker_cmd > $submit_stdout_file 2> $submit_stderr_file &";
+    return \@children_pids;
+}
 
-    print "Executing [ ".$self->signature." ] x$required_worker_count \t\t$cmd\n";
-    foreach (1..$required_worker_count) {
-        system( $cmd ) && die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax;
-    }
+
+sub run_on_host {   # Overrides Meadow::run_on_host
+    my ($self, $meadow_host, $meadow_user, $command) = @_;
+    # We can assume the current host is $meadow_host and bypass ssh
+    return system(@$command);
 }
 
 1;

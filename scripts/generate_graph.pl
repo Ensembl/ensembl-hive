@@ -11,14 +11,15 @@ BEGIN {
     unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
 }
 
-
 use Getopt::Long qw(:config pass_through no_auto_abbrev);
 use Pod::Usage;
 
 use Bio::EnsEMBL::Hive::HivePipeline;
-use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module');
+use Bio::EnsEMBL::Hive::Utils ('load_file_or_module');
 use Bio::EnsEMBL::Hive::Utils::Graph;
+use Bio::EnsEMBL::Hive::Utils::URL;
 
+Bio::EnsEMBL::Hive::Utils::URL::hide_url_password();
 
 main();
 
@@ -33,7 +34,7 @@ sub main {
         'reg_conf|reg_file=s'   => \$self->{'reg_conf'},
         'reg_type=s'            => \$self->{'reg_type'},
         'reg_alias|reg_name=s'  => \$self->{'reg_alias'},
-        'nosqlvc=i'             => \$self->{'nosqlvc'},     # using "=i" instead of "!" for consistency with scripts where it is a propagated option
+        'nosqlvc'               => \$self->{'nosqlvc'}, # using "nosqlvc" instead of "sqlvc!" for consistency with scripts where it is a propagated option
 
             # json config files
         'config_file=s@'        => \$self->{'config_files'},
@@ -61,7 +62,7 @@ sub main {
 
     } else {
         $self->{'pipeline'} = Bio::EnsEMBL::Hive::HivePipeline->new();
-
+        die "A pipeline has to be given, either via -url/-reg* or via -pipeconfig" unless $self->{'pipeconfigs'};
     }
 
     foreach my $pipeconfig (@{ $self->{'pipeconfigs'} || [] }) {
@@ -73,7 +74,7 @@ sub main {
         $pipeconfig_object->add_objects_from_config( $self->{'pipeline'} );
     }
 
-    if($self->{'output'}) {
+    if($self->{'output'} or $self->{'format'}) {
 
         if(!$self->{'format'}) {
             if($self->{'output'}=~/\.(\w+)$/) {
@@ -83,15 +84,29 @@ sub main {
             }
         }
 
-        my $graph = Bio::EnsEMBL::Hive::Utils::Graph->new(
-            $self->{'pipeline'},
-            $self->{'config_files'} ? @{ $self->{'config_files'} } : ()
-        );
-        my $graphviz = $graph->build();
+        if($self->{'format'} eq 'txt') {
+            local *STDOUT;
 
-        my $call = 'as_'.$self->{'format'};
+            open (STDOUT, '>', $self->{'output'}); # redirect STDOUT to $self->{'output'}
 
-        $graphviz->$call($self->{'output'});
+            $self->{'pipeline'}->print_diagram;     # and capture the Unicode diagram in a text file
+
+        } else {
+            my $graph = Bio::EnsEMBL::Hive::Utils::Graph->new(
+                $self->{'pipeline'},
+                $self->{'config_files'} ? @{ $self->{'config_files'} } : ()
+            );
+            my $graphviz = $graph->build();
+
+            if( $self->{'format'} eq 'dot' ) {          # If you need to take a look at the intermediate dot file
+                $graphviz->dot_input_filename( $self->{'output'} || \*STDOUT);
+                $graphviz->as_canon( '/dev/null' );
+
+            } else {
+                my $call = 'as_'.$self->{'format'};
+                $graphviz->$call($self->{'output'} || \*STDOUT);
+            }
+        }
 
     } else {
         $self->{'pipeline'}->print_diagram;
@@ -110,66 +125,74 @@ __DATA__
 
 =head1 NAME
 
-    generate_graph.pl
+generate_graph.pl
 
 =head1 SYNOPSIS
 
-    ./generate_graph.pl -help
+    generate_graph.pl -help
 
-    ./generate_graph.pl [ -url mysql://user:pass@server:port/dbname | -reg_conf <reg_conf_file> -reg_alias <reg_alias> ] [-pipeconfig TopUp_conf.pm]* -output OUTPUT_LOC
+    generate_graph.pl [ -url mysql://user:pass@server:port/dbname | -reg_conf <reg_conf_file> -reg_alias <reg_alias> ] [-pipeconfig TopUp_conf.pm]* -output OUTPUT_LOC
 
 =head1 DESCRIPTION
 
-    This program will generate a graphical representation of your hive pipeline.
-    This includes visualising the flow of data from the different analyses, blocking
-    rules & table writers. The graph is also coloured to indicate the stage
-    an analysis is at. The colours & fonts used can be configured via
-    hive_config.json configuration file.
+This program will generate a graphical representation of your eHive pipeline.
+This includes visualising the flow of data from the different analyses, blocking
+rules and table writers. The graph is also coloured to indicate the stage
+an Analysis is at. The colours and fonts used can be configured via
+hive_config.json configuration file.
 
 =head1 OPTIONS
 
-B<--url>
+=over
 
-    url defining where hive database is located
+=item --url <url>
 
-B<--reg_conf>
+URL defining where eHive database is located
 
-    path to a Registry configuration file
+=item --reg_conf <path>
 
-B<--reg_alias>
+path to a Registry configuration file
 
-    species/alias name for the Hive DBAdaptor
+=item --reg_alias <str>
 
-B<--nosqlvc>
+species/alias name for the eHive DBAdaptor
 
-    if 1, don't check sql schema version
+=item --nosqlvc
 
-B<--config_file>
+"No SQL Version Check" - set if you want to force working with a database created by a potentially schema-incompatible API
 
-    Path to JSON hive config file
+=item --config_file <path>
 
-B<--pipeconfig>
+Path to JSON eHive config file
 
-    A pipeline configuration file that can function both as the initial source of pipeline structure or as a top-up config.
-    This option can now be used multiple times for multiple top-ups.
+=item --pipeconfig <path|module_name>
 
-B<--format>
+A pipeline configuration file that can function both as the initial source of pipeline structure or as a top-up config.
+This option can now be used multiple times for multiple top-ups.
 
-    (Optional) specify the output format, or override the output format specified by the output file's extension
-    (e.g. png, jpeg, dot, gif, ps)
+=item --format <str>
 
-B<--output>
+(Optional) specify the output format, or override the output format specified by the output file's extension
+(e.g. png, jpeg, dot, gif, ps)
 
-    Location of the file to write to.
-    The file extension (.png , .jpeg , .dot , .gif , .ps) will define the output format.
+=item --output <path>
 
-B<--help>
+Location of the file to write to.
+The file extension (.png , .jpeg , .dot , .gif , .ps) will define the output format.
 
-    Print this help message
+=item --help
+
+Print this help message
+
+=back
 
 =head1 EXTERNAL DEPENDENCIES
 
-    GraphViz
+=over
+
+=item GraphViz
+
+=back
 
 =head1 LICENSE
 
@@ -187,7 +210,7 @@ B<--help>
 
 =head1 CONTACT
 
-    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the eHive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss eHive-related questions or to be notified of our updates
 
 =cut
 

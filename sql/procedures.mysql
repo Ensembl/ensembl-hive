@@ -101,6 +101,26 @@ CREATE OR REPLACE VIEW live_roles AS
     WHERE r.when_finished IS NULL
     GROUP BY w.meadow_user, w.meadow_type, w.resource_class_id, rc.name, r.analysis_id, a.logic_name;
 
+-- show activity of beekeepers in this hive
+--
+-- Usage:
+--       select * from beekeeper_activity;
+--
+--       -- Find beekeepers that may have disappeared
+--       select * from beekeeper_activity
+--       where cause_of_death is null
+--       and is_overdue = 1
+
+CREATE OR REPLACE VIEW beekeeper_activity AS
+    SELECT b.beekeeper_id, b.meadow_user, b.meadow_host, b.sleep_minutes, b.loop_limit, b.is_blocked,
+           b.cause_of_death, COUNT(*) AS loops_executed,
+           MAX(lm.when_logged) AS last_heartbeat,
+           IF(cause_of_death IS NULL, TIMEDIFF(now(), max(lm.when_logged)), NULL) AS time_since_last_heartbeat,
+           IF(cause_of_death IS NULL, TIMEDIFF(SEC_TO_TIME(sleep_minutes * 60), TIMEDIFF(now(), max(lm.when_logged))) < 0, NULL) AS is_overdue
+    FROM beekeeper b
+    LEFT JOIN log_message lm
+    ON b.beekeeper_id = lm.beekeeper_id
+    GROUP BY b.beekeeper_id;
 
 -- time an analysis or group of analyses (given by a name pattern) ----------------------------------------
 --
@@ -167,8 +187,10 @@ DELIMITER //
 CREATE PROCEDURE drop_hive_tables()
 MODIFIES SQL DATA
 BEGIN
-    DROP VIEW IF EXISTS msg, progress, resource_usage_stats, live_roles;
-    DROP TABLE IF EXISTS pipeline_wide_parameters, analysis_stats_monitor, worker_resource_usage, resource_description, analysis_data, job_file, dataflow_target, dataflow_rule, analysis_ctrl_rule, analysis_stats, log_message, accu, job, role, worker, analysis_base, resource_class, hive_meta;
+    SET FOREIGN_KEY_CHECKS=0;
+    DROP VIEW IF EXISTS msg, progress, resource_usage_stats, live_roles, beekeeper_activity;
+    DROP TABLE IF EXISTS pipeline_wide_parameters, analysis_stats_monitor, worker_resource_usage, resource_description, analysis_data, job_file, dataflow_target, dataflow_rule, analysis_ctrl_rule, analysis_stats, log_message, accu, job, semaphore, role, worker, beekeeper, analysis_base, resource_class, hive_meta;
+    SET FOREIGN_KEY_CHECKS=1;
 END; //
 DELIMITER ;
 

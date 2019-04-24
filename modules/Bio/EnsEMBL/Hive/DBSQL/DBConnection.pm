@@ -40,7 +40,7 @@ use warnings;
 
 use Time::HiRes ('usleep');
 use Bio::EnsEMBL::Hive::Utils ('throw');
-use Bio::EnsEMBL::Hive::Utils::URL;
+use Bio::EnsEMBL::Hive::Utils::URL ('parse', 'hash_to_url');
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection');
 
@@ -69,6 +69,44 @@ sub new {
     }
 }
 
+
+sub _optional_pair {     # helper function
+    my ($key, $value) = @_;
+
+    return defined($value) ? ($key => $value) : ();
+}
+
+
+sub to_url_hash {
+    my ($self, $psw_env_var_name) = @_;
+
+    my $psw_expression;
+    if($psw_expression = $self->password) {
+        if($psw_env_var_name) {
+            $ENV{$psw_env_var_name} = $psw_expression;
+            $psw_expression = '${'.$psw_env_var_name.'}';
+        }
+    }
+
+    my $url_hash = {
+        _optional_pair('driver',    $self->driver),
+        _optional_pair('user',      $self->username),
+        _optional_pair('pass',      $psw_expression),
+        _optional_pair('host',      $self->host),
+        _optional_pair('port',      $self->port),
+        _optional_pair('dbname',    $self->dbname),
+
+        'conn_params' => {
+            _optional_pair('disconnect_when_inactive',  $self->disconnect_when_inactive),
+            _optional_pair('wait_timeout',              $self->wait_timeout),
+            _optional_pair('reconnect_when_lost',       $self->reconnect_when_lost),
+        },
+    };
+
+    return $url_hash;
+}
+
+
 =head2 url
 
     Arg [1]    : String $environment_variable_name_to_store_password_in (optional)
@@ -84,48 +122,15 @@ sub new {
 sub url {
     my ($self, $psw_env_var_name) = @_;
 
-    my $url = $self->driver . '://';
-
-    if($self->username) {
-        $url .= $self->username;
-
-        if(my $psw_expression = $self->password) {
-            if($psw_env_var_name) {
-                $ENV{$psw_env_var_name} = $psw_expression;
-                $psw_expression = '${'.$psw_env_var_name.'}';
-            }
-            $url .= ':'.$psw_expression if($psw_expression);
-        }
-
-        $url .= '@';
-    }
-
-    if($self->host) {
-        $url .= $self->host;
-
-        if($self->port) {
-            $url .= ':'.$self->port;
-        }
-    }
-    $url .= '/' . $self->dbname;
-
-    my @opt_pairs = ();
-    foreach my $option ('disconnect_when_inactive', 'wait_timeout', 'reconnect_when_lost') {
-        if( defined(my $value = $self->$option()) ) {
-            push @opt_pairs, "$option=$value";
-        }
-    }
-    $url = join(';', $url, @opt_pairs);
-
-    return $url;
+    return Bio::EnsEMBL::Hive::Utils::URL::hash_to_url( $self->to_url_hash( $psw_env_var_name ) );
 }
 
 
 sub connect {       # a wrapper that imitates CSMA/CD protocol's incremental backoff-and-retry approach
     my $self        = shift @_;
 
-    my $attempts    = 8;
-    my $sleep_sec   = 1;
+    my $attempts    = 9;
+    my $sleep_sec   = 30;
     my $retval;
 
     foreach my $attempt (1..$attempts) {
@@ -135,6 +140,7 @@ sub connect {       # a wrapper that imitates CSMA/CD protocol's incremental bac
         } or do {
             if( ($@ =~ /Could not connect to database.+?failed: Too many connections/s)                             # problem on server side (configured with not enough connections)
              or ($@ =~ /Could not connect to database.+?failed: Can't connect to \w+? server on '.+?' \(99\)/s)     # problem on client side (cooling down period after a disconnect)
+             or ($@ =~ /Could not connect to database.+?failed: Can't connect to \w+? server on '.+?' \(110\)/s)    # problem on server side ("Connection timed out"L the server is temporarily dropping connections until it reaches a reasonable load)
              or ($@ =~ /Could not connect to database.+?failed: Lost connection to MySQL server at 'reading authorization packet', system error: 0/s)     # problem on server side (server too busy ?)
             ) {
 
@@ -182,7 +188,9 @@ sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" b
         } or do {
             $query_msg = "QUERY: $sql_cmd, PARAMS: (".join(', ',@$sql_params).")";
 
-            if( $@ =~ /Deadlock found when trying to get lock; try restarting transaction/ ) {
+            if( ($@ =~ /Deadlock found when trying to get lock; try restarting transaction/)                        # MySQL error
+             or ($@ =~ /Lock wait timeout exceeded; try restarting transaction/)                                    # MySQL error
+            ) {
 
                 my $this_sleep_sec = int( rand( $sleep_max_sec )*100 ) / 100.0;
 
@@ -206,6 +214,7 @@ sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" b
 
     return $retval;
 }
+
 
 our $pass_internal_counter = 0;
 sub to_cmd {
@@ -271,14 +280,15 @@ sub to_cmd {
     if($driver eq 'mysql') {
         $executable ||= 'mysql';
 
+        push @cmd, ('env', 'MYSQL_PWD='.$hidden_password)  if ($self->password);
         push @cmd, $executable;
-        push @cmd, @$prepend                if ($prepend && @$prepend);
-        push @cmd, '-h'.$self->host         if $self->host;
-        push @cmd, '-P'.$self->port         if $self->port;
-        push @cmd, '-u'.$self->username     if $self->username;
-        push @cmd, '-p'.$hidden_password    if $self->password;
-        push @cmd, ('-e', $sqlcmd)          if $sqlcmd;
-        push @cmd, $dbname                  if $dbname;
+        push @cmd, @$prepend                        if ($prepend && @$prepend);
+        push @cmd, '--host='.$self->host            if $self->host;
+        push @cmd, '--port='.$self->port            if $self->port;
+        push @cmd, '--user='.$self->username        if $self->username;
+#        push @cmd, '--password='.$hidden_password   if $self->password;
+        push @cmd, ('-e', $sqlcmd)                  if $sqlcmd;
+        push @cmd, $dbname                          if $dbname;
 
     } elsif($driver eq 'pgsql') {
         $executable ||= 'psql';
@@ -307,5 +317,96 @@ sub to_cmd {
 
     return \@cmd;
 }
+
+
+=head2 run_in_transaction
+
+    Description : Wrapper that first sets AutoCommit to 0, runs some user code, and at the end issues a commit() / rollback()
+                  It also has to temporarily set disconnect_when_inactive() to 1 because a value of 0 would cause the
+                  DBConnection object to disconnect early, which would rollback the transaction.
+                  NB: This is essentially a trimmed copy of Ensembl's Utils::SqlHelper::transaction()
+
+=cut
+
+sub run_in_transaction {
+    my ($self, $callback) = @_;
+
+    # Save the original value of disconnect_when_inactive()
+    my $original_dwi = $self->disconnect_when_inactive();
+    $self->disconnect_when_inactive(0);
+
+    $self->reconnect() unless $self->db_handle()->ping();
+
+    # Save the original value of "AutoCommit"
+    my $original_ac = $self->db_handle()->{'AutoCommit'};
+    $self->db_handle()->{'AutoCommit'} = 0;
+
+    my $result;
+    eval {
+        $result = $callback->();
+        # FIXME: does this work if the "MySQL server has gone away" ?
+        $self->db_handle()->commit();
+    };
+    my $error = $@;
+
+    #If there is an error then we apply rollbacks
+    if($error) {
+        eval { $self->db_handle()->rollback(); };
+    }
+
+    # Restore the original values
+    $self->db_handle()->{'AutoCommit'} = $original_ac;
+    $self->disconnect_when_inactive($original_dwi);
+
+    die "ABORT: Transaction aborted because of error: ${error}" if $error;
+    return $result;
+}
+
+
+=head2 has_write_access
+
+  Example     : my $can_do = $dbc->has_write_access();
+  Description : Tells whether the underlying database connection has write access to the database
+  Returntype  : Boolean
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub has_write_access {
+    my $self = shift;
+    if ($self->driver eq 'mysql') {
+        my $user_entries =  $self->selectall_arrayref('SELECT Insert_priv, Update_priv, Delete_priv FROM mysql.user WHERE user = ?', undef, $self->username);
+        my $has_write_access_from_some_host = 0;
+        foreach my $entry (@$user_entries) {
+            $has_write_access_from_some_host ||= !scalar(grep {$_ eq 'N'} @$entry);
+        }
+        return $has_write_access_from_some_host;
+    } else {
+        # TODO: implement this for other drivers
+        return 1;
+    }
+}
+
+=head2 requires_write_access
+
+  Example     : $dbc->requires_write_access();
+  Description : See Exceptions
+  Returntype  : none
+  Exceptions  : Throws if the current user hasn't write access to the database
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub requires_write_access {
+    my $self = shift;
+    unless ($self->has_write_access) {
+        die sprintf("It appears that %s doesn't have INSERT/UPDATE/DELETE privileges on this database (%s). Please check the credentials\n", $self->username, $self->dbname);
+    }
+}
+
+
 1;
 

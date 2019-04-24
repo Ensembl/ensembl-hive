@@ -47,15 +47,20 @@ use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc', 'stringify');
 use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
 sub param_defaults {
+    my $self = shift;
     return {
+        %{ $self->SUPER::param_defaults() },
+
         'src_db_conn'   => '',
         'dest_db_conn'  => '',
         'mode'          => 'overwrite',
         'where'         => undef,
         'filter_cmd'    => undef,
-        # Needed by SystemCmd
+        'renamed_table' => undef,                                       # optional argument - lets you rename the table
+        'rename_filter' => 'sed "s/\`#table#\`/\`#renamed_table#\`/" | sed "s/\`#table#_ibfk/\`#renamed_table#_ibfk/"', # NB: only change this if your data contains backticked table name AND you know how to fix it
+
+        # Overrides default values of SystemCmd
         'use_bash_pipefail'         => 1,
-        'return_codes_2_branches'   => {},
         'lock_tables'   => 0,
     };
 }
@@ -106,15 +111,18 @@ sub fetch_input {
 
     if($mode ne 'overwrite') {
         $self->_assert_same_table_schema($src_dbc, $dest_dbc, $table);
-        $self->param('dest_before_all', $self->get_row_count($dest_dbc, $table) );
     }
 
-    my $filter_cmd  = $self->param('filter_cmd');
-    my $lock_tables = $self->param('lock_tables');
-
-    my $mode_options = { 'overwrite' => [], 'topup' => ['--no-create-info'], 'insertignore' => [qw(--no-create-info --insert-ignore)] }->{$mode};
+    my $mode_options = { 'overwrite' => [], 'topup' => [qw(--no-create-info --insert-ignore)], 'insertignore' => [qw(--no-create-info --insert-ignore)] }->{$mode};
     die "Mode '$mode' not recognized. Should be 'overwrite', 'topup' or 'insertignore'\n" unless $mode_options;
+
+    my $lock_tables = $self->param('lock_tables');
     push(@{$mode_options}, '--skip-lock-tables') unless ($lock_tables);
+
+    my $filter_cmd      = $self->param('filter_cmd');
+
+    my $renamed_table   = $self->param('renamed_table');
+    my $rename_filter   = $renamed_table && $self->param('rename_filter').' | ';
 
     # Must be joined because of the pipe
     my $cmd = join(' ',
@@ -122,6 +130,7 @@ sub fetch_input {
                 $table,
                 (defined($where) ? "--where '$where' " : ''),
                 '|',
+                ($rename_filter || ''),
                 ($filter_cmd ? "$filter_cmd | " : ''),
                 @{$dest_dbc->to_cmd(undef, undef, undef, undef, 1)}
             );
@@ -145,31 +154,30 @@ sub write_output {
 
     my $mode        = $self->param('mode');
     my $table       = $self->param('table');
+    my $ren_table   = $self->param('renamed_table') || $table;
     my $where       = $self->param('where');
 
     my $src_before  = $self->param('src_before');
+    my $dest_after  = $self->get_row_count($dest_dbc, $ren_table, $where);
 
     if($mode eq 'overwrite') {
-        my $dest_after      = $self->get_row_count($dest_dbc,  $table, $where);
 
         if($src_before == $dest_after) {
             $self->warning("Successfully copied $src_before '$table' rows");
         } else {
             die "Could not copy '$table' rows: $src_before rows from source copied into $dest_after rows in target\n";
         }
+    } elsif ($mode eq 'topup') {
+
+        if($dest_after >= $src_before) {
+            $self->warning("Cannot check success in this mode, but the number of '$ren_table' rows in target is indeed higher than $src_before ($dest_after)");
+        } else {
+            die "Could not copy '$table' rows: $src_before rows from source copied into $dest_after rows in target\n";
+        }
+
     } else {
 
-        my $dest_row_increase = $self->get_row_count($dest_dbc, $table) - $self->param('dest_before_all');
-
-        if($mode eq 'topup') {
-            if($src_before <= $dest_row_increase) {
-                $self->warning("Cannot check success/failure in this mode, but the number of '$table' rows in target increased by $dest_row_increase (higher than $src_before)");
-            } else {
-                die "Could not add rows: $src_before '$table' rows from source copied into $dest_row_increase rows in target\n";
-            }
-        } elsif($mode eq 'insertignore') {
-            $self->warning("Cannot check success/failure in this mode, but the number of '$table' rows in target increased by $dest_row_increase");
-        }
+        $self->warning("Cannot check success/failure in this mode, but the number of '$ren_table' rows in target increased by ".($dest_after-$src_before));
     }
 }
 
@@ -193,15 +201,15 @@ sub get_row_count {
 sub _assert_same_table_schema {
     my ($self, $src_dbc, $dest_dbc, $table) = @_;
 
-    my $src_sth = $src_dbc->db_handle->column_info(undef, undef, $table, '%');
+    my $src_sth = $src_dbc->column_info(undef, undef, $table, '%');
     my $src_schema = $src_sth->fetchall_arrayref;
     $src_sth->finish();
 
-    my $dest_sth = $dest_dbc->db_handle->column_info(undef, undef, $table, '%');
+    my $dest_sth = $dest_dbc->column_info(undef, undef, $table, '%');
     my $dest_schema = $dest_sth->fetchall_arrayref;
     $dest_sth->finish();
 
-    die "'$table' has a different schema in the two databases." if stringify($src_schema) ne stringify($dest_schema);
+    die "'$table' has a different schema in the two databases. Do SHOW CREATE TABLE in both databases and compare the outputs." if stringify($src_schema) ne stringify($dest_schema);
 }
 
 

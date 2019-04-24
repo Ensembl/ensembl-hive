@@ -75,12 +75,13 @@ package Bio::EnsEMBL::Hive::Worker;
 use strict;
 use warnings;
 use POSIX;
+use File::Path 'make_path';
 
 use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Hive::Limiter;
 use Bio::EnsEMBL::Hive::Utils::RedirectStack;
 use Bio::EnsEMBL::Hive::Utils::Stopwatch;
-use Bio::EnsEMBL::Hive::Utils ('stringify', 'throw');
+use Bio::EnsEMBL::Hive::Utils ('dir_revhash', 'stringify', 'throw');
 
 use base ( 'Bio::EnsEMBL::Hive::Storable' );
 
@@ -88,6 +89,10 @@ use base ( 'Bio::EnsEMBL::Hive::Storable' );
     ## How often we should refresh the AnalysisStats objects
 sub refresh_tolerance_seconds {
     return 20;
+}
+
+sub worker_error_threshold {
+    return 2;
 }
 
 
@@ -160,6 +165,27 @@ sub status {
     my $self = shift;
     $self->{'_status'} = shift if(@_);
     return $self->{'_status'};
+}
+
+
+sub beekeeper_id {
+    my $self = shift;
+    $self->{'_beekeeper_id'} = shift if(@_);
+    return $self->{'_beekeeper_id'} || undef;
+}
+
+
+sub when_submitted {
+    my $self = shift;
+    $self->{'_when_submitted'} = shift if(@_);
+    return $self->{'_when_submitted'};
+}
+
+
+sub seconds_since_when_submitted {
+    my $self = shift;
+    $self->{'_seconds_since_when_submitted'} = shift if(@_);
+    return $self->{'_seconds_since_when_submitted'};
 }
 
 
@@ -401,6 +427,11 @@ sub get_stderr_redirector {
 sub worker_say {
     my ($self, $msg) = @_;
 
+    unless ($self->adaptor) {
+        print "Standalone worker $$ : $msg\n";
+        return;
+    }
+
     my $worker_id       = $self->dbID();
     my $current_role    = $self->current_role;
     my $job_id          = $self->runnable_object && $self->runnable_object->input_job && $self->runnable_object->input_job->dbID;
@@ -519,7 +550,7 @@ sub run {
                              "Claiming: ready_job_count=".$stats->ready_job_count
                             .", num_running_workers=".$stats->num_running_workers
                             .", desired_batch_size=$desired_batch_size, actual_batch_size=".scalar(@$actual_batch),
-                        0 );
+                        'INFO' );
                     }
 
                     if(scalar(@$actual_batch)) {
@@ -556,7 +587,7 @@ sub run {
             if ( $stats->refresh($self->refresh_tolerance_seconds) ) {  # if we DID refresh
                 $self->adaptor->db->get_AnalysisAdaptor->refresh( $analysis );
                 $stats->hive_pipeline->invalidate_hive_current_load;
-                if( defined($stats->hive_capacity) && (0 <= $stats->hive_capacity) && ($stats->hive_pipeline->get_cached_hive_current_load >= 1.1)
+                if( defined($analysis->hive_capacity) && (0 <= $analysis->hive_capacity) && ($stats->hive_pipeline->get_cached_hive_current_load >= 1.1)
                  or defined($analysis->analysis_capacity) && (0 <= $analysis->analysis_capacity) && ($analysis->analysis_capacity < $stats->num_running_workers)
                 ) {
                     $self->cause_of_death('HIVE_OVERLOAD');
@@ -570,12 +601,16 @@ sub run {
             $self->adaptor->db->get_AnalysisStatsAdaptor->update_status( $self->current_role->analysis_id, 'ALL_CLAIMED' );
         }
 
+        # Respecialize if:
+        #  1) No work to do (computed across all
+        #  2) allowed to by the command-line option
+        #  3) [heuristic] there are some possible candidates for the next analysis (i.e. no pattern set or the pattern has multiple components). This doesn't guarantee that the pattern will resolve to multiple analyses !
         if( $cod =~ /^(NO_WORK|HIVE_OVERLOAD)$/ and $self->can_respecialize and (!$specialization_arghash->{'-analyses_pattern'} or $specialization_arghash->{'-analyses_pattern'}!~/^\w+$/) ) {
             my $old_role = $self->current_role;
             $self->adaptor->db->get_RoleAdaptor->finalize_role( $old_role, 0 );
             $self->current_role( undef );
             $self->cause_of_death(undef);
-            $self->specialize_and_compile_wrapper( $specialization_arghash, $old_role->analysis );
+            $self->specialize_and_compile_wrapper( $specialization_arghash );
         }
 
     }     # /Worker's lifespan loop
@@ -599,7 +634,7 @@ sub run {
 
 
 sub specialize_and_compile_wrapper {
-    my ($self, $specialization_arghash, $prev_analysis) = @_;
+    my ($self, $specialization_arghash) = @_;
 
     eval {
         $self->enter_status('SPECIALIZATION');
@@ -612,36 +647,46 @@ sub specialize_and_compile_wrapper {
 
         $self->cause_of_death('SEE_MSG') unless($self->cause_of_death());   # some specific causes could have been set prior to die "...";
 
-        my $is_error = $self->cause_of_death() ne 'NO_ROLE';
-        $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, $msg, $is_error );
+        my $message_class;
+        if ($self->cause_of_death() eq "NO_ROLE") {
+            $message_class = 'INFO';
+        } else {
+            $message_class = 'WORKER_ERROR'
+        }
+
+        $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, $msg, $message_class );
     };
 
     if( !$self->cause_of_death() ) {
         eval {
             $self->enter_status('COMPILATION');
 
-            my $runnable_object = $self->current_role->analysis->get_compiled_module_name->new($self->current_role->analysis->language, $self->current_role->analysis->module)  # Only GuestProcess will read the arguments
+            my $current_analysis    = $self->current_role->analysis;
+            my $runnable_object     = $current_analysis->get_compiled_module_name->new($self->debug, $current_analysis->language, $current_analysis->module) # Only GuestProcess will read the arguments
                 or die "Unknown compilation error";
 
-            $runnable_object->db( $self->adaptor->db );
             $runnable_object->worker( $self );
-            $runnable_object->debug( $self->debug );
-            $runnable_object->execute_writes( $self->execute_writes );
 
             $self->runnable_object( $runnable_object );
             $self->enter_status('READY');
 
             1;
         } or do {
-            my $msg = $@;
-            $self->worker_say( "runnable '".$self->current_role->analysis->module."' compilation failed :\t$msg" );
-            $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, $msg, 1 );
-
-            $self->cause_of_death('SEE_MSG') unless($self->cause_of_death());   # some specific causes could have been set prior to die "...";
+            my $last_err = $@;
+            $self->handle_compilation_failure($last_err);
         };
     }
 }
 
+sub handle_compilation_failure {
+    my ($self, $msg) = @_;
+    $self->worker_say( "runnable '".$self->current_role->analysis->module."' compilation failed :\t$msg" );
+    $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, $msg, 'WORKER_ERROR' );
+
+    $self->cause_of_death('SEE_MSG') unless($self->cause_of_death());   # some specific causes could have been set prior to die "...";
+
+    $self->check_analysis_for_exclusion();
+}
 
 sub run_one_batch {
     my ($self, $jobs, $is_special_batch) = @_;
@@ -679,8 +724,6 @@ sub run_one_batch {
             $self->adaptor->db->dbc->query_count(0);
             $job_stopwatch->restart();
 
-            $job->analysis( $current_role->analysis );
-
             $job->load_parameters( $runnable_object );
 
             $self->worker_say( "Job $job_id unsubstituted_params= ".stringify($job->{'_unsubstituted_param_hash'}) ) if($self->debug());
@@ -689,7 +732,7 @@ sub run_one_batch {
         };
         if(my $msg = $@) {
             $job->died_somewhere( $job->incomplete );  # it will be OR'd inside
-            $self->runnable_object->warning( $msg, $job->incomplete );
+            Bio::EnsEMBL::Hive::Process::warning($self->runnable_object, $msg, $job->incomplete?'WORKER_ERROR':'INFO');   # In case the Runnable has redefined warning()
         }
 
             # whether the job completed successfully or not:
@@ -699,17 +742,17 @@ sub run_one_batch {
 
         my $job_completion_line = "Job $job_id : ". ($job->died_somewhere ? 'died' : 'complete' );
 
-        print STDERR "\n$job_completion_line\n" if($self->log_dir and ($self->debug or $job->died_somewhere));  # one copy goes to the job's STDERR
+        print "\n$job_completion_line\n" if($self->log_dir and ($self->debug or $job->died_somewhere));         # one copy goes to the job's STDERR
         $self->stop_job_output_redirection($job);                                                               # and then we switch back to worker's STDERR
         $self->worker_say( $job_completion_line );                                                              # one copy goes to the worker's STDERR
 
         $self->current_role->register_attempt( ! $job->died_somewhere );
 
         if($job->died_somewhere) {
-                # If the job specifically said what to do next, respect that last wish.
-                # Otherwise follow the default behaviour set by the beekeeper in $worker:
-                #
-            my $may_retry = defined($job->transient_error) ? $job->transient_error : $self->retry_throwing_jobs;
+                # Both flags default to 1, meaning that jobs would by default be retried.
+                # If the job specifically said not to retry, or if the worker is configured
+                # not to retry jobs, follow their wish.
+            my $may_retry = $job->transient_error && $self->retry_throwing_jobs;
 
             $job->adaptor->release_and_age_job( $job_id, $max_retry_count, $may_retry, $job->runtime_msec );
 
@@ -726,11 +769,8 @@ sub run_one_batch {
             $jobs_done_here++;
             $job->set_and_update_status('DONE');
 
-            if(my $semaphored_job_id = $job->semaphored_job_id) {
-                my $dbc = $self->adaptor->db->dbc;
-                $dbc->do( "SELECT 1 FROM job WHERE job_id=$semaphored_job_id FOR UPDATE" ) if($dbc->driver ne 'sqlite');
-
-                $job->adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id );    # step-unblock the semaphore
+            if( my $controlled_semaphore = $job->controlled_semaphore ) {
+                $controlled_semaphore->decrease_by( [ $job ] );
             }
 
             if($job->lethal_for_worker) {
@@ -754,14 +794,14 @@ sub run_one_batch {
                 $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self,
                     "Check-point: rdy=$ready_job_count, rem=$remaining_jobs_in_batch, "
                   . "opt=$optimal_batch_now, 2unc=$jobs_to_unclaim",
-                0 );
+                'INFO' );
             }
             if( $jobs_to_unclaim > 0 ) {
                 # FIXME: a faster way would be to unclaim( splice(@$jobs, -$jobs_to_unclaim) );  # unclaim the last $jobs_to_unclaim elements
                     # currently we just dump all the remaining jobs and prepare to take a fresh batch:
                 $job->adaptor->release_claimed_jobs_from_role( $current_role );
                 $jobs = [];
-                $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, "Unclaimed $jobs_to_unclaim jobs (trimming the tail)", 0 );
+                $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, "Unclaimed $jobs_to_unclaim jobs (trimming the tail)", 'INFO' );
             }
         }
 
@@ -830,6 +870,49 @@ sub stop_job_output_redirection {
         if(my $job_adaptor = $job->adaptor) {
             $job_adaptor->store_out_files($job);
         }
+    }
+}
+
+sub check_analysis_for_exclusion {
+    my $self = shift(@_);
+    my $worker_errors_this_analysis =
+        $self->adaptor->db->get_LogMessageAdaptor()->count_analysis_events(
+            $self->current_role->analysis_id,
+            'WORKER_ERROR');
+#    warn "There are $worker_errors_this_analysis worker errors for this analysis\n";
+    if ($worker_errors_this_analysis > $self->worker_error_threshold) {
+        my $current_logic_name = $self->current_role->analysis->logic_name;
+        $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, "setting analysis '$current_logic_name' to excluded", 'INFO' );
+        $self->current_role->analysis->stats->is_excluded(1);
+        $self->adaptor->db->get_AnalysisStatsAdaptor->update_is_excluded($self->current_role->analysis->stats);
+    }
+}
+
+sub set_log_directory_name {
+    my ($self, $hive_log_dir, $worker_log_dir) = @_;
+
+    return unless ($hive_log_dir or $worker_log_dir);
+
+    my $dir_revhash = dir_revhash($self->dbID // '');  # Database-less workers are not hashed
+    $worker_log_dir ||= $hive_log_dir .'/'. ($dir_revhash ? "$dir_revhash/" : '') . ($self->adaptor ? 'worker_id_' . $self->dbID : 'standalone/worker_pid_' . $self->process_id);
+
+    eval {
+        make_path( $worker_log_dir );
+        1;
+    } or die "Could not create '$worker_log_dir' directory : $@";
+
+    $self->log_dir( $worker_log_dir );
+    $self->adaptor->update_log_dir( $self ) if $self->adaptor;   # autoloaded
+}
+
+
+sub temp_directory_name {
+    my $self = shift @_;
+
+    if ($self->adaptor) {
+        return sprintf('/tmp/worker_%s_%s.%s/', $self->meadow_user, $self->hive_pipeline->hive_pipeline_name, $self->dbID);
+    } else {
+        return sprintf('/tmp/worker_%s.standalone.%s/', $self->meadow_user, $self->process_id);
     }
 }
 

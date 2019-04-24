@@ -1,0 +1,30 @@
+────────────────────[ (unstored gcpct) ]────────────────────
+
+chunk_sequences
+ │  ║
+ │  ║
+ │  ║#2
+ │  ║
+ │├─╚═> count_atgc
+ │       │
+ │       │
+ │       │#1
+ │       │
+ │       └─▻ <<-- at_count[]:=at_count
+ │       │
+ │       │
+ │       │#1
+ │       │
+ │       └─▻ <<-- gc_count[]:=gc_count
+ │
+ │
+ │#1
+ │
+ V
+calc_overall_percentage
+ │
+ │
+ │#1
+ │
+ V
+[[ final_result ]]

@@ -39,18 +39,12 @@ package Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Hive::AnalysisCtrlRule;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
 
 sub default_table_name {
     return 'analysis_ctrl_rule';
-}
-
-
-sub default_insertion_method {
-    return 'INSERT_IGNORE';
 }
 
 

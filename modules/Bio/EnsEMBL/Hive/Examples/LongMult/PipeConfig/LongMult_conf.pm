@@ -126,15 +126,16 @@ sub pipeline_wide_parameters {
 sub pipeline_analyses {
     my ($self) = @_;
     return [
-        {   -logic_name => 'take_b_apart',
-            -module     => 'Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::DigitFactory',
-            -meadow_type=> 'LOCAL',     # do not bother the farm with such a simple task (and get it done faster)
+        {   -logic_name         => 'take_b_apart',
+            -comment            => "A factory that takes in #b_multiplier# and dataflows all its unique non-trivial digits into #2",
+            -module             => 'Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::DigitFactory',
+            -meadow_type        => 'LOCAL',     # do not bother the farm with such a simple task (and get it done faster)
             -analysis_capacity  =>  2,  # use per-analysis limiter
-            -input_ids => [
-                { 'a_multiplier' => '9650156169', 'b_multiplier' => '327358788' },
-                { 'a_multiplier' => '327358788', 'b_multiplier' => '9650156169' },
+            -input_ids          => [
+                    { 'a_multiplier' => '9650156169', 'b_multiplier' => '327358788' },
+                    { 'a_multiplier' => '327358788', 'b_multiplier' => '9650156169' },
             ],
-            -flow_into => {
+            -flow_into          => {
                     # creating a semaphored fan of jobs; filtering by WHEN; using INPUT_PLUS or templates to top-up the hashes.
                     #
                     # A WHEN block is not a hash, so multiple occurences of each condition (including ELSE) is permitted.
@@ -147,17 +148,19 @@ sub pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'part_multiply',
-            -module     => 'Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::PartMultiply',
+        {   -logic_name         => 'part_multiply',
+            -comment            => "Multiplies #a_multiplier# by #digit# and dataflows #product# into #1",
+            -module             => 'Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::PartMultiply',
             -analysis_capacity  =>  4,  # use per-analysis limiter
-            -flow_into => {
+            -flow_into          => {
                 1 => [ '?accu_name=partial_product&accu_address={digit}&accu_input_variable=product' ],
             },
         },
         
-        {   -logic_name => 'add_together',
-            -module     => 'Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::AddTogether',
-            -flow_into => {
+        {   -logic_name         => 'add_together',
+            -comment            => "Takes in #a_multiplier#, #b_multiplier# and the #partial_product# hash and dataflows the product of #a_multiplier# and #b_multiplier# into #1",
+            -module             => 'Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::AddTogether',
+            -flow_into          => {
                 1 => [ '?table_name=final_result' ],
             },
         },

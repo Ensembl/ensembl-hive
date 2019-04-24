@@ -37,7 +37,6 @@ package Bio::EnsEMBL::Hive::DBSQL::MetaAdaptor;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Hive::MetaParameters;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor');
 

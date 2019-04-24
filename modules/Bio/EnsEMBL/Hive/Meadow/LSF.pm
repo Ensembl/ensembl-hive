@@ -8,6 +8,29 @@
 
     This is the 'LSF' implementation of Meadow
 
+=head1 TODO
+
+=over
+
+=item LSF being temporarily unavailable
+
+We should probably implement a method using IPC::Open3 (see Bio::EnsEMBL::Compara::Utils::RunCommand)
+that captures stderr and can parse stdout on the fly.
+Depending on the Meadow method, we should either retry say 1 minute later, or
+return something like undef to tell the caller that no operation was done.
+
+ Beekeeper : loop #15 ======================================================
+ GarbageCollector:       Checking for lost Workers...
+ GarbageCollector:       [Queen:] out of 20 Workers that haven't checked in during the last 5 seconds...
+ GarbageCollector:       [LSF/EBI Meadow:]       LOST:20
+
+ GarbageCollector:       Discovered 20 lost LSF Workers
+ LSF::parse_report_source_line( "bacct -l '4126850[15]' '4126850[6]' '4126835[24]' '4126850[33]' '4126835[10]' '4126835[39]' '4126850[23]' '4126835[3]' '4126835[19]' '4126835[31]' '4126835[40]' '4126835[41]' '4126850[5]' '4126850[41]' '4126850[2]' '4126850[3]' '4126835[5]' '4126835[33]' '4126850[7]' '4126850[42]'" )
+ ls_getclustername(): Slave LIM configuration is not ready yet. Please give file name.
+ Could not read from 'bacct -l '4126850[15]' '4126850[6]' '4126835[24]' '4126850[33]' '4126835[10]' '4126835[39]' '4126850[23]' '4126835[3]' '4126835[19]' '4126835[31]' '4126835[40]' '4126835[41]' '4126850[5]' '4126850[41]' '4126850[2]' '4126850[3]' '4126835[5]' '4126835[33]' '4126850[7]' '4126850[42]''. Received the error 255
+
+=back
+
 =head1 LICENSE
 
     Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -36,12 +59,12 @@ use warnings;
 use Time::Piece;
 use Time::Seconds;
 
-use Bio::EnsEMBL::Hive::Utils ('split_for_bash');
+use Bio::EnsEMBL::Hive::Utils ('split_for_bash', 'whoami');
 
 use base ('Bio::EnsEMBL::Hive::Meadow');
 
 
-our $VERSION = '3.1';       # Semantic version of the Meadow interface:
+our $VERSION = '5.2';       # Semantic version of the Meadow interface:
                             #   change the Major version whenever an incompatible change is introduced,
                             #   change the Minor version whenever the interface is extended, but compatibility is retained.
 
@@ -83,80 +106,47 @@ sub get_current_worker_process_id {
 }
 
 
-sub count_pending_workers_by_rc_name {
+sub deregister_local_process {
     my ($self) = @_;
 
-    my $jnp = $self->job_name_prefix();
-    my @bjobs_out = qx{bjobs -w -J '${jnp}*' 2>/dev/null};  # "-u all" has been removed to ensure one user's PEND processes
-                                                          #   do not affect another user helping to run the same pipeline.
-
-#    warn "LSF::count_pending_workers_by_rc_name() running cmd:\n\t$cmd\n";
-
-    my %pending_this_meadow_by_rc_name = ();
-    my $total_pending_this_meadow = 0;
-
-    foreach my $line (@bjobs_out) {
-        if ($line=~/PEND/) {
-            if($line=~/\b\Q$jnp\E(\S+)\-\d+(\[\d+\])?\b/) {
-                $pending_this_meadow_by_rc_name{$1}++;
-                $total_pending_this_meadow++;
-            }
-        }
-    }
-
-    return (\%pending_this_meadow_by_rc_name, $total_pending_this_meadow);
+    delete $ENV{'LSB_JOBID'};
+    delete $ENV{'LSB_JOBINDEX'};
 }
 
 
-sub count_running_workers {
+sub status_of_all_our_workers { # returns an arrayref
     my $self                        = shift @_;
-    my $meadow_users_of_interest    = shift @_ || [ 'all' ];
+    my $meadow_users_of_interest    = shift @_;
+
+    $meadow_users_of_interest = [ 'all' ] unless ($meadow_users_of_interest && scalar(@$meadow_users_of_interest));
 
     my $jnp = $self->job_name_prefix();
 
-    my $total_running_worker_count = 0;
+    my @status_list = ();
 
     foreach my $meadow_user (@$meadow_users_of_interest) {
-        my @bjobs_out = qx{bjobs -w -J '${jnp}*' -u $meadow_user 2>/dev/null};
-
-#        warn "LSF::count_running_workers() running cmd:\n\t$cmd\n";
-
-        my $meadow_user_worker_count = scalar(grep {/RUN/} @bjobs_out);
-
-        $total_running_worker_count += $meadow_user_worker_count;
-    }
-
-    return $total_running_worker_count;
-}
-
-
-sub status_of_all_our_workers { # returns a hashref
-    my $self                        = shift @_;
-    my $meadow_users_of_interest    = shift @_ || [ 'all' ];
-
-    my $jnp = $self->job_name_prefix();
-
-    my %status_hash = ();
-
-    foreach my $meadow_user (@$meadow_users_of_interest) {
-        my $cmd = "bjobs -w -J '${jnp}*' -u $meadow_user 2>/dev/null";
+        my $cmd = "bjobs -w -u $meadow_user 2>/dev/null";
 
 #        warn "LSF::status_of_all_our_workers() running cmd:\n\t$cmd\n";
 
         foreach my $line (`$cmd`) {
             my ($group_pid, $user, $status, $queue, $submission_host, $running_host, $job_name) = split(/\s+/, $line);
 
+            # skip the header line and jobs that are done
             next if(($group_pid eq 'JOBID') or ($status eq 'DONE') or ($status eq 'EXIT'));
+
+            # skip the hive jobs that belong to another pipeline
+            next if (($job_name =~ /Hive-/) and (index($job_name, $jnp) != 0));
 
             my $worker_pid = $group_pid;
             if($job_name=~/(\[\d+\])$/ and $worker_pid!~/\[\d+\]$/) {   # account for the difference in LSF 9.1.1.1 vs LSF 9.1.2.0  bjobs' output
                 $worker_pid .= $1;
             }
-            $status_hash{$worker_pid} = $status;
+            push @status_list, [$worker_pid, $user, $status];
         }
     }
 
-    return \%status_hash;
+    return \@status_list;
 }
 
 
@@ -164,7 +154,7 @@ sub check_worker_is_alive_and_mine {
     my ($self, $worker) = @_;
 
     my $wpid = $worker->process_id();
-    my $this_user = $ENV{'USER'};
+    my $this_user = whoami();
     my $cmd = qq{bjobs -u $this_user $wpid 2>&1};
 
     my @bjobs_out = qx/$cmd/;
@@ -222,13 +212,17 @@ sub _convert_to_datetime {      # a private subroutine that can recover missing 
 sub parse_report_source_line {
     my ($self, $bacct_source_line) = @_;
 
-    warn "LSF::parse_report_source_line( \"$bacct_source_line\" )\n";
+    print "LSF::parse_report_source_line( \"$bacct_source_line\" )\n";
 
+    # Conplete list of exit codes is available at
+    # https://www.ibm.com/support/knowledgecenter/SSETD4_9.1.3/lsf_admin/termination_reasons_lsf.html
     my %status_2_cod = (
         'TERM_MEMLIMIT'     => 'MEMLIMIT',
         'TERM_RUNLIMIT'     => 'RUNLIMIT',
         'TERM_OWNER'        => 'KILLED_BY_USER',    # bkill     (wait until it dies)
         'TERM_FORCE_OWNER'  => 'KILLED_BY_USER',    # bkill -r  (quick remove)
+        'TERM_BUCKET_KILL'  => 'KILLED_BY_USER',    # bkill -b  (kills large numbers of jobs as soon as possible)
+        'TERM_REQUEUE_OWNER'=> 'KILLED_BY_USER',    # Job killed and requeued by owner
     );
 
     my %units_2_megs = (
@@ -239,7 +233,7 @@ sub parse_report_source_line {
     );
 
     local $/ = "------------------------------------------------------------------------------\n\n";
-    open(my $bacct_fh, $bacct_source_line);
+    open(my $bacct_fh, '-|', $bacct_source_line);
     my $record = <$bacct_fh>; # skip the header
 
     my %report_entry = ();
@@ -253,13 +247,18 @@ sub parse_report_source_line {
         if( my ($process_id) = $lines[0]=~/^Job <(\d+(?:\[\d+\])?)>/) {
 
             my ($exit_status, $exception_status) = ('' x 2);
+            my ($when_born, $meadow_host);
             my ($when_died, $cause_of_death);
             my (@keys, @values);
             my $line_has_key_values = 0;
             foreach (@lines) {
-                if( /^(\w+)\s+(\w+\s+\d+\s+\d+:\d+:\d+)(?:\s+(\d{4}))?:\s+Completed\s<(\w+)>(?:\.|;\s+(\w+))/ ) {
+                if( /^(\w+)\s+(\w+\s+\d+\s+\d+:\d+:\d+)(?:\s+(\d{4}))?:\s+(?:\[\d+\]\s+)?[Dd]ispatched to\s<([\w\-\.]+)>/ ) {
+                    $when_born      = _convert_to_datetime($1, $2, $3);
+                    $meadow_host    = $4;
+                }
+                elsif( /^(\w+)\s+(\w+\s+\d+\s+\d+:\d+:\d+)(?:\s+(\d{4}))?:\s+Completed\s<(\w+)>(?:\.|;\s+(\w+))/ ) {
                     $when_died      = _convert_to_datetime($1, $2, $3);
-                    $cause_of_death = $5 && $status_2_cod{$5};
+                    $cause_of_death = $5 && ($status_2_cod{$5} || 'SEE_EXIT_STATUS');
                     $exit_status = $4 . ($5 ? "/$5" : '');
                 }
                 elsif(/^\s*EXCEPTION STATUS:\s*(.*?)\s*$/) {
@@ -285,6 +284,8 @@ sub parse_report_source_line {
 
             $report_entry{ $process_id } = {
                     # entries for 'worker' table:
+                'meadow_host'       => $meadow_host,
+                'when_born'         => $when_born,
                 'when_died'         => $when_died,
                 'cause_of_death'    => $cause_of_death,
 
@@ -314,7 +315,7 @@ sub get_report_entries_for_process_ids {
 
     unless ($self->config_get('AccountingDisabled')) {
         while (my $pid_batch = join(' ', map { "'$_'" } splice(@_, 0, 20))) {  # can't fit too many pids on one shell cmdline
-            my $cmd = "bacct -l $pid_batch |";
+            my $cmd = "bacct -l $pid_batch";
 
 #           warn "LSF::get_report_entries_for_process_ids() running cmd:\n\t$cmd\n";
 
@@ -340,7 +341,7 @@ sub get_report_entries_for_time_interval {
         my $to_timepiece = Time::Piece->strptime($to_time, '%Y-%m-%d %H:%M:%S') + 2*ONE_MINUTE;
         $to_time = $to_timepiece->strftime('%Y/%m/%d/%H:%M');
 
-        my $cmd = "bacct -l -C $from_time,$to_time ".($username ? "-u $username" : '') . ' |';
+        my $cmd = "bacct -l -C $from_time,$to_time ".($username ? "-u $username" : '');
 
 #        warn "LSF::get_report_entries_for_time_interval() running cmd:\n\t$cmd\n";
 
@@ -351,11 +352,12 @@ sub get_report_entries_for_time_interval {
 }
 
 
-sub submit_workers {
+sub submit_workers_return_meadow_pids {
     my ($self, $worker_cmd, $required_worker_count, $iteration, $rc_name, $rc_specific_submission_cmd_args, $submit_log_subdir) = @_;
 
     my $job_array_common_name               = $self->job_array_common_name($rc_name, $iteration);
-    my $job_array_name_with_indices         = $job_array_common_name . (($required_worker_count > 1) ? "[1-${required_worker_count}]" : '');
+    my $array_required                      = $required_worker_count > 1;
+    my $job_array_name_with_indices         = $job_array_common_name . ($array_required ? "[1-${required_worker_count}]" : '');
     my $meadow_specific_submission_cmd_args = $self->config_get('SubmissionOptions');
 
     my ($submit_stdout_file, $submit_stderr_file);
@@ -369,8 +371,6 @@ sub submit_workers {
     }
 
     $ENV{'LSB_STDOUT_DIRECT'} = 'y';  # unbuffer the output of the bsub command
-    delete $ENV{'LSB_JOBID'};
-    delete $ENV{'LSB_JOBINDEX'};
 
     my @cmd = ('bsub',
         '-o', $submit_stdout_file,
@@ -383,7 +383,23 @@ sub submit_workers {
 
     print "Executing [ ".$self->signature." ] \t\t".join(' ', @cmd)."\n";
 
-    system( @cmd ) && die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax
+    my $lsf_jobid;
+
+    open(my $bsub_output_fh, "-|", @cmd) || die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax
+    while(my $line = <$bsub_output_fh>) {
+        if($line=~/^Job \<(\d+)\> is submitted to/) {
+            $lsf_jobid = $1;
+        } else {
+            warn $line;     # assuming it is a temporary blockage that might resolve itself with time
+        }
+    }
+    close $bsub_output_fh;
+
+    if($lsf_jobid) {
+        return ($array_required ? [ map { $lsf_jobid.'['.$_.']' } (1..$required_worker_count) ] : [ $lsf_jobid ]);
+    } else {
+        die "Submission unsuccessful\n";
+    }
 }
 
 1;

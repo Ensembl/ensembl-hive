@@ -1,0 +1,119 @@
+-- Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+-- Copyright [2016-2019] EMBL-European Bioinformatics Institute
+-- 
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+-- 
+--      http://www.apache.org/licenses/LICENSE-2.0
+-- 
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
+
+-- ---------------------------------------------------------------------------------------------------
+
+CREATE TEMPORARY VIEW exp_ver AS SELECT "80" AS expected_version;
+
+.bail ON
+
+SELECT ('The patch only applies to schema version '
+    || expected_version
+    || ', but the current schema version is '
+    || meta_value
+    || ', skipping the rest.') AS ''
+    FROM hive_meta JOIN exp_ver WHERE meta_key='hive_sql_schema_version' AND meta_value<>expected_version;
+
+INSERT INTO hive_meta (meta_key, meta_value)
+    SELECT hm.* FROM hive_meta AS hm JOIN exp_ver WHERE meta_key='hive_sql_schema_version' AND meta_value<>expected_version;
+
+SELECT ('The patch seems to be compatible with schema version '
+    || expected_version
+    || ', applying the patch...') AS '' FROM exp_ver;
+
+
+-- ----------------------------------<actual_patch> -------------------------------------------------
+
+CREATE TABLE beekeeper (
+       beekeeper_id      INTEGER        NOT NULL PRIMARY KEY AUTOINCREMENT,
+       meadow_host       VARCHAR(255)   NOT NULL,
+       meadow_user       VARCHAR(255)   NOT NULL,
+       process_id        INTEGER        NOT NULL,
+       status            VARCHAR(255)   NOT NULL, /* enum('ALIVE', 'ANALYSIS_FAILED', 'DISAPPEARED', 'JOB_FAILED', 'LOOP_LIMIT', 'NO_WORK', 'TASK_FAILED') NOT NULL */
+       sleep_minutes     REAL           NULL,
+       analyses_pattern  TEXT           NULL,
+       loop_limit        INTEGER        NULL,
+       loop_until        VARCHAR(255)   NOT NULL, /* enum('ANALYSIS_FAILURE', 'FOREVER', 'JOB_FAILURE', 'NO_WORK') NOT NULL */
+       options           TEXT           NULL,
+       meadow_signatures TEXT           NULL
+);
+CREATE INDEX beekeeper_signature_idx ON beekeeper (meadow_host, meadow_user, process_id);
+
+ALTER TABLE worker RENAME TO old_worker__;
+DROP INDEX worker_meadow_type_meadow_name_process_id_idx;
+
+CREATE TABLE worker (
+    worker_id               INTEGER     NOT NULL PRIMARY KEY AUTOINCREMENT,
+    meadow_type             VARCHAR(255) NOT NULL,
+    meadow_name             VARCHAR(255) NOT NULL,
+    meadow_host             VARCHAR(255) NOT NULL,
+    meadow_user             VARCHAR(255)         DEFAULT NULL,
+    process_id              VARCHAR(255) NOT NULL,
+    resource_class_id       INTEGER              DEFAULT NULL,
+    work_done               INTEGER      NOT NULL DEFAULT 0,
+    status                  VARCHAR(255) NOT NULL DEFAULT 'READY', /* enum('SPECIALIZATION','COMPILATION','READY','JOB_LIFECYCLE','DEAD') DEFAULT 'READY' NOT NULL */
+    beekeeper_id            INTEGER      DEFAULT NULL,
+    when_born               TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    when_checked_in         TIMESTAMP            DEFAULT NULL,
+    when_seen               TIMESTAMP            DEFAULT NULL,
+    when_died               TIMESTAMP            DEFAULT NULL,
+    cause_of_death          TEXT                 DEFAULT NULL, /* enum('NO_ROLE', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'RELOCATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'UNKNOWN') DEFAULT NULL */
+    log_dir                 VARCHAR(255)         DEFAULT NULL
+);
+CREATE INDEX worker_meadow_type_meadow_name_process_id_idx ON worker (meadow_type, meadow_name, process_id);
+
+INSERT INTO worker (worker_id,meadow_type,meadow_name,meadow_host,meadow_user,process_id,resource_class_id,work_done,status,when_born,when_checked_in,when_seen,when_died,cause_of_death,log_dir)
+    SELECT * FROM old_worker__;
+
+DROP TABLE old_worker__;
+
+ALTER TABLE log_message RENAME TO old_log_message__;
+DROP INDEX log_message_worker_idx;
+DROP INDEX log_message_job_idx;
+CREATE TABLE log_message (
+	    log_message_id          INTEGER     NOT NULL PRIMARY KEY AUTOINCREMENT,
+	    job_id                  INTEGER              DEFAULT NULL,
+	    role_id                 INTEGER              DEFAULT NULL,
+	    worker_id               INTEGER              DEFAULT NULL,
+	    beekeeper_id            INTEGER              DEFAULT NULL,
+	    when_logged             TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	    retry                   INTEGER              DEFAULT NULL,
+	    status                  TEXT        NOT NULL DEFAULT 'UNKNOWN', /* enum('UNKNOWN','SPECIALIZATION','COMPILATION','CLAIMED','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','PASSED_ON') DEFAULT 'UNKNOWN' */
+	    msg                     TEXT,
+	    is_error                SMALLINT
+);
+
+CREATE INDEX log_message_worker_idx ON log_message (worker_id);
+CREATE INDEX log_message_job_idx ON log_message (job_id);
+CREATE INDEX log_message_beekeeper_idx ON log_message (beekeeper_id);
+
+INSERT INTO log_message (log_message_id,job_id,role_id,worker_id,when_logged,retry,status,msg,is_error) SELECT * FROM old_log_message__;
+DROP TABLE old_log_message__;
+
+DROP VIEW msg;
+CREATE VIEW IF NOT EXISTS msg AS
+    SELECT a.analysis_id, a.logic_name, m.*
+    FROM log_message m
+    LEFT JOIN role USING (role_id)
+    LEFT JOIN analysis_base a USING (analysis_id);
+
+
+-- ----------------------------------</actual_patch> -------------------------------------------------
+
+
+    -- increase the schema version by one:
+UPDATE hive_meta SET meta_value=meta_value+1 WHERE meta_key='hive_sql_schema_version';
+INSERT INTO hive_meta (meta_key, meta_value) SELECT 'patched_to_' || meta_value, CURRENT_TIMESTAMP FROM hive_meta WHERE meta_key = 'hive_sql_schema_version';

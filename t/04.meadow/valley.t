@@ -34,16 +34,17 @@ BEGIN {
 
 # Need EHIVE_ROOT_DIR to access the default config file
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
-my @config_files = Bio::EnsEMBL::Hive::Utils::Config->default_config_files();
-my $config = Bio::EnsEMBL::Hive::Utils::Config->new(@config_files);
+my $config = Bio::EnsEMBL::Hive::Utils::Config->new();
 
-my @virtual_methods = qw(name get_current_worker_process_id count_running_workers count_pending_workers_by_rc_name status_of_all_our_workers check_worker_is_alive_and_mine kill_worker submit_workers);
+my @virtual_methods = qw(name get_current_worker_process_id status_of_all_our_workers check_worker_is_alive_and_mine kill_worker submit_workers_return_meadow_pids);
+my @optional_methods = qw(parse_report_source_line get_report_entries_for_process_ids get_report_entries_for_time_interval);
 
 # Check that the base Meadow class has some virtual methods
 subtest 'Bio::EnsEMBL::Hive::Meadow' => sub {
     my $virtual_meadow = eval {
         # Meadow's constructor calls cached_name(), which needs name()
         # name() will revert to its original implementation at the end of the scope
+        no warnings qw(redefine);
         local *Bio::EnsEMBL::Hive::Meadow::name = sub {
             return 'this_is_me';
         };
@@ -52,34 +53,24 @@ subtest 'Bio::EnsEMBL::Hive::Meadow' => sub {
     foreach my $method (@virtual_methods) {
         throws_ok {$virtual_meadow->$method()} qr/Please use a derived method/, $method.'() is virtual in Meadow';
     }
-    foreach my $method (qw(parse_report_source_line get_report_entries_for_process_ids get_report_entries_for_time_interval)) {
+    foreach my $method (@optional_methods) {
         warning_like {$virtual_meadow->$method()} qr/Bio::EnsEMBL::Hive::Meadow does not support resource usage logs/, $method.'() has a default (empty) implementation in Meadow';
     }
 };
 
-# Check that the meadows are fully implemented
-foreach my $meadow_class ( @{ Bio::EnsEMBL::Hive::Valley->loaded_meadow_drivers() } ) {
-    if($meadow_class->check_version_compatibility) {
-        subtest $meadow_class => sub
-        {
-            lives_ok( sub {
-                    eval "require $meadow_class";
-                }, $meadow_class.' can be compiled and imported');
-            my $meadow_object = $meadow_class->new();
-            ok($meadow_object->isa('Bio::EnsEMBL::Hive::Meadow'), $meadow_class.' implements the eHive Meadow interface');
-
-            # Let's check that the virtual methods have been redefined
-            foreach my $method (@virtual_methods) {
-                eval {
-                    $meadow_object->$method();
-                };
-                if ($@) {
-                    unlike($@, qr/Please use a derived method/, $method.'() is implemented');
-                } else {
-                    ok(1, $method.'() is implemented');
-                }
-            }
-        }
+# Check that the first-class meadows are fully implemented
+foreach my $meadow_short_class (qw(LOCAL LSF)) {
+    my $meadow_class = Bio::EnsEMBL::Hive::Valley::meadow_class_path() . '::' . $meadow_short_class;
+    subtest $meadow_class => sub
+    {
+        lives_ok( sub {
+                eval "require $meadow_class";
+            }, $meadow_class.' can be compiled and imported');
+        ok($meadow_class->check_version_compatibility, 'Compatible versions');
+        lives_ok( sub {
+                my $meadow_object = $meadow_class->new();
+                ok($meadow_object->isa('Bio::EnsEMBL::Hive::Meadow'), $meadow_class.' implements the eHive Meadow interface');
+            }, $meadow_class.' can be constructed');
     }
 }
 
@@ -89,9 +80,9 @@ my $valley = Bio::EnsEMBL::Hive::Valley->new($config, 'LOCAL', $pipeline_name);
 
 ok($valley, 'Can build a Valley');
 
-my ($meadow_type, $meadow_name) = $valley->whereami();
-ok($meadow_type, 'Could find the neadow type');
-ok($meadow_name, 'Could find the neadow name');
+my ($meadow, $pid) = $valley->whereami();
+ok($meadow, 'Could find the meadow');
+ok($pid, 'Could find the process id');
 
 my $available_meadows = $valley->get_available_meadow_list();
 ok(scalar(@$available_meadows), 'At least a meadow could be found');

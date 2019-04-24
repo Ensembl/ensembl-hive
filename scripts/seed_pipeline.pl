@@ -11,13 +11,16 @@ BEGIN {
     unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
 }
 
-
 use Getopt::Long qw(:config no_auto_abbrev);
+use Pod::Usage;
 
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
-use Bio::EnsEMBL::Hive::Utils ('destringify', 'stringify', 'script_usage');
+use Bio::EnsEMBL::Hive::Utils ('destringify', 'stringify');
+use Bio::EnsEMBL::Hive::Utils::URL;
+
+Bio::EnsEMBL::Hive::Utils::URL::hide_url_password();
 
 sub show_seedable_analyses {
     my ($pipeline) = @_;
@@ -43,6 +46,7 @@ sub main {
 	$analysis_id, 
 	$logic_name, 
 	$input_id,
+    $wrap_in_semaphore,
         $help);
 
     GetOptions(
@@ -51,16 +55,15 @@ sub main {
             'reg_conf|regfile|reg_file=s'  => \$reg_conf,
             'reg_type=s'                   => \$reg_type,
             'reg_alias|regname|reg_name=s' => \$reg_alias,
-            'nosqlvc=i'                    => \$nosqlvc,      # using "=i" instead of "!" for consistency with scripts where it is a propagated option
-
+            'nosqlvc'                      => \$nosqlvc,      # using "nosqlvc" instead of "sqlvc!" for consistency with scripts where it is a propagated option
 
                 # identify the analysis:
             'analyses_pattern=s'    => \$analyses_pattern,
             'analysis_id=i'         => \$analysis_id,
             'logic_name=s'          => \$logic_name,
 
-                # specify the input_id (as a string):
-            'input_id=s'            => \$input_id,
+            'input_id=s'            => \$input_id,          # specify the Job's input parameters (as a stringified hash)
+            'wrap|semaphored!'      => \$wrap_in_semaphore, # wrap the job into a funnel semaphore (provide a stable_id for the whole execution stream)
 
 	        # other commands/options
 	    'h|help!'               => \$help,
@@ -70,7 +73,9 @@ sub main {
         die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
     }
 
-    if ($help) { script_usage(0); }
+    if ($help) {
+        pod2usage({-exitvalue => 0, -verbose => 2});
+    }
 
     my $pipeline;
     if($url or $reg_alias) {
@@ -81,9 +86,9 @@ sub main {
                 -reg_alias                      => $reg_alias,
                 -no_sql_schema_version_check    => $nosqlvc,
         );
+        $pipeline->hive_dba()->dbc->requires_write_access();
     } else {
-        warn "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
-        script_usage(1);
+        die "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
     }
 
     my $analysis;
@@ -101,7 +106,7 @@ sub main {
 
     } else {
 
-        print "\nYou haven't specified -logic_name nor -analysis_id of the analysis being seeded.\n";
+        print "\nYou haven't specified -logic_name nor -analysis_id of the Analysis being seeded.\n";
         print "\nSeedable analyses without incoming dataflow:\n";
         show_seedable_analyses($pipeline);
         exit(0);
@@ -120,20 +125,27 @@ sub main {
     }
 
     my $job = Bio::EnsEMBL::Hive::AnalysisJob->new(
-        'prev_job'      => undef,   # this job has been created by the initialization script, not by another job
+        'hive_pipeline' => $pipeline,
+        'prev_job'      => undef,           # This job has been created by the seed_pipeline.pl script, not by another job
         'analysis'      => $analysis,
         'input_id'      => $dinput_id,      # Make sure all job creations undergo re-stringification to avoid alternative "spellings" of the same input_id hash
     );
 
-    my ($job_id) = @{ $pipeline->hive_dba->get_AnalysisJobAdaptor->store_jobs_and_adjust_counters( [ $job ] ) };
+    my $job_adaptor = $pipeline->hive_dba->get_AnalysisJobAdaptor;
+    my ($semaphore_id, $job_id);
+
+    if( $wrap_in_semaphore ) {
+        my $dummy;
+        ($semaphore_id, $dummy, $job_id) = $job_adaptor->store_a_semaphored_group_of_jobs( undef, [ $job ], undef );
+    } else {
+        ($job_id) = @{ $job_adaptor->store_jobs_and_adjust_counters( [ $job ] ) };
+    }
 
     if($job_id) {
-
-        print "Job $job_id [ ".$analysis->logic_name.'('.$analysis->dbID.")] : '$input_id'\n";
+        print "Job $job_id [ ".$analysis->logic_name.'('.$analysis->dbID.")] : '$input_id'".($semaphore_id ? ", wrapped in Semaphore $semaphore_id" : '')."\n";
 
     } else {
-
-        warn "Could not create job '$input_id' (it may have been created already)\n";
+        warn "Could not create Job '$input_id' (it may have been created already)\n";
     }
 }
 
@@ -145,7 +157,7 @@ __DATA__
 
 =head1 NAME
 
-    seed_pipeline.pl
+seed_pipeline.pl
 
 =head1 SYNOPSIS
 
@@ -153,7 +165,7 @@ __DATA__
 
 =head1 DESCRIPTION
 
-    seed_pipeline.pl is a generic script that is used to create {initial or top-up} jobs for hive pipelines
+seed_pipeline.pl is a generic script that is used to create {initial or top-up} Jobs for eHive pipelines
 
 =head1 USAGE EXAMPLES
 
@@ -162,7 +174,7 @@ __DATA__
     seed_pipeline.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult"
 
 
-        # seed one job into the "start" analysis:
+        # seed one Job into the "start" Analysis:
 
     seed_pipeline.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" \
                      -logic_name start -input_id '{"a_multiplier" => 2222222222, "b_multiplier" => 3434343434}'
@@ -171,24 +183,67 @@ __DATA__
 
 =head2 Connection parameters
 
-    -reg_conf <path>            : path to a Registry configuration file
-    -reg_type <string>          : type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
-    -reg_alias <string>         : species/alias name for the Hive DBAdaptor
-    -url <url string>           : url defining where hive database is located
-    -nosqlvc <0|1>              : skip sql version check if 1
+=over
+
+=item --reg_conf <path>
+
+path to a Registry configuration file
+
+=item --reg_type <string>
+
+type of the registry entry ("hive", "core", "compara", etc - defaults to "hive")
+
+=item --reg_alias <string>
+
+species/alias name for the eHive DBAdaptor
+
+=item --url <url string>
+
+URL defining where eHive database is located
+
+=item --nosqlvc
+
+"No SQL Version Check" - set if you want to force working with a database created by a potentially schema-incompatible API
+
+=back
 
 =head2 Analysis parameters
 
-    -analyses_pattern <string>  : seed job(s) for analyses whose logic_name matches the supplied pattern
-    -analysis_id <num>          : seed job for analysis with the given analysis_id
+=over
+
+=item --analyses_pattern <string>
+
+seed Job(s) for analyses whose logic_name matches the supplied pattern
+
+=item --analysis_id <num>
+
+seed Job for Analysis with the given analysis_id
+
+=back
 
 =head2 Input
 
-    -input_id <string>          : specify the input_id as a stringified hash 
+=over
+
+=item --input_id <string>
+
+specify the Job's input parameters as a stringified hash
+
+=item --semaphored
+
+wrap the Job into a funnel Semaphore (provide a stable_id for the whole execution stream)
+
+=back
 
 =head2 Other commands/options
 
-    -h | -help                  : show this help message
+=over
+
+=item -h, --help
+
+show this help message
+
+=back
 
 =head1 LICENSE
 
@@ -206,7 +261,7 @@ __DATA__
 
 =head1 CONTACT
 
-    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the eHive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss eHive-related questions or to be notified of our updates
 
 =cut
 

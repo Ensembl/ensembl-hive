@@ -19,37 +19,29 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-use File::Temp qw{tempdir};
 
 use Test::More;
 
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline get_test_urls run_sql_on_db);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 use Cwd            ();
 use File::Basename ();
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
-my $dir = tempdir CLEANUP => 1;
+my $ehive_test_pipeline_urls = get_test_urls();
 
-my $ehive_test_pipeline_urls = $ENV{'EHIVE_TEST_PIPELINE_URLS'} || "sqlite:///${dir}/ehive_test_pipeline_db";
-
-foreach my $pipeline_url (split( /[\s,]+/, $ehive_test_pipeline_urls )) {
+foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
 
 subtest 'Test on '.$pipeline_url, sub {
-    plan tests => 17;
+    plan tests => 20;
 
-my $url         = init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf', [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
+init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf', $pipeline_url);
 
-my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
-    -url                        => $url,
-    -disconnect_when_inactive   => 1,
-);
-
-my $hive_dba    = $pipeline->hive_dba;
+my $hive_dba    = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url );
 my $ana_a       = $hive_dba->get_AnalysisAdaptor;
 my $job_a       = $hive_dba->get_AnalysisJobAdaptor;
 my $dfr_a       = $hive_dba->get_DataflowRuleAdaptor;
@@ -97,6 +89,9 @@ my $another_job = Bio::EnsEMBL::Hive::AnalysisJob->new(
 
 $job_a->store($another_job);
 is($ada_a->count_all(), 1, "still 1 entry in the analysis_data table");
+
+$hive_dba->dbc->disconnect_if_idle();
+run_sql_on_db($pipeline_url, 'DROP DATABASE');
 
 }
 }

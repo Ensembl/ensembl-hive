@@ -33,7 +33,7 @@ use warnings;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'throw');
 use Bio::EnsEMBL::Hive::TheApiary;
 
-use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
+use base ( 'Bio::EnsEMBL::Hive::Storable' );
 
 
 sub unikey {    # override the default from Cacheable parent
@@ -116,8 +116,8 @@ sub to_analysis_url {
         }
     } elsif( !$self->{'_to_analysis_url'} and my $target_object=$self->{'_to_analysis'} ) {
 
-        my $ref_dba = $self->from_analysis && $self->from_analysis->adaptor && $self->from_analysis->adaptor->db;
-        $self->{'_to_analysis_url'} = $target_object->url( $ref_dba );      # the URL may be shorter if DBA is the same for source and target
+        my $ref_pipeline = $self->from_analysis && $self->from_analysis->hive_pipeline;
+        $self->{'_to_analysis_url'} = $target_object->relative_url( $ref_pipeline );        # the URL may be shorter if hive_pipeline is the same for source and target
     }
 
     return $self->{'_to_analysis_url'};
@@ -128,8 +128,8 @@ sub to_analysis_url {
 
     Usage   : $self->to_analysis($analysis);
     Function: Get/set method for the goal analysis object of this rule.
-    Returns : Bio::EnsEMBL::Hive::Analysis
-    Args    : Bio::EnsEMBL::Hive::Analysis
+    Returns : Bio::EnsEMBL::Hive::Analysis or Bio::EnsEMBL::Hive::Accumulator or Bio::EnsEMBL::Hive::NakedTable
+    Args    : Bio::EnsEMBL::Hive::Analysis or Bio::EnsEMBL::Hive::Accumulator or Bio::EnsEMBL::Hive::NakedTable
   
 =cut
 

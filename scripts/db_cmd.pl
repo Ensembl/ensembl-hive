@@ -12,9 +12,10 @@ BEGIN {
 }
 
 use Getopt::Long qw(:config no_auto_abbrev);
+use Pod::Usage;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Hive::Utils ('script_usage', 'report_versions');
+use Bio::EnsEMBL::Hive::Version ('report_versions');
 
 
 sub main {
@@ -41,7 +42,7 @@ sub main {
 
     if($help) {
 
-        script_usage(0);
+        pod2usage({-exitvalue => 0, -verbose => 2});
 
     } elsif($report_versions) {
 
@@ -49,7 +50,7 @@ sub main {
         exit(0);
 
     } elsif( not ($url xor $reg_alias) ) {
-        script_usage(1);
+        die "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
 
     } else {
         my $dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
@@ -68,6 +69,7 @@ sub main {
     }
 
     my @cmd = @{ $dbc->to_cmd( $executable, \@prepend, [@append, @ARGV], $sqlcmd ) };
+    $dbc->disconnect_if_idle;
 
     if( $verbose ) {
         my $flat_cmd = join(' ', map { ($_=~/^-?\w+$/) ? $_ : "\"$_\"" } @cmd);
@@ -87,7 +89,7 @@ __DATA__
 
 =head1 NAME
 
-    db_cmd.pl
+db_cmd.pl
 
 =head1 SYNOPSIS
 
@@ -95,9 +97,48 @@ __DATA__
 
 =head1 DESCRIPTION
 
-    db_cmd.pl is a generic script that connects you interactively to your database using either URL or Registry and optionally runs an SQL command.
-    -url is exclusive to -reg_alias. -reg_type is only needed if several databases map to that alias / species.
-    If the arguments that have to be appended contain options (i.e. start with dashes), first use a double-dash to indicate the end of db_cmd.pl's options and the start of the arguments that have to be passed as-is (see the example below with --html)
+db_cmd.pl is a generic script that connects you interactively to your database using either URL or Registry and optionally runs an SQL command.
+
+=head1 OPTIONS
+
+=over
+
+=item --url <url>
+
+URL defining where eHive database is located
+
+=item --reg_conf <path>
+
+path to a Registry configuration file
+
+=item --reg_alias <str>
+
+species/alias name for the eHive DBAdaptor
+
+=item --executable <name|path>
+
+The executable to run instead of the driver's default (which is the command-line client)
+
+=item --prepend <string>
+
+Argument that has to be prepended to the connection details. This option can be repeated
+
+=item --sql <string>
+
+SQL command to execute
+
+=item --verbose
+
+Print the command before running it.
+
+=item --help
+
+Print this help message
+
+=back
+
+All the remaining arguments are passed on to the command to be run.
+If some of them start with a dash, first use a double-dash to indicate the end of db_cmd.pl's options and the start of the arguments that have to be passed as is (see the example below with --html)
 
 =head1 USAGE EXAMPLES
 
@@ -126,7 +167,7 @@ __DATA__
 
 =head1 CONTACT
 
-    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the eHive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss eHive-related questions or to be notified of our updates
 
 =cut
 

@@ -114,9 +114,9 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
-        # init_pipeline.pl makes the best guess of the hive root directory and stores it in EHIVE_ROOT_DIR, if it wasn't already set in the shell
-    'inputfile'     => $ENV{'EHIVE_ROOT_DIR'} . '/t/input_fasta.fa',    # name of the input file, here set to a sample file included with the eHive distribution
-    'input_format'  => 'FASTA',                                         # the expected format of the input file
+            # init_pipeline.pl makes the best guess of the hive root directory and stores it in EHIVE_ROOT_DIR, if it wasn't already set in the shell
+        'inputfile'     => $ENV{'EHIVE_ROOT_DIR'} . '/t/input_fasta.fa',    # name of the input file, here set to a sample file included with the eHive distribution
+        'input_format'  => 'FASTA',                                         # the expected format of the input file
 
             # Because this is an example pipeline, we provide a way to slow down execution so
             # that it can be more easily observed as it runs. The 'take_time' parameter,

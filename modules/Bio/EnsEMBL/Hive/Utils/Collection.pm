@@ -201,6 +201,9 @@ sub _find_all_by_subpattern {    # subpatterns can be combined into full pattern
     } elsif( $pattern=~/^(\w+)>(.*)$/) {
 
         $filtered_elements = $self->find_all_by( $1, sub { return $_[0] > $2; } );
+
+    } else {
+        die "The pattern '$pattern' is not recognized\n";
     }
 
     return $filtered_elements;

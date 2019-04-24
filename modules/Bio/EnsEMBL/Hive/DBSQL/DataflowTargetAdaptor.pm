@@ -40,18 +40,12 @@ package Bio::EnsEMBL::Hive::DBSQL::DataflowTargetAdaptor;
 use strict;
 use warnings;
 use Bio::EnsEMBL::Hive::Utils ('stringify');
-use Bio::EnsEMBL::Hive::DataflowTarget;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
 
 sub default_table_name {
     return 'dataflow_target';
-}
-
-
-sub default_insertion_method {
-    return 'INSERT';
 }
 
 

@@ -1,12 +1,33 @@
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016-2019] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package Bio::EnsEMBL::Hive::HivePipeline;
 
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::TheApiary;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify', 'throw');
 use Bio::EnsEMBL::Hive::Utils::Collection;
 use Bio::EnsEMBL::Hive::Utils::PCL;
+use Bio::EnsEMBL::Hive::Utils::URL;
 
     # needed for offline graph generation:
 use Bio::EnsEMBL::Hive::Accumulator;
@@ -35,6 +56,17 @@ sub display_name {
 }
 
 
+sub unambig_key {   # based on DBC's URL if present, otherwise on pipeline_name
+    my $self = shift @_;
+
+    if(my $dbc = $self->hive_dba && $self->hive_dba->dbc) {
+        return Bio::EnsEMBL::Hive::Utils::URL::hash_to_unambig_url( $dbc->to_url_hash );
+    } else {
+        return 'unstored:'.$self->hive_pipeline_name;
+    }
+}
+
+
 sub collection_of {
     my $self = shift @_;
     my $type = shift @_;
@@ -43,15 +75,17 @@ sub collection_of {
         $self->{'_cache_by_class'}->{$type} = shift @_;
     } elsif (not $self->{'_cache_by_class'}->{$type}) {
 
-        if( (my $hive_dba = $self->hive_dba) and ($type ne 'NakedTable') and ($type ne 'Accumulator') ) {
+        if( (my $hive_dba = $self->hive_dba) and ($type ne 'NakedTable') and ($type ne 'Accumulator') and ($type ne 'Job') and ($type ne 'AnalysisJob')) {
             my $adaptor = $hive_dba->get_adaptor( $type );
             my $all_objects = $adaptor->fetch_all();
             if(@$all_objects and UNIVERSAL::can($all_objects->[0], 'hive_pipeline') ) {
                 $_->hive_pipeline($self) for @$all_objects;
             }
             $self->{'_cache_by_class'}->{$type} = Bio::EnsEMBL::Hive::Utils::Collection->new( $all_objects );
+#            warn "initialized collection_of($type) by loading all ".scalar(@$all_objects)."\n";
         } else {
             $self->{'_cache_by_class'}->{$type} = Bio::EnsEMBL::Hive::Utils::Collection->new();
+#            warn "initialized collection_of($type) as an empty one\n";
         }
     }
 
@@ -62,6 +96,7 @@ sub collection_of {
 sub find_by_query {
     my $self            = shift @_;
     my $query_params    = shift @_;
+    my $no_die          = shift @_;
 
     if(my $object_type = delete $query_params->{'object_type'}) {
         my $object;
@@ -82,14 +117,54 @@ sub find_by_query {
                     $self->hive_dba ? ('adaptor' => $self->hive_dba->get_adaptor($object_type, @specific_adaptor_params)) : (),
                 );
             }
+        } elsif($object_type eq 'AnalysisJob' or $object_type eq 'Semaphore') {
+            my $id_name = { 'AnalysisJob' => 'job_id', 'Semaphore' => 'semaphore_id' }->{$object_type};
+            my $dbID    = $query_params->{$id_name};
+            my $coll    = $self->collection_of($object_type);
+            unless($object = $coll->find_one_by( 'dbID' => $dbID )) {
+
+                my $adaptor = $self->hive_dba->get_adaptor( $object_type );
+                if( $object = $adaptor->fetch_by_dbID( $dbID ) ) {
+                    $coll->add( $object );
+                }
+            }
         } else {
             $object = $self->collection_of($object_type)->find_one_by( %$query_params );
         }
 
-        return $object || throw("Could not find an '$object_type' object from query ".stringify($query_params)." in ".$self->display_name);
+        return $object if $object || $no_die;
+        throw("Could not find an '$object_type' object from query ".stringify($query_params)." in ".$self->display_name);
 
     } else {
         throw("Could not find or guess the object_type from the query ".stringify($query_params)." , so could not find the object");
+    }
+}
+
+sub test_connections {
+    my $self = shift;
+
+    my @warnings;
+
+    foreach my $dft ($self->collection_of('DataflowTarget')->list) {
+        my $analysis_url = $dft->to_analysis_url;
+        if ($analysis_url =~ m{^\w+$}) {
+            my $heir_analysis = $self->collection_of('Analysis')->find_one_by('logic_name', $analysis_url)
+                or push @warnings, "Could not find a local analysis named '$analysis_url' (dataflow from analysis '".($dft->source_dataflow_rule->from_analysis->logic_name)."')";
+        }
+    }
+
+    foreach my $cf ($self->collection_of('AnalysisCtrlRule')->list) {
+        my $analysis_url = $cf->condition_analysis_url;
+        if ($analysis_url =~ m{^\w+$}) {
+            my $heir_analysis = $self->collection_of('Analysis')->find_one_by('logic_name', $analysis_url)
+                or push @warnings, "Could not find a local analysis named '$analysis_url' (control-flow for analysis '".($cf->ctrled_analysis->logic_name)."')";
+        }
+
+    }
+
+    if (@warnings) {
+        push @warnings, '', 'Please fix these before running the pipeline';
+        warn join("\n", '', '# ' . '-' x 26 . '[WARNINGS]' . '-' x 26, '', @warnings), "\n";
     }
 }
 
@@ -110,6 +185,8 @@ sub new {       # construct an attached or a detached Pipeline object
     } else {
 #       warn "Created a standalone pipeline";
     }
+
+    Bio::EnsEMBL::Hive::TheApiary->pipelines_collection->add( $self );
 
     return $self;
 }
@@ -157,9 +234,9 @@ sub save_collections {
     foreach my $analysis ( $self->collection_of( 'Analysis' )->list ) {
         if(my $our_jobs = $analysis->jobs_collection ) {
             $job_adaptor->store( $our_jobs );
-            foreach my $job (@$our_jobs) {
+#            foreach my $job (@$our_jobs) {
 #                warn "Stored ".$job->toString()."\n";
-            }
+#            }
         }
     }
 }
@@ -168,6 +245,9 @@ sub save_collections {
 sub add_new_or_update {
     my $self = shift @_;
     my $type = shift @_;
+
+    # $verbose is an extra optional argument that sits between the type and the object hash
+    my $verbose = scalar(@_) % 2 ? shift : 0;
 
     my $class   = 'Bio::EnsEMBL::Hive::'.$type;
     my $coll    = $self->collection_of( $type );
@@ -181,9 +261,9 @@ sub add_new_or_update {
         @unikey_pairs{ @$unikey_keys} = delete @other_pairs{ @$unikey_keys };
 
         if( $object = $coll->find_one_by( %unikey_pairs ) ) {
-            my $found_display = UNIVERSAL::can($object, 'toString') ? $object->toString : stringify($object);
+            my $found_display = $verbose && (UNIVERSAL::can($object, 'toString') ? $object->toString : stringify($object));
             if(keys %other_pairs) {
-                warn "Updating $found_display with (".stringify(\%other_pairs).")\n";
+                print "Updating $found_display with (".stringify(\%other_pairs).")\n" if $verbose;
                 if( ref($object) eq 'HASH' ) {
                     @$object{ keys %other_pairs } = values %other_pairs;
                 } else {
@@ -192,12 +272,13 @@ sub add_new_or_update {
                     }
                 }
             } else {
-                warn "Found a matching $found_display\n";
+                print "Found a matching $found_display\n" if $verbose;
             }
         } elsif( my $dark_coll = $coll->dark_collection) {
             if( my $shadow_object = $dark_coll->find_one_by( %unikey_pairs ) ) {
                 $dark_coll->forget( $shadow_object );
-#                warn "Found a shadow on the dark side, forgetting it\n";
+                my $found_display = $verbose && (UNIVERSAL::can($shadow_object, 'toString') ? $shadow_object->toString : stringify($shadow_object));
+                print "Undeleting $found_display\n" if $verbose;
             }
         }
     } else {
@@ -212,8 +293,8 @@ sub add_new_or_update {
 
         $object->hive_pipeline($self) if UNIVERSAL::can($object, 'hive_pipeline');
 
-        my $found_display = UNIVERSAL::can($object, 'toString') ? $object->toString : 'naked entry '.stringify($object);
-        warn "Created a new $found_display\n";
+        my $found_display = $verbose && (UNIVERSAL::can($object, 'toString') ? $object->toString : 'naked entry '.stringify($object));
+        print "Created a new $found_display\n" if $verbose;
     }
 
     return ($object, $newly_made);
@@ -229,13 +310,9 @@ sub add_new_or_update {
 sub get_source_analyses {
     my $self = shift @_;
 
-    my (%refset_of_analyses) = map { ("$_" => $_) } $self->collection_of( 'Analysis' )->list;
+    my %analyses_to_discard = map {scalar($_->to_analysis) => 1} $self->collection_of( 'DataflowTarget' )->list;
 
-    foreach my $df_target ($self->collection_of( 'DataflowTarget' )->list) {
-        delete $refset_of_analyses{ $df_target->to_analysis };
-    }
-
-    return [ values %refset_of_analyses ];
+    return [grep {!$analyses_to_discard{"$_"}} $self->collection_of( 'Analysis' )->list];
 }
 
 
@@ -321,6 +398,18 @@ sub hive_use_triggers {
     }
 
     return $self->_meta_value_by_key('hive_use_triggers') // '0';
+}
+
+=head2 hive_default_max_retry_count
+
+    Description: getter/setter via MetaParameters. Defines the default value for analysis_base.max_retry_count
+
+=cut
+
+sub hive_default_max_retry_count {
+    my $self = shift @_;
+
+    return $self->_meta_value_by_key('hive_default_max_retry_count', @_) // 0;
 }
 
 
@@ -675,6 +764,24 @@ sub apply_tweaks {
                         $need_write = 1;
                     }
 
+                } elsif( $attrib_name eq 'is_excluded' ) {
+                    my $analysis_stats = $analysis->stats();
+                    if($operator eq '?') {
+                        print "Tweak.Show    \tanalysis[$analysis_name].is_excluded ::\t".$analysis_stats->is_excluded()."\n";
+                    } elsif($operator eq '#') {
+                        print "Tweak.Error   \tDeleting of excluded status is not supported\n";
+                    } else {
+                        if(!($new_value =~ /^[01]$/)) {
+                            print "Tweak.Error    \tis_excluded can only be 0 (no) or 1 (yes)\n";
+                        } elsif ($new_value == $analysis_stats->is_excluded()) {
+                            print "Tweak.Info    \tanalysis[$analysis_name].is_excluded is already $new_value, leaving as is\n";
+                        } else {
+                           print "Tweak.Changing\tanalysis[$analysis_name].is_excluded ::\t" .
+                               $analysis_stats->is_excluded() . " --> $new_value_str\n";
+                           $analysis_stats->is_excluded($new_value);
+                           $need_write = 1;
+                        }
+                    }
                 } elsif($analysis->can($attrib_name)) {
                     my $old_value = stringify($analysis->$attrib_name());
 

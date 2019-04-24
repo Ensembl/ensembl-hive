@@ -1,0 +1,57 @@
+-- Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+-- Copyright [2016-2019] EMBL-European Bioinformatics Institute
+-- 
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+-- 
+--      http://www.apache.org/licenses/LICENSE-2.0
+-- 
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
+
+-- ---------------------------------------------------------------------------------------------------
+
+SET @expected_version = 87;
+
+    -- make MySQL stop immediately after it encounters division by zero:
+SET SESSION sql_mode='TRADITIONAL';
+
+    -- warn that we detected the schema version mismatch:
+SELECT CONCAT(  'The patch only applies to schema version ',
+                @expected_version,
+                ', but the current schema version is ',
+                meta_value,
+                ', so skipping the rest.') AS ''
+    FROM hive_meta WHERE meta_key='hive_sql_schema_version' AND meta_value<>@expected_version;
+
+    -- cause division by zero only if current version differs from the expected one:
+INSERT INTO hive_meta (meta_key, meta_value)
+    SELECT 'this_should_never_be_inserted', 1 FROM hive_meta WHERE NOT 1/(meta_key<>'hive_sql_schema_version' OR meta_value=@expected_version);
+
+SELECT CONCAT(  'The patch seems to be compatible with schema version ',
+                @expected_version,
+                ', applying the patch...') AS '';
+
+    -- Now undo the change so that we could patch potentially non-TRADITIONAL schema:
+SET SESSION sql_mode='';
+
+-- ----------------------------------<actual_patch> -------------------------------------------------
+
+
+ALTER TABLE analysis_base ADD COLUMN batch_size INTEGER NOT NULL DEFAULT 1;
+UPDATE analysis_base JOIN analysis_stats USING (analysis_id) SET analysis_base.batch_size = analysis_stats.batch_size;
+ALTER TABLE analysis_stats DROP COLUMN batch_size;
+ALTER TABLE analysis_stats_monitor DROP COLUMN batch_size;
+
+
+-- ----------------------------------</actual_patch> -------------------------------------------------
+
+
+    -- increase the schema version by one and register the patch:
+UPDATE hive_meta SET meta_value=meta_value+1 WHERE meta_key='hive_sql_schema_version';
+INSERT INTO hive_meta (meta_key, meta_value) SELECT CONCAT("patched_to_", meta_value), CURRENT_TIMESTAMP FROM hive_meta WHERE meta_key = "hive_sql_schema_version";

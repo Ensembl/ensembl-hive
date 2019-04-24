@@ -35,7 +35,7 @@ package Bio::EnsEMBL::Hive::NakedTable;
 use strict;
 use warnings;
 
-use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
+use base ( 'Bio::EnsEMBL::Hive::Storable' );
 
 
 sub unikey {    # override the default from Cacheable parent
@@ -63,13 +63,13 @@ sub insertion_method {
 }
 
 
-sub url {
-    my ($self, $ref_dba) = @_;  # if reference dba is the same as 'my' dba, a shorter url is generated
+sub url_query_params {
+     my ($self) = @_;
 
-    my $my_dba = $self->adaptor && $self->adaptor->db;
-    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->url : '' )
-        . '?table_name=' . $self->table_name
-        . ( $self->insertion_method ? '&insertion_method='.$self->insertion_method : '');
+     return {   # direct access to the actual (possibly missing) values
+        'table_name'            => $self->table_name,
+        'insertion_method'      => $self->{'_insertion_method'},
+     };
 }
 
 

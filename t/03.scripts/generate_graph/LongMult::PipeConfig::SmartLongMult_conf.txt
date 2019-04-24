@@ -1,0 +1,45 @@
+────────────────────[ (unstored smart_long_mult) ]────────────────────
+
+redirect_trivial_jobs
+ │
+ │
+ │#1
+ │
+ │ WHEN #b_multiplier# =~ /^0+$/
+ └─▻ {"result" => 0}
+ │   │
+ │   V
+ │  [[ final_result ]]
+ │
+ │ WHEN #b_multiplier# =~ /^10*$/
+ └─▻ {"result" => "#a_multiplier##expr(\"0\" x (length(#b_multiplier#)-1))expr#"}
+ │   │
+ │   V
+ │  [[ final_result ]]
+ │
+ │ ELSE
+ └─▻ take_b_apart
+     │  ║
+     │  ║
+     │  ║#2
+     │  ║
+     │  ║ WHEN #digit#>1
+     │├─╚═> part_multiply
+     │       │
+     │       │
+     │       │#1
+     │       │
+     │       V
+     │      <<-- partial_product{digit}:=product
+     │
+     │
+     │#1
+     │
+     V
+    add_together
+     │
+     │
+     │#1
+     │
+     V
+    [[ final_result ]]

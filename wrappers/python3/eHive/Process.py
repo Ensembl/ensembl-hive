@@ -1,4 +1,19 @@
 
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016-2019] EMBL-European Bioinformatics Institute
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import eHive.Params
 
 import os
@@ -9,7 +24,7 @@ import unittest
 import warnings
 import traceback
 
-__version__ = "0.2"
+__version__ = "3.0"
 
 __doc__ = """
 This module mainly implements python's counterpart of GuestProcess. Read
@@ -47,12 +62,12 @@ class BaseRunnable(object):
     # Private BaseRunnable interface
     #################################
 
-    def __init__(self, read_fileno, write_fileno):
+    def __init__(self, read_fileno, write_fileno, debug):
         # We need the binary mode to disable the buffering
         self.__read_pipe = os.fdopen(read_fileno, mode='rb', buffering=0)
         self.__write_pipe = os.fdopen(write_fileno, mode='wb', buffering=0)
         self.__pid = os.getpid()
-        self.debug = 0
+        self.debug = debug
         self.__process_life_cycle()
 
     def __print_debug(self, *args):

@@ -19,7 +19,10 @@
 use strict;
 use warnings;
 
-use Cwd;
+use Cwd            ();
+use File::Basename ();
+$ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
+
 use File::Basename;
 use Test::More;
 use Data::Dumper;
@@ -27,8 +30,13 @@ use File::Temp qw{tempdir};
 
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 
+SKIP: {
+    eval { require Bio::SeqIO; };
+
+    skip "Bioperl not installed", 2 if $@;
+
 # Where the Fasta file should be
-my $inputfile = File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ).'/input_fasta.fa';
+my $inputfile = $ENV{'EHIVE_ROOT_DIR'}.'/t/input_fasta.fa';
 
 my $dir = tempdir CLEANUP => 1;
 my $original = Cwd::getcwd;
@@ -272,8 +280,10 @@ is((stat($expected_filename))[7], (stat($inputfile))[7], 'file size of input == 
 @all_files = glob('test5_*.fa');
 is(@all_files, 1, 'exactly one output file - test 5 (like 1)');
 
+chdir $original;
+
+}
 
 done_testing();
 
-chdir $original;
 

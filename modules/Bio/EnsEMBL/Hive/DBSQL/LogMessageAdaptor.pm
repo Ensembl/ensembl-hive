@@ -6,9 +6,13 @@
 
 =head1 SYNOPSIS
 
-    $dba->get_LogMessageAdaptor->store_job_message($job_id, $msg, $is_error);
+    $dba->get_LogMessageAdaptor->store_job_message($job_id, $msg, $message_class);
 
-    $dba->get_LogMessageAdaptor->store_worker_message($worker, $msg, $is_error);
+    $dba->get_LogMessageAdaptor->store_worker_message($worker, $msg, $message_class);
+
+    $dba->get_LogMessageAdaptor->store_hive_message($msg, $message_class);
+
+    $dba->get_LogMessageAdaptor->store_beekeeper_message($beekeeper_id, $msg, $message_class, $status);
 
 =head1 DESCRIPTION
 
@@ -49,29 +53,34 @@ sub default_table_name {
 
 
 sub store_job_message {
-    my ($self, $job_id, $msg, $is_error) = @_;
+    my ($self, $job_id, $msg, $message_class) = @_;
 
-    chomp $msg;   # we don't want that last "\n" in the database
+    if($job_id) {
+        chomp $msg;   # we don't want that last "\n" in the database
 
-    my $table_name = $self->table_name();
+        my $table_name = $self->table_name();
 
-        # Note: the timestamp 'when_logged' column will be set automatically
-    my $sql = qq{
-        INSERT INTO $table_name (job_id, role_id, worker_id, retry, status, msg, is_error)
-                           SELECT job_id, role_id, worker_id, retry_count, status, ?, ?
-                             FROM job
-                             JOIN role USING(role_id)
-                            WHERE job_id=?
-    };
+            # Note: the timestamp 'when_logged' column will be set automatically
+        my $sql = qq{
+            INSERT INTO $table_name (job_id, role_id, worker_id, retry, status, msg, message_class)
+                               SELECT job_id, role_id, worker_id, retry_count, status, ?, ?
+                                 FROM job
+                                 JOIN role USING(role_id)
+                                WHERE job_id=?
+        };
 
-    my $sth = $self->prepare( $sql );
-    $sth->execute( $msg, $is_error ? 1 : 0, $job_id );
-    $sth->finish();
+        my $sth = $self->prepare( $sql );
+        $sth->execute( $msg, $message_class, $job_id );
+        $sth->finish();
+
+    } else {
+        $self->store_hive_message($msg, $message_class);
+    }
 }
 
 
 sub store_worker_message {
-    my ($self, $worker_or_id, $msg, $is_error) = @_;
+    my ($self, $worker_or_id, $msg, $message_class) = @_;
 
     my ($worker, $worker_id) = ref($worker_or_id) ? ($worker_or_id, $worker_or_id->dbID) : (undef, $worker_or_id);
     my $role_id   = $worker && $worker->current_role && $worker->current_role->dbID;
@@ -82,30 +91,48 @@ sub store_worker_message {
 
         # Note: the timestamp 'when_logged' column will be set automatically
     my $sql = qq{
-        INSERT INTO $table_name (worker_id, role_id, status, msg, is_error)
+        INSERT INTO $table_name (worker_id, role_id, status, msg, message_class)
                            SELECT worker_id, ?, status, ?, ?
                              FROM worker WHERE worker_id=?
     };
     my $sth = $self->prepare( $sql );
-    $sth->execute( $role_id, $msg, $is_error ? 1 : 0, $worker_id );
+    $sth->execute( $role_id, $msg, $message_class, $worker_id );
     $sth->finish();
 }
 
 
 sub store_hive_message {
-    my ($self, $msg, $is_error) = @_;
+    my ($self, $msg, $message_class) = @_;
 
     chomp $msg;   # we don't want that last "\n" in the database
 
-    my $table_name = $self->table_name();
-
         # Note: the timestamp 'when_logged' column will be set automatically
-    my $sql = qq{
-        INSERT INTO $table_name (status, msg, is_error) VALUES ('UNKNOWN', ?, ?)
+    my $log_message = {
+        'msg'           => $msg,
+        'message_class' => $message_class,
+        'status'        => 'UNKNOWN',
     };
-    my $sth = $self->prepare( $sql );
-    $sth->execute( $msg, $is_error ? 1 : 0 );
-    $sth->finish();
+    return $self->store($log_message);
+}
+
+sub store_beekeeper_message {
+    my ($self, $beekeeper_id, $msg, $message_class, $status) = @_;
+
+    chomp $msg;
+
+    my $log_message = {
+        'beekeeper_id'  => $beekeeper_id,
+        'msg'           => $msg,
+        'message_class' => $message_class,
+        'status'        => $status,
+    };
+    return $self->store($log_message);
+}
+
+sub count_analysis_events {
+    my ($self, $analysis_id, $message_class) = @_;
+
+    return $self->count_all("JOIN role USING (role_id) WHERE analysis_id = ? AND message_class = ?", undef, $analysis_id, $message_class);
 }
 
 1;

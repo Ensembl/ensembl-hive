@@ -21,19 +21,17 @@ use warnings;
 
 use Cwd;
 use Test::More;
-use File::Temp qw{tempdir};
 
 use Data::Dumper;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
-use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
+use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob get_test_url_or_die make_new_db_from_sqls run_sql_on_db);
 
-plan tests => 7;
+plan tests => 9;
 
 # Need EHIVE_ROOT_DIR to be able to point at specific files
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
-
-my $dir = tempdir CLEANUP => 1;
+my $input_job_factory = File::Basename::dirname( Cwd::realpath($0) ) . '/input_job_factory.sql';
 
 standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
@@ -245,7 +243,7 @@ my $l2 = q{ALTER TABLE analysis_stats ADD COLUMN failed_job_tolerance int(10) DE
 standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
     {
-        'inputfile'     => 'patch_2007-11-16.sql',  # We're still in the $EHIVE_ROOT_DIR/sql/ directory
+        'inputfile'     => $input_job_factory,
         'column_names'  => [ 'line' ],
     },
     # The files contains 3 lines but the last one is empty. JobFactory only
@@ -263,32 +261,38 @@ standaloneJob(
 );
 
 
-my $sqlite_url = "sqlite:///${dir}/test_db";
-my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $sqlite_url);
-system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE') });
-$dbc->do('CREATE TABLE params (key VARCHAR(15), value INT)');
+my $test_url = get_test_url_or_die();
 my ($k1, $v1) = ('one_key', 34);
 my ($k2, $v2) = ('another_key', -5);
-$dbc->do("INSERT INTO params VALUES ('$k1', $v1), ('$k2', $v2)");
+my $dbc = make_new_db_from_sqls(
+    $test_url,
+    [
+        'CREATE TABLE params (param_key VARCHAR(15), param_value INT)',
+        "INSERT INTO params VALUES ('$k1', $v1)",
+        "INSERT INTO params VALUES ('$k2', $v2)"
+    ],
+    'Dummy database with a single table and two rows'
+);
 
 standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
     {
         'inputquery'    => 'SELECT * FROM params',
-        'db_conn'       => $sqlite_url,
+        'db_conn'       => $test_url,
     },
     [
         [
             'DATAFLOW',
             [
-                { 'key' => $k1, 'value' => $v1 },
-                { 'key' => $k2, 'value' => $v2 },
+                { 'param_key' => $k1, 'param_value' => $v1 },
+                { 'param_key' => $k2, 'param_value' => $v2 },
             ],
             2
         ]
     ]
 );
-system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') });
+$dbc->disconnect_if_idle();
+run_sql_on_db($test_url, 'DROP DATABASE');
 
 done_testing();
 

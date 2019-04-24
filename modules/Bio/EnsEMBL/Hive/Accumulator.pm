@@ -37,7 +37,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Utils ('stringify');
 
-use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
+use base ( 'Bio::EnsEMBL::Hive::Storable' );
 
 
 sub unikey {    # override the default from Cacheable parent
@@ -75,17 +75,14 @@ sub accu_input_variable {
 }
 
 
-sub url {
-    my ($self, $ref_dba) = @_;  # if reference dba is the same as 'my' dba, a shorter url is generated
+sub url_query_params {
+     my ($self) = @_;
 
-    my $my_dba = $self->adaptor && $self->adaptor->db;
-    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->url : '' )
-        . '?'
-        . join('&',
-            'accu_name='.$self->accu_name,
-            ( $self->accu_address ? ('accu_address='.$self->accu_address) : () ),
-            'accu_input_variable='.$self->accu_input_variable,
-        );
+     return {   # direct access to the actual (possibly missing) values
+        'accu_name'             => $self->accu_name,
+        'accu_address'          => $self->{'_accu_address'},
+        'accu_input_variable'   => $self->{'_accu_input_variable'},
+     };
 }
 
 
@@ -101,30 +98,37 @@ sub display_name {
 sub dataflow {
     my ( $self, $output_ids, $emitting_job ) = @_;
 
-    my $sending_job_id      = $emitting_job->dbID;
-    my $receiving_job_id    = $emitting_job->semaphored_job_id || die "No semaphored job, cannot perform accumulated dataflow";
+    if(my $receiving_semaphore = $emitting_job->controlled_semaphore) {
 
-    my $accu_name           = $self->accu_name;
-    my $accu_address        = $self->accu_address;
-    my $accu_input_variable = $self->accu_input_variable;
+        my $sending_job_id          = $emitting_job->dbID;
+        my $receiving_semaphore_id  = $receiving_semaphore->dbID;
+        my $accu_adaptor            = $receiving_semaphore->adaptor->db->get_AccumulatorAdaptor;
 
-    my @rows = ();
+        my $accu_name           = $self->accu_name;
+        my $accu_address        = $self->accu_address;
+        my $accu_input_variable = $self->accu_input_variable;
 
-    foreach my $output_id (@$output_ids) {
+        my @rows = ();
 
-        my $key_signature = $accu_address;
-        $key_signature=~s/(\w+)/$emitting_job->_param_possibly_overridden($1,$output_id)/eg;
+        foreach my $output_id (@$output_ids) {
 
-        push @rows, {
-            'sending_job_id'    => $sending_job_id,
-            'receiving_job_id'  => $receiving_job_id,
-            'struct_name'       => $accu_name,
-            'key_signature'     => $key_signature,
-            'value'             => stringify( $emitting_job->_param_possibly_overridden($accu_input_variable, $output_id) ),
-        };
+            my $key_signature = $accu_address;
+            $key_signature=~s/(\w+)/$emitting_job->_param_possibly_overridden($1,$output_id)/eg;
+
+            push @rows, {
+                'sending_job_id'            => $sending_job_id,
+                'receiving_semaphore_id'    => $receiving_semaphore_id,
+                'struct_name'               => $accu_name,
+                'key_signature'             => $key_signature,
+                'value'                     => stringify( $emitting_job->_param_possibly_overridden($accu_input_variable, $output_id) ),
+            };
+        }
+
+        $accu_adaptor->store( \@rows );
+
+    } else {
+        die "No controlled semaphore, cannot perform accumulated dataflow";
     }
-
-    $self->adaptor->store( \@rows );
 }
 
 

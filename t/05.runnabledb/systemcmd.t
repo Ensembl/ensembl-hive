@@ -19,8 +19,14 @@
 use strict;
 use warnings;
 
+use Cwd            ();
+use File::Basename ();
+$ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
+
+use JSON;
 use Test::More;
 use Data::Dumper;
+use File::Temp qw/tempfile/;
 
 use Bio::EnsEMBL::Hive::Utils qw(stringify);
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
@@ -37,7 +43,7 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         [
             'WARNING',
             qr/^Could not start '${ctdne}': Can't exec "${ctdne}": No such file or directory at/,
-            1
+            'WORKER_ERROR'
         ],
     ],
     { 'expect_failure' => 1 },
@@ -51,7 +57,7 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         [
             'WARNING',
             qr/'ls ${ptdne}' resulted in an error code=\d+\nstderr is: ls: .+: No such file or directory/,
-            1
+            'WORKER_ERROR'
         ],
     ],
     { 'expect_failure' => 1 },
@@ -65,15 +71,44 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
     [
         [
             'DATAFLOW',
-            stringify($input_hash),
+            undef,
             -1,
         ],
         [
             'WARNING',
             qr/Java heap space is out of memory. A job has been dataflown to the -1 branch/,
-            0
+            'INFO'
         ],
     ],
+    {
+        'flow_into' => {
+                '-1' => [ 'dummy' ],
+            },
+    },
+);
+
+
+# Here we pretend we have a command that takes to omuch time to complete
+$input_hash = { 'cmd' => 'sleep 10', 'timeout' => 3 };
+standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+    $input_hash,
+    [
+        [
+            'DATAFLOW',
+            undef,
+            -2,
+        ],
+        [
+            'WARNING',
+            qr/The command was aborted because it exceeded the allowed runtime. Flowing to the -2 branch/,
+            'INFO'
+        ],
+    ],
+    {
+        'flow_into' => {
+                '-2' => [ 'dummy' ],
+            },
+    },
 );
 
 
@@ -93,12 +128,12 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
     $input_hash, [
         [
             'DATAFLOW',
-            stringify($input_hash),
+            undef,
             4,
         ], [
             'WARNING',
             "The command exited with code 1, which is mapped to a dataflow on branch #4.\n",
-            0,
+            'INFO',
         ],
     ],
 );
@@ -114,18 +149,57 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd', {
 $input_hash = {
     'cmd'                       => 'ls /_inexistent_; exit 0',
     'use_bash_errexit'          => 1,
-    'return_codes_2_branches'   => { 2 => 4 },
+    'return_codes_2_branches'   => {
+                                    2 => 4,     # on Linux
+                                    1 => 4      # on OSX
+                                   },
 };
 standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
     $input_hash, [
         [
             'DATAFLOW',
-            stringify($input_hash),
+            undef,
             4,
         ], [
             'WARNING',
-            "The command exited with code 2, which is mapped to a dataflow on branch #4.\n",
-            0,
+            qr/The command exited with code \d, which is mapped to a dataflow on branch #4.\n/,
+            'INFO',
+        ],
+    ],
+);
+
+
+my $json_formatter = JSON->new()->indent(0);
+my $array_of_hashes = [{'key1' => 1}, {"funny\nkey2" => [2,2]}];
+my ($fh, $filename) = tempfile(UNLINK => 1);
+print $fh $json_formatter->encode($array_of_hashes->[0]), "\n";
+print $fh '3 ', $json_formatter->encode($array_of_hashes->[0]), "\n";
+print $fh '-1 ', $json_formatter->encode($array_of_hashes->[1]), "\n";
+print $fh '1 ', $json_formatter->encode($array_of_hashes), "\n";
+close($fh);
+
+standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+    { 'cmd' => 'sleep 0', 'dataflow_file' => $filename },
+    [
+        [
+            'DATAFLOW',
+            $array_of_hashes->[0],
+            undef,
+        ],
+        [
+            'DATAFLOW',
+            $array_of_hashes->[0],
+            3,
+        ],
+        [
+            'DATAFLOW',
+            $array_of_hashes->[1],
+            -1,
+        ],
+        [
+            'DATAFLOW',
+            $array_of_hashes,
+            1,
         ],
     ],
 );

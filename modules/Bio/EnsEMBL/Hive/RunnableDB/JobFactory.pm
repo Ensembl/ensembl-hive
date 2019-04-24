@@ -136,8 +136,8 @@ sub run {
     my ($rows, $column_names_from_data) =
               $inputlist    ? $self->_get_rows_from_list(  $inputlist  )
             : $inputquery   ? $self->_get_rows_from_query( $inputquery )
-            : $inputfile    ? $self->_get_rows_from_open(  $inputfile  , $delimiter, $parse_column_names )
-            : $inputcmd     ? $self->_get_rows_from_open( ($self->param('use_bash_pipefail') ? 'set -o pipefail; ': '')."$inputcmd |", $delimiter, $parse_column_names )
+            : $inputfile    ? $self->_get_rows_from_open(  $inputfile  , '<', $delimiter, $parse_column_names )
+            : $inputcmd     ? $self->_get_rows_from_open( ($self->param('use_bash_pipefail') ? 'set -o pipefail; ': '').$inputcmd, '-|', $delimiter, $parse_column_names )
             : die "range of values should be defined by setting 'inputlist', 'inputquery', 'inputfile' or 'inputcmd'";
 
     if( $column_names_from_data                                             # column data is available
@@ -187,7 +187,7 @@ sub write_output {  # nothing to write out, but some dataflow to perform:
 
 
 =head2 _get_rows_from_list
-    
+
     Description: a private method that ensures the list is 2D
 
 =cut
@@ -202,7 +202,7 @@ sub _get_rows_from_list {
 
 
 =head2 _get_rows_from_query
-    
+
     Description: a private method that loads ids from a given sql query
 
     param('db_conn'): An optional hash to pass in connection parameters to the database upon which the query will have to be run.
@@ -212,13 +212,11 @@ sub _get_rows_from_list {
 sub _get_rows_from_query {
     my ($self, $inputquery) = @_;
 
-    if($self->debug()) {
-        warn qq{inputquery = "$inputquery"\n};
-    }
+    $self->say_with_header(qq{inputquery = "$inputquery"});
     my @rows = ();
     my $sth = $self->data_dbc()->prepare($inputquery);
     $sth->execute();
-    my @column_names_from_data = @{$sth->{NAME}};   # tear it off the original reference to gain some freedom
+    my @column_names_from_data = @{$sth->dbi_sth()->{'NAME'}};   # tear it off the original reference to gain some freedom
 
     while (my @cols = $sth->fetchrow_array()) {
         push @rows, \@cols;
@@ -232,26 +230,24 @@ sub _get_rows_from_query {
 
 
 =head2 _get_rows_from_open
-    
+
     Description: a private method that loads ids from a given file or command pipe
 
 =cut
 
 sub _get_rows_from_open {
-    my ($self, $input_file_or_pipe, $delimiter, $parse_header) = @_;
+    my ($self, $input_file_or_command, $open_mode, $delimiter, $parse_header) = @_;
 
-    if($self->debug()) {
-        warn qq{input_file_or_pipe = "$input_file_or_pipe"\n};
-    }
+    $self->say_with_header(qq{input_file_or_command = "$input_file_or_command" [$open_mode]});
     my @rows = ();
-    open(FILE, $input_file_or_pipe) or die "Could not open '$input_file_or_pipe' because: $!";
-    while(my $line = <FILE>) {
+    open(my $fh, $open_mode, $input_file_or_command) or die "Could not open '$input_file_or_command' because: $!";
+    while(my $line = <$fh>) {
         chomp $line;
 
         push @rows, [ defined($delimiter) ? split(/$delimiter/, $line) : $line ];
     }
-    close FILE
-        or die "Could not read from '$input_file_or_pipe'. Received the error ".($! || $?);
+    close $fh
+        or die "Could not read from $open_mode '$input_file_or_command'. Received the error ".($! || $?);
 
     my $column_names_from_data = $parse_header ? shift @rows : 0;
 
@@ -282,7 +278,7 @@ sub _substitute_rows {
 
 
 =head2 _substitute_minibatched_rows
-    
+
     Description: a private method that minibatches a list and transforms every minibatch using param-substitution
 
 =cut
@@ -336,7 +332,7 @@ sub _substitute_minibatched_rows {
 
 
 =head2 _fisher_yates_shuffle_in_place
-    
+
     Description: a private function (not a method) that shuffles a list of ids
 
 =cut

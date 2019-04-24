@@ -23,8 +23,6 @@ package Bio::EnsEMBL::Hive::Scripts::RunWorker;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Process;
-use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::Utils::Stopwatch;
 
 sub runWorker {
@@ -45,25 +43,15 @@ sub runWorker {
     my $queen = $hive_dba->get_Queen();
     die "No Queen, God Bless Her\n" unless $queen and $queen->isa('Bio::EnsEMBL::Hive::Queen');
 
-    my ($meadow_type, $meadow_name, $process_id, $meadow_host, $meadow_user) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
-    die "Valley is not fully defined" unless ($meadow_type && $meadow_name && $process_id && $meadow_host && $meadow_user);
-
-    if( $specialization_options->{'force_sync'} ) {       # sync the Hive in Test mode:
-        my $list_of_analyses = $pipeline->collection_of('Analysis')->find_all_by_pattern( $specialization_options->{'analyses_pattern'} );
-
-        $queen->synchronize_hive( $list_of_analyses );
-    }
-
     # Create the worker
     my $worker = $queen->create_new_worker(
-          # Worker identity:
-             -meadow_type           => $meadow_type,
-             -meadow_name           => $meadow_name,
-             -process_id            => $process_id,
-             -meadow_host           => $meadow_host,
-             -meadow_user           => $meadow_user,
+             -preregistered         => $specialization_options->{'preregistered'},
+             -config_files          => $execution_options->{'config_files'},
+
+          # Resource class:
              -resource_class_id     => $specialization_options->{'resource_class_id'},
              -resource_class_name   => $specialization_options->{'resource_class_name'},
+             -beekeeper_id          => $specialization_options->{'beekeeper_id'},
 
           # Worker control parameters:
              -job_limit             => $life_options->{'job_limit'},
@@ -74,6 +62,8 @@ sub runWorker {
              -hive_log_dir          => $execution_options->{'hive_log_dir'},
              -retry_throwing_jobs   => $life_options->{'retry_throwing_jobs'},
              -can_respecialize      => $specialization_options->{'can_respecialize'},
+             -worker_delay_startup_seconds  => $life_options->{'worker_delay_startup_seconds'},
+             -worker_crash_on_startup_prob  => $life_options->{'worker_crash_on_startup_prob'},
 
           # Other parameters:
              -debug                 => $execution_options->{'debug'},
@@ -89,12 +79,13 @@ sub runWorker {
         } );
         cleanup_if_needed($worker);
         _update_resource_usage($worker, $worker_stopwatch);
+        $hive_dba->dbc->disconnect_if_idle;
         1;
 
     } or do {
         my $msg = $@;
         eval {
-            $hive_dba->get_LogMessageAdaptor()->store_worker_message($worker, $msg, 1 );
+            $hive_dba->get_LogMessageAdaptor()->store_worker_message($worker, $msg, 'WORKER_ERROR' );
             $worker->cause_of_death( 'SEE_MSG' );
             $queen->register_worker_death($worker, 1);
         };
@@ -102,6 +93,7 @@ sub runWorker {
         cleanup_if_needed($worker);
         _update_resource_usage($worker, $worker_stopwatch, 'error');
 
+        $hive_dba->dbc->disconnect_if_idle;
         die $msg;
     };
 
@@ -142,6 +134,10 @@ sub _update_resource_usage {
             'cpu_sec'       => $res_self->utime + $res_self->stime + $res_child->utime + $res_child->stime,
             'lifespan_sec'  => $worker_stopwatch->get_elapsed(),
             'exception_status' => $exception_status,
+            #'file_blocks_in'   => $res_self->inblock + $res_child->inblock,     # Only blocks physically read. Blocks cached by the OS are not counted
+            #'file_blocks_out'  => $res_self->oublock + $res_child->oublock,
+            #'net_msg_sent'     => $res_self->msgsnd + $res_child->msgsnd,       # IPC messages sent: not used in the context of eHive Runnables
+            #'net_msg_rec'      => $res_self->msgrcv + $res_child->msgrcv,       # IPC messages received: not used in the context of eHive Runnables
         };
 
     } or eval {

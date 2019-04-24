@@ -57,14 +57,10 @@ use warnings;
 use Carp ('confess');
 use Data::Dumper;
 use Scalar::Util qw(looks_like_number);
-use Bio::EnsEMBL::Hive::Meadow;
-use Bio::EnsEMBL::Hive::Valley;
-use Bio::EnsEMBL::Hive::Version;
-use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 #use Bio::EnsEMBL::Hive::DBSQL::DBConnection;   # causes warnings that all exported functions have been redefined
 
 use Exporter 'import';
-our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage split_for_bash go_figure_dbc report_versions throw join_command_args);
+our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module split_for_bash go_figure_dbc throw join_command_args whoami timeout);
 
 no warnings ('once');   # otherwise the next line complains about $Carp::Internal being used just once
 $Carp::Internal{ (__PACKAGE__) }++;
@@ -74,6 +70,7 @@ $Carp::Internal{ (__PACKAGE__) }++;
 
     Description: This function takes in a Perl data structure and stringifies it using specific configuration
                  that allows us to store/recreate this data structure according to our specific storage/communication requirements.
+                 NOTE: Some recursive structures are not stringified in a way that allows destringification with destringify
 
     Callers    : Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor      # stringification of input_id() hash
                  Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf   # stringification of parameters() hash
@@ -197,7 +194,7 @@ sub find_submodules {
     my %seen_module_name = ();
 
     foreach my $inc (@INC) {
-        foreach my $full_module_path (<$inc/$prefix/*.pm>) {
+        foreach my $full_module_path (glob("$inc/$prefix/*.pm")) {
             my $module_name = substr($full_module_path, length($inc)+1, -3);    # remove leading "$inc/" and trailing '.pm'
             $module_name=~s{/}{::}g;                                            # transform back to module_name space
 
@@ -234,51 +231,20 @@ sub load_file_or_module {
                 $module_name = $1;
 
             } else {
-                warn "Package line format unrecognized:\n$package_line\n";
-                script_usage(1);
+                die "Package line format in '$file_or_module' unrecognized:\n$package_line\n";
             }
         } else {
-            warn "Could not find the package definition line in '$file_or_module'\n";
-            script_usage(1);
+            die "Could not find the package definition line in '$file_or_module'\n";
         }
 
     } else {
-        warn "The parameter '$file_or_module' neither seems to be a valid module nor a valid readable file\n";
-        script_usage(1);
+        die "The parameter '$file_or_module' neither seems to be a valid module nor a valid readable file\n";
     }
 
     eval "require $module_name;";
     die $@ if ($@);
 
     return $module_name;
-}
-
-
-=head2 script_usage
-
-    Description: This function takes one argument (return value).
-                It attempts to run perldoc on the current script, and if perldoc is not present, emulates its behaviour.
-                Then it exits with the return value given.
-
-    Callers    : scripts
-
-=cut
-
-sub script_usage {
-    my $retvalue = pop @_;
-
-    if(`which perldoc`) {
-        system('perldoc', $0);
-    } else {
-        foreach my $line (<main::DATA>) {
-            if($line!~s/\=\w+\s?//) {
-                $line = "\t$line";
-            }
-            print $line;
-        }
-        <main::DATA>;   # this is just to stop the 'used once' warnings
-    }
-    exit($retvalue);
 }
 
 
@@ -294,19 +260,30 @@ sub script_usage {
 sub split_for_bash {
     my $cmd = pop @_;
 
-    my @cmd = ($cmd =~ /((?:".*?"|'.*?'|\S)+)/g);   # split on space except for quoted strings
+    my @cmd = ();
 
-    foreach my $syll (@cmd) {                       # remove the outer quotes or apostrophes
-        if($syll=~/^(\S*?)"(.*?)"(\S*?)$/) {
-            $syll = $1 . $2 . $3;
-        } elsif($syll=~/^(\S*?)'(.*?)'(\S*?)$/) {
-            $syll = $1 . $2 . $3;
+    if( defined($cmd) ) {
+        @cmd = ($cmd =~ /((?:".*?"|'.*?'|\S)+)/g);   # split on space except for quoted strings
+
+        foreach my $syll (@cmd) {                       # remove the outer quotes or apostrophes
+            if($syll=~/^(\S*?)"(.*?)"(\S*?)$/) {
+                $syll = $1 . $2 . $3;
+            } elsif($syll=~/^(\S*?)'(.*?)'(\S*?)$/) {
+                $syll = $1 . $2 . $3;
+            }
         }
     }
 
     return @cmd;
 }
 
+
+=head2 go_figure_dbc
+
+    Description: This function tries its best to build a DBConnection from $foo
+                 It may need $reg_type if $foo is a Registry key and there are more than 1 DBAdaptors for it
+
+=cut
 
 sub go_figure_dbc {
     my ($foo, $reg_type) = @_;      # NB: the second parameter is used by a Compara Runnable
@@ -368,32 +345,6 @@ sub go_figure_dbc {
 }
 
 
-sub report_versions {
-    require Bio::EnsEMBL::Hive::Version;
-    require Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
-    require Bio::EnsEMBL::Hive::GuestProcess;
-    print "CodeVersion\t".Bio::EnsEMBL::Hive::Version->get_code_version()."\n";
-    print "CompatibleHiveDatabaseSchemaVersion\t".Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version()."\n";
-    print "CompatibleGuestLanguageCommunicationProtocolVersion\t".Bio::EnsEMBL::Hive::GuestProcess->get_protocol_version()."\n";
-
-    print "MeadowInterfaceVersion\t".Bio::EnsEMBL::Hive::Meadow->get_meadow_major_version()."\n";
-    my $meadow_class_path = Bio::EnsEMBL::Hive::Valley->meadow_class_path;
-    foreach my $meadow_class (@{ Bio::EnsEMBL::Hive::Valley->loaded_meadow_drivers }) {
-        $meadow_class=~/^${meadow_class_path}::(.+)$/;
-        my $meadow_driver   = $1;
-        my $meadow_version  = $meadow_class->get_meadow_version;
-        my $compatible      = $meadow_class->check_version_compatibility;
-        my $status          = $compatible
-                                ? ( $meadow_class->name
-                                    ? 'available'
-                                    : 'unavailable'
-                                   )
-                                : 'incompatible';
-        print '',join("\t", 'Meadow::'.$meadow_driver, $meadow_version, $status)."\n";
-    }
-}
-
-
 sub throw {
     my $msg = pop @_;
 
@@ -414,7 +365,7 @@ sub throw {
 
 =cut
 
-my %shell_characters = map {$_ => 1} qw(< > |);
+my %shell_characters = map {$_ => 1} qw(< > >> 2> 2>&1 | && || ;);
 
 sub join_command_args {
     my $args = shift;
@@ -437,6 +388,69 @@ sub join_command_args {
     }
 
     return ($join_needed,join(' ', @new_args));
+}
+
+
+=head2 whoami
+
+    Description: Returns the name of the user who's currently running Perl.
+                 $ENV{'USER'} is the most common source but it can be missing
+                 so we also default to a builtin method.
+
+=cut
+
+sub whoami {
+    return ($ENV{'USER'} || (getpwuid($<))[0]);
+}
+
+
+=head2 timeout
+
+    Argument[0]: (coderef) Callback subroutine
+    Argument[1]: (integer) Time to wait (in seconds)
+    Description: Calls the callback whilst ensuring it does not take more than the allowed time to run.
+    Returns:     The return value (scalar context) of the callback or -2 if the
+                 command had to be aborted.
+                 FIXME: may need a better mechanism that allows callbacks to return -2 too
+
+=cut
+
+sub timeout {
+    my ($callback, $timeout) = @_;
+    if (not $timeout) {
+        return $callback->();
+    }
+
+    my $ret;
+    ## Adapted from the TimeLimit pacakge: http://www.perlmonks.org/?node_id=74429
+    my $die_text = "_____RunCommandTimeLimit_____\n";
+    my $old_alarm = alarm(0);        # turn alarm off and read old value
+    {
+        local $SIG{ALRM} = 'IGNORE'; # ignore alarms in this scope
+
+        eval
+        {
+            local $SIG{__DIE__};     # turn die handler off in eval block
+            local $SIG{ALRM} = sub { die $die_text };
+            alarm($timeout);         # set alarm
+            $ret = $callback->();
+        };
+
+        # Note the alarm is still active here - however we assume that
+        # if we got here without an alarm the user's code succeeded -
+        # hence the IGNOREing of alarms in this scope
+
+        alarm 0;                     # kill off alarm
+    }
+
+    alarm $old_alarm;                # restore alarm
+
+    if ($@) {
+        # the eval returned an error
+        die $@ if $@ ne $die_text;
+        return -2;
+    }
+    return $ret;
 }
 
 

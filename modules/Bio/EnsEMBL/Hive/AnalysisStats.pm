@@ -42,7 +42,7 @@ use List::Util 'sum';
 use POSIX;
 use Term::ANSIColor;
 
-use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
+use base ( 'Bio::EnsEMBL::Hive::Storable' );
 
 
 sub unikey {    # override the default from Cacheable parent
@@ -71,25 +71,17 @@ sub dbID {
 }
 
 
-sub batch_size {
-    my $self = shift;
-    $self->{'_batch_size'} = shift if(@_);
-    $self->{'_batch_size'} = 1 unless(defined($self->{'_batch_size'})); # only initialize when undefined, so if defined as 0 will stay 0
-    return $self->{'_batch_size'};
-}
-
-sub hive_capacity {
-    my $self = shift;
-    $self->{'_hive_capacity'} = shift if(@_);
-    return $self->{'_hive_capacity'};
-}
-
 sub status {
     my $self = shift;
     $self->{'_status'} = shift if(@_);
     return $self->{'_status'};
 }
 
+sub is_excluded {
+    my $self = shift;
+    $self->{'_is_excluded'} = shift if (@_);
+    return $self->{'_is_excluded'};
+}
 
 ## counters of jobs in different states:
 
@@ -132,29 +124,7 @@ sub num_running_workers {
 }
 
 
-## dynamic hive_capacity mode attributes:
-
-
-sub behaviour {
-    my $self = shift;
-    $self->{'_behaviour'} = shift if(@_);
-    return $self->{'_behaviour'};
-}
-
-sub input_capacity {
-    my $self = shift;
-    $self->{'_input_capacity'} = shift if(@_);
-    return $self->{'_input_capacity'};
-}
-
-sub output_capacity {
-    my $self = shift;
-    $self->{'_output_capacity'} = shift if(@_);
-    return $self->{'_output_capacity'};
-}
-
-
-## dynamic hive_capacity mode counters:
+## runtime stats:
 
 
 sub avg_msec_per_job {
@@ -240,7 +210,7 @@ sub get_or_estimate_batch_size {
     my $self                = shift @_;
     my $remaining_job_count = shift @_ || 0;    # FIXME: a better estimate would be $self->claimed_job_count when it is introduced
 
-    my $batch_size = $self->batch_size;
+    my $batch_size = $self->analysis->batch_size;
 
     if( $batch_size > 0 ) {        # set to positive or not set (and auto-initialized within $self->batch_size)
 
@@ -279,7 +249,7 @@ sub estimate_num_required_workers {     # this 'max allowed' total includes the 
 
     my $num_required_workers = $self->ready_job_count + $remaining_job_count;   # this 'max' estimation can still be zero
 
-    my $h_cap = $self->hive_capacity;
+    my $h_cap = $self->analysis->hive_capacity;
     if( defined($h_cap) and $h_cap>=0) {  # what is the currently attainable maximum defined via hive_capacity?
         my $hive_current_load = $self->hive_pipeline->get_cached_hive_current_load();
         my $h_max = $self->num_running_workers + POSIX::floor( $h_cap * ( 1.0 - $hive_current_load ) );
@@ -331,6 +301,7 @@ my %analysis_status_2_meta_status = (
     'LOADING'       => 'READY',
     'SYNCHING'      => 'READY',
     'ALL_CLAIMED'   => 'BLOCKED',
+    'EXCLUDED'      => 'FAILED',
     'WORKING'       => 'RUNNING',
 );
 
@@ -393,18 +364,22 @@ sub friendly_avg_job_runtime {
 
 sub toString {
     my $self = shift @_;
-    my $max_logic_name_length = shift || 40;
 
     my $can_do_colour                                   = (-t STDOUT ? 1 : 0);
     my ($breakout_label, $total_job_count, $count_hash) = $self->job_count_breakout(24, $can_do_colour);
     my $analysis                                        = $self->analysis;
     my ($avg_runtime, $avg_runtime_unit)                = $self->friendly_avg_job_runtime;
+    my $max_logic_name_length                           = shift @_ || length($analysis->logic_name);
+    my $status_text                                     = $self->status;
+    if ($self->is_excluded) {
+        $status_text = 'EXCLUDED';
+    }
 
     my $output .= sprintf("%-${max_logic_name_length}s(%3d) %s, jobs( %s ), avg:%5.1f %-3s, workers(Running:%d, Est.Required:%d) ",
         $analysis->logic_name,
         $self->analysis_id // 0,
 
-        _text_with_status_color(11, $can_do_colour, $self->status, $analysis_status_2_meta_status{$self->status} || $self->status),
+        _text_with_status_color(11, $can_do_colour, $status_text, $analysis_status_2_meta_status{$status_text} || $status_text),
 
         $breakout_label,
 
@@ -413,7 +388,7 @@ sub toString {
         $self->num_running_workers,
         $self->estimate_num_required_workers,
     );
-    $output .=  '  h.cap:'    .( $self->hive_capacity // '-' )
+    $output .=  '  h.cap:'    .( $analysis->hive_capacity // '-' )
                .'  a.cap:'    .( $analysis->analysis_capacity // '-')
                ."  (sync'd "  .($self->seconds_since_when_updated // 0)." sec ago)";
 
@@ -422,7 +397,7 @@ sub toString {
 
 
 sub check_blocking_control_rules {
-    my $self = shift;
+    my ($self, $no_die) = @_;
   
     my $ctrl_rules = $self->analysis->control_rules_collection();
 
@@ -431,18 +406,27 @@ sub check_blocking_control_rules {
     if(scalar @$ctrl_rules) {    # there are blocking ctrl_rules to check
 
         foreach my $ctrl_rule (@$ctrl_rules) {
-                #use this method because the condition_analysis objects can be
-                #network distributed to a different database so use it's adaptor to get
-                #the AnalysisStats object
-            my $condition_analysis  = $ctrl_rule->condition_analysis;
-            my $condition_stats     = $condition_analysis && $condition_analysis->stats;
+
+            my $condition_analysis  = $ctrl_rule->condition_analysis(undef, $no_die);
+            unless ($condition_analysis) {
+                $all_conditions_satisfied = 0;
+                last
+            }
+
+            my $condition_stats     = $condition_analysis->stats;
+            unless ($condition_stats) {
+                $all_conditions_satisfied = 0;
+                last
+            }
+
             # Make sure we use fresh properties of the AnalysisStats object
             # (especially relevant in the case of foreign pipelines, since
             # local objects are periodically refreshed)
             $condition_stats->refresh();
-            my $condition_status    = $condition_stats    && $condition_stats->status;
-            my $condition_cbe       = $condition_analysis && $condition_analysis->can_be_empty;
-            my $condition_tjc       = $condition_stats    && $condition_stats->total_job_count;
+
+            my $condition_status    = $condition_stats->status;
+            my $condition_cbe       = $condition_analysis->can_be_empty;
+            my $condition_tjc       = $condition_stats->total_job_count;
 
             my $this_condition_satisfied = ($condition_status eq 'DONE')
                         || ($condition_cbe && !$condition_tjc);             # probably safer than saying ($condition_status eq 'EMPTY') because of the sync order
@@ -478,10 +462,6 @@ sub determine_status {
             my $absolute_tolerance = $analysis->failed_job_tolerance * $self->total_job_count / 100.0;
             if ($self->failed_job_count > $absolute_tolerance) {
                 $self->status('FAILED');
-                warn       "\n##################################################\n";
-                warn sprintf("##   ERROR: %-35s ##\n", $analysis->logic_name." failed!");
-                warn sprintf("##     %d jobs failed (tolerance: %d (%3d%%)) ##\n", $self->failed_job_count, $absolute_tolerance, $analysis->failed_job_tolerance);
-                warn         "##################################################\n\n";
             } else {
                 $self->status('DONE');
             }

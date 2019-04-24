@@ -40,7 +40,6 @@ package Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 use strict;
 use warnings;
 use Bio::EnsEMBL::Hive::Utils ('stringify');
-use Bio::EnsEMBL::Hive::DataflowRule;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
@@ -52,11 +51,6 @@ sub check_object_present_in_db_by_content {
 
 sub default_table_name {
     return 'dataflow_rule';
-}
-
-
-sub default_insertion_method {
-    return 'INSERT';
 }
 
 

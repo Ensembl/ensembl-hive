@@ -57,7 +57,7 @@ sub fetch_structures_for_job_ids {
 
     if( $job_ids_csv ) {
 
-        my $sql = "SELECT receiving_job_id, struct_name, key_signature, value FROM accu WHERE receiving_job_id in ($job_ids_csv)";
+        my $sql = "SELECT s.dependent_job_id, a.struct_name, a.key_signature, a.value FROM accu a JOIN semaphore s ON (s.semaphore_id=a.receiving_semaphore_id) WHERE s.dependent_job_id in ($job_ids_csv)";
         my $sth = $self->prepare( $sql );
         $sth->execute();
 

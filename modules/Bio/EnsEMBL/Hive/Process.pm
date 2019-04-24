@@ -101,7 +101,12 @@ package Bio::EnsEMBL::Hive::Process;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils ('stringify', 'go_figure_dbc', 'join_command_args');
+use File::Path qw(remove_tree);
+use JSON;
+use Scalar::Util qw(looks_like_number);
+use Time::HiRes qw(time);
+
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'go_figure_dbc', 'join_command_args', 'timeout');
 use Bio::EnsEMBL::Hive::Utils::Stopwatch;
 
 
@@ -125,10 +130,15 @@ sub life_cycle {
     $job->autoflow(1);
 
     eval {
+        # Catch all the "warn" calls
+        #$SIG{__WARN__} = sub { $self->warning(@_) };
+
         if( $self->can('pre_cleanup') and $job->retry_count()>0 ) {
             $self->enter_status('PRE_CLEANUP');
             $self->pre_cleanup;
         }
+
+        # PRE_HEALTHCHECK can come here
 
         $self->enter_status('FETCH_INPUT');
         $partial_stopwatch->restart();
@@ -140,7 +150,7 @@ sub life_cycle {
         $self->run;
         $job_partial_timing{'RUN'} = $partial_stopwatch->pause->get_elapsed;
 
-        if($self->execute_writes) {
+        if($self->worker->execute_writes) {
             $self->enter_status('WRITE_OUTPUT');
             $partial_stopwatch->restart();
             $self->write_output;
@@ -154,10 +164,12 @@ sub life_cycle {
             $self->say_with_header( ": *no* WRITE_OUTPUT requested, so there will be no AUTOFLOW" );
         }
     };
+    # Restore the default handler
+    #$SIG{__WARN__} = 'DEFAULT';
 
     if(my $life_cycle_msg = $@) {
         $job->died_somewhere( $job->incomplete );  # it will be OR'd inside
-        $self->warning( $life_cycle_msg, $job->incomplete );
+        Bio::EnsEMBL::Hive::Process::warning($self, $life_cycle_msg, $job->incomplete?'WORKER_ERROR':'INFO');     # In case the Runnable has redefined warning()
     }
 
     if( $self->can('post_cleanup') ) {   # may be run to clean up memory even after partially failed attempts
@@ -168,7 +180,7 @@ sub life_cycle {
         };
         if(my $post_cleanup_msg = $@) {
             $job->died_somewhere( $job->incomplete );  # it will be OR'd inside
-            $self->warning( $post_cleanup_msg, $job->incomplete );
+            Bio::EnsEMBL::Hive::Process::warning($self, $post_cleanup_msg, $job->incomplete?'WORKER_ERROR':'INFO');   # In case the Runnable has redefined warning()
         }
     }
 
@@ -201,7 +213,7 @@ sub say_with_header {
         if(my $worker = $self->worker) {
             $worker->worker_say( $msg );
         } else {
-            print STDERR "StandaloneJob $msg\n";
+            print "StandaloneJob $msg\n";
         }
     }
 }
@@ -223,20 +235,21 @@ sub enter_status {
 
 
 sub warning {
-    my ($self, $msg, $is_error) = @_;
+    my ($self, $msg, $message_class) = @_;
 
-    $is_error //= 0;
+    $message_class = 'WORKER_ERROR' if $message_class && looks_like_number($message_class);
+    $message_class ||= 'INFO';
     chomp $msg;
 
-    $self->say_with_header( ($is_error ? 'Fatal' : 'Warning')." : $msg", 1 );
+    $self->say_with_header( "$message_class : $msg", 1 );
 
     my $job = $self->input_job;
     my $worker = $self->worker;
 
     if(my $job_adaptor = ($job && $job->adaptor)) {
-        $job_adaptor->db->get_LogMessageAdaptor()->store_job_message($job->dbID, $msg, $is_error);
+        $job_adaptor->db->get_LogMessageAdaptor()->store_job_message($job->dbID, $msg, $message_class);
     } elsif(my $worker_adaptor = ($worker && $worker->adaptor)) {
-        $worker_adaptor->db->get_LogMessageAdaptor()->store_worker_message($worker, $msg, $is_error);
+        $worker_adaptor->db->get_LogMessageAdaptor()->store_worker_message($worker, $msg, $message_class);
     }
 }
 
@@ -359,20 +372,10 @@ sub worker {
 }
 
 
-=head2 execute_writes
-
-    Title   :   execute_writes
-    Usage   :   $self->execute_writes( 1 );
-    Function:   getter/setter for whether we want the 'write_output' method to be run
-    Returns :   boolean
-
-=cut
-
 sub execute_writes {
     my $self = shift;
 
-    $self->{'_execute_writes'} = shift if(@_);
-    return $self->{'_execute_writes'};
+    return $self->worker->execute_writes(@_);
 }
 
 
@@ -388,8 +391,7 @@ sub execute_writes {
 sub db {
     my $self = shift;
 
-    $self->{'_db'} = shift if(@_);
-    return $self->{'_db'};
+    return $self->worker->adaptor && $self->worker->adaptor->db(@_);
 }
 
 
@@ -425,6 +427,13 @@ sub data_dbc {
     my $given_ref = ref( $given_db_conn );
     my $given_signature = ($given_ref eq 'ARRAY' or $given_ref eq 'HASH') ? stringify ( $given_db_conn ) : "$given_db_conn";
 
+    if (!$self->param_is_defined('db_conn') and !$self->db and !$self->dbc) {
+        # go_figure_dbc won't be able to create a DBConnection, so let's
+        # just print a nicer error message
+        $self->input_job->transient_error(0);
+        throw('In standaloneJob mode, $self->data_dbc requires the -db_conn parameter to be defined on the command-line');
+    }
+
     if( !$self->{'_cached_db_signature'} or ($self->{'_cached_db_signature'} ne $given_signature) ) {
         $self->{'_cached_db_signature'} = $given_signature;
         $self->{'_cached_data_dbc'} = go_figure_dbc( $given_db_conn );
@@ -437,13 +446,16 @@ sub data_dbc {
 =head2 run_system_command
 
     Title   :  run_system_command
+    Arg[1]  :  (string or arrayref) Command to be run
+    Arg[2]  :  (hashref, optional) Options, amongst:
+                 - use_bash_pipefail: when enabled, a command with pipes will require all sides to succeed
+                 - use_bash_errexit: when enabled, will stop at the first failure (otherwise commands such as "do_something_that_fails; do_something_that_succeeds" would return 0)
+                 - timeout: the maximum number of seconds the command can run for. Will return the exit code -2 if the command has to be aborted
     Usage   :  my $return_code = $self->run_system_command('script.sh with many_arguments');   # Command as a single string
                my $return_code = $self->run_system_command(['script.sh', 'arg1', 'arg2']);     # Command as an array-ref
                my ($return_code, $stderr, $string_command) = $self->run_system_command(['script.sh', 'arg1', 'arg2']);     # Same in list-context. $string_command will be "script.sh arg1 arg2"
                my $return_code = $self->run_system_command('script1.sh with many_arguments | script2.sh', {'use_bash_pipefail' => 1});  # Command with pipes evaluated in a bash "pipefail" environment
-    Function:  Runs a command given as a single-string or an array-ref. The second argument is
-               a list of options. Currently only "use_bash_pipefail" is supported (to change the
-               way the exit-code is computed when the command contains pipes (bash-only)).
+    Function:  Runs a command given as a single-string or an array-ref. The second argument is a list of options
     Returns :  Returns the return-code in scalar context, or a triplet (return-code, standard-error, command) in list context
 
 =cut
@@ -477,11 +489,13 @@ sub run_system_command {
 
     # Capture:Tiny has weird behavior if 'require'd instead of 'use'd
     # see, for example,http://www.perlmonks.org/?node_id=870439 
-    my $stderr = Capture::Tiny::tee_stderr(sub {
-        $return_value = system(@cmd_to_run);
+    my $starttime = time() * 1000;
+    my ($stdout, $stderr) = Capture::Tiny::tee(sub {
+        $return_value = timeout( sub {system(@cmd_to_run)}, $options->{'timeout'} );
     });
+    die sprintf("Could not run '%s', got %s\nSTDERR %s\n", $flat_cmd, $return_value, $stderr) if $return_value && $options->{die_on_failure};
 
-    return ($return_value, $stderr, $flat_cmd) if wantarray;
+    return ($return_value, $stderr, $flat_cmd, $stdout, time()*1000-$starttime) if wantarray;
     return $return_value;
 }
 
@@ -554,8 +568,42 @@ sub param_substitute {
 sub dataflow_output_id {
     my $self = shift @_;
 
-    $self->say_with_header(sprintf("Dataflow on branch #%d of %s", $_[1] || 1, stringify($_[0])));
+    # Let's not spend time stringifying a large object if it's not going to be printed anyway
+    $self->say_with_header('Dataflow on branch #' . ($_[1] // 1) . (defined $_[0] ? ' of ' . stringify($_[0]) : ' (no parameters -> input parameters repeated)')) if $self->debug;
     return $self->input_job->dataflow_output_id(@_);
+}
+
+
+=head2 dataflow_output_ids_from_json
+
+    Title   :  dataflow_output_ids_from_json
+    Arg[1]  :  File name
+    Arg[2]  :  (optional) Branch number, defaults to 1 (see L<AnalysisJob::dataflow_output_id>)
+    Function:  Wrapper around L<dataflow_output_id> that takes the output_ids from a JSON file.
+               Each line in the JSON file is expected to be a complete JSON structure, which
+               may be prefixed with a branch number
+
+=cut
+
+sub dataflow_output_ids_from_json {
+    my ($self, $filename, $default_branch) = @_;
+
+    my $json_formatter = JSON->new()->indent(0);
+    my @output_job_ids;
+    open(my $fh, '<', $filename) or die "Could not open '$filename' because: $!";
+    while (my $l = $fh->getline()) {
+        chomp $l;
+        my $branch = $default_branch;
+        my $json = $l;
+        if ($l =~ /^(-?\d+)\s+(.*)$/) {
+            $branch = $1;
+            $json = $2;
+        }
+        my $hash = $json_formatter->decode($json);
+        push @output_job_ids, @{ $self->dataflow_output_id($hash, $branch) };
+    }
+    close($fh);
+    return \@output_job_ids;
 }
 
 
@@ -566,9 +614,24 @@ sub throw {
 }
 
 
-sub complete_early {
-    my ($self, $msg) = @_;
+=head2 complete_early
 
+  Arg[1]      : (string) message
+  Arg[2]      : (integer, optional) branch number
+  Description : Ends the job with the given message, whilst marking the job as complete
+                Dataflows to the given branch right before if a branch number if given,
+                in which case the autoflow is disabled too.
+  Returntype  : This function does not return
+
+=cut
+
+sub complete_early {
+    my ($self, $msg, $branch_code) = @_;
+
+    if (defined $branch_code) {
+        $self->dataflow_output_id(undef, $branch_code);
+        $self->input_job->autoflow(0);
+    }
     $self->input_job->incomplete(0);
     die $msg;
 }
@@ -586,9 +649,7 @@ sub complete_early {
 sub debug {
     my $self = shift;
 
-    $self->{'_debug'} = shift if(@_);
-    $self->{'_debug'}=0 unless(defined($self->{'_debug'}));  
-    return $self->{'_debug'};
+    return $self->worker->debug(@_);
 }
 
 
@@ -625,9 +686,7 @@ sub worker_temp_directory {
 sub worker_temp_directory_name {
     my $self = shift @_;
 
-    my $username = $ENV{'USER'};
-    my $worker_id = $self->worker ? $self->worker->dbID : "standalone.$$";
-    return "/tmp/worker_${username}.${worker_id}/";
+    return $self->worker->temp_directory_name;
 }
 
 
@@ -645,7 +704,7 @@ sub cleanup_worker_temp_directory {
 
     my $tmp_dir = $self->worker_temp_directory_name();
     if(-e $tmp_dir) {
-        system('rm', '-r', $tmp_dir);
+        remove_tree($tmp_dir, {error => undef});
     }
 }
 

@@ -22,6 +22,7 @@ use warnings;
 use Cwd;
 use File::Basename;
 use Test::More;
+use Test::Warn;
 use Data::Dumper;
 
 BEGIN {
@@ -47,7 +48,8 @@ my $simple = $config->load_from_json($json);
 isa_ok($simple, 'HASH');
 ok(exists($simple->{'Meadow'}), 'exists');
 
-my $simpler = $config->load_from_json($json . '.notexist');
+my $simpler;
+warning_like { $simpler = $config->load_from_json($json . '.notexist') } qr/Can't read from '$json\.notexist'/;
 is($simpler, undef, 'undef, but no death');
 
 $config->merge($simple);

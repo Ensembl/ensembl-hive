@@ -34,7 +34,7 @@ FOR EACH ROW
         ready_job_count         = ready_job_count       + (CASE NEW.status WHEN 'READY'         THEN 1                         ELSE 0 END),
         done_job_count          = done_job_count        + (CASE NEW.status WHEN 'DONE'          THEN 1 WHEN 'PASSED_ON' THEN 1 ELSE 0 END),
         failed_job_count        = failed_job_count      + (CASE NEW.status WHEN 'FAILED'        THEN 1                         ELSE 0 END),
-        status                  = (CASE WHEN status!='BLOCKED' THEN 'LOADING' ELSE 'BLOCKED' END)
+        status                  = (CASE WHEN status='EMPTY' THEN 'READY' ELSE status END)
     WHERE analysis_id = NEW.analysis_id;
 
 
@@ -47,6 +47,8 @@ FOR EACH ROW
         done_job_count          = done_job_count        - (CASE OLD.status WHEN 'DONE'          THEN 1 WHEN 'PASSED_ON' THEN 1 ELSE 0 END),
         failed_job_count        = failed_job_count      - (CASE OLD.status WHEN 'FAILED'        THEN 1                         ELSE 0 END)
     WHERE analysis_id = OLD.analysis_id;
+
+
 
 DELIMITER $$
 
@@ -69,23 +71,27 @@ FOR EACH ROW
                 failed_job_count        = failed_job_count      + (CASE NEW.status WHEN 'FAILED'        THEN 1                         ELSE 0 END)
             WHERE analysis_id = NEW.analysis_id;
         END;
+    ELSE BEGIN END;
     END CASE$$
 
 DELIMITER ;
 
-CREATE TRIGGER add_worker AFTER INSERT ON worker
+
+
+CREATE TRIGGER add_role AFTER INSERT ON role
 FOR EACH ROW
     UPDATE analysis_stats SET
         num_running_workers = num_running_workers + 1
     WHERE analysis_id = NEW.analysis_id;
 
-CREATE TRIGGER update_worker AFTER UPDATE ON worker
+
+CREATE TRIGGER update_role AFTER UPDATE ON role
 FOR EACH ROW
     UPDATE analysis_stats SET
         num_running_workers = num_running_workers - 1
     WHERE analysis_id = NEW.analysis_id
-      AND OLD.status <> 'DEAD'
-      AND NEW.status =  'DEAD';
+      AND OLD.when_finished IS NULL
+      AND NEW.when_finished IS NOT NULL;
 
 
     -- inform the runtime part of the system that triggers are in place:

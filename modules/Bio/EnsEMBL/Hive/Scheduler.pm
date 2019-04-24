@@ -39,8 +39,8 @@ use warnings;
 
 use List::Util ('shuffle');
 
-use Bio::EnsEMBL::Hive::Valley;
 use Bio::EnsEMBL::Hive::Limiter;
+use Bio::EnsEMBL::Hive::Utils;
 
 
 sub scheduler_say {
@@ -57,11 +57,11 @@ sub scheduler_say {
 sub schedule_workers_resync_if_necessary {
     my ($queen, $valley, $list_of_analyses) = @_;
 
-    my $meadow_type_2_name_2_users              = $queen->meadow_type_2_name_2_users_of_running_workers();
+    my $reconciled_worker_statuses              = $valley->query_worker_statuses( $queen->registered_workers_attributes );
     my $submit_capacity                         = $valley->config_get('SubmitWorkersMax');
     my $default_meadow_type                     = $valley->get_default_meadow()->type;
     my ($valley_running_worker_count,
-        $meadow_capacity_limiter_hashed_by_type)= $valley->count_running_workers_and_generate_limiters( $meadow_type_2_name_2_users );
+        $meadow_capacity_limiter_hashed_by_type)= $valley->generate_limiters( $reconciled_worker_statuses );
 
     my ($workers_to_submit_by_analysis, $workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
         = schedule_workers($queen, $submit_capacity, $default_meadow_type, $list_of_analyses, $meadow_capacity_limiter_hashed_by_type);
@@ -75,9 +75,9 @@ sub schedule_workers_resync_if_necessary {
         scheduler_say( "re-synchronizing..." );
         $queen->synchronize_hive( $list_of_analyses );
 
-        if( $queen->db->hive_pipeline->hive_auto_rebalance_semaphores ) {  # make sure rebalancing only ever happens for the pipelines that asked for it
-            if( $queen->check_nothing_to_run_but_semaphored( $list_of_analyses ) ) { # and double-check on our side
-                scheduler_say( "looks like we may need re-balancing semaphore_counts..." );
+        if( $queen->check_nothing_to_run_but_semaphored( $list_of_analyses ) ) { # double-check that we are really stuck
+            scheduler_say( "looks like we may need re-balancing semaphore_counts..." );
+            if( $queen->db->hive_pipeline->hive_auto_rebalance_semaphores ) {  # make sure rebalancing only ever happens for the pipelines that asked for it
                 if( my $rebalanced_jobs_counter = $queen->db->get_AnalysisJobAdaptor->balance_semaphores( $list_of_analyses ) ) {
                     scheduler_say( "re-balanced $rebalanced_jobs_counter jobs, going through another re-synchronization..." );
                     $queen->synchronize_hive( $list_of_analyses );
@@ -85,11 +85,13 @@ sub schedule_workers_resync_if_necessary {
                     scheduler_say( "hmmm... managed to re-balance 0 jobs, you may need to investigate further." );
                 }
             } else {
-                scheduler_say( "apparently there are no semaphored jobs that may need to be re-balanced at this time." );
+                scheduler_say([ "automatic re-balancing of semaphore_counts is off by default.",
+                                "If you think your pipeline might benefit from it, set hive_auto_rebalance_semaphores => 1 in the PipeConfig's hive_meta_table.",
+                                "You can also manually rebalance semaphores this time by running beekeeper with the '--balance_semaphores' option",
+                            ]);
             }
         } else {
-            scheduler_say( [ "automatic re-balancing of semaphore_counts is off by default.",
-                            "If you think your pipeline might benefit from it, set hive_auto_rebalance_semaphores => 1 in the PipeConfig's hive_meta_table." ] );
+            scheduler_say( "some READY jobs still in the queue. No need to consider re-balancing at this time." );
         }
 
         ($workers_to_submit_by_analysis, $workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
@@ -99,7 +101,7 @@ sub schedule_workers_resync_if_necessary {
     }
 
         # adjustment for pending workers:
-    my ($pending_worker_counts_by_meadow_type_rc_name, $total_pending_all_meadows)  = $valley->get_pending_worker_counts_by_meadow_type_rc_name();
+    my $pending_worker_counts_by_meadow_type_rc_name    = $queen->get_submitted_worker_counts_by_meadow_type_rc_name_for_meadow_user(Bio::EnsEMBL::Hive::Utils::whoami());
 
     while( my ($this_meadow_type, $partial_workers_to_submit_by_rc_name) = each %$workers_to_submit_by_meadow_type_rc_name) {
         while( my ($this_rc_name, $workers_to_submit_this_group) = each %$partial_workers_to_submit_by_rc_name) {
@@ -213,16 +215,6 @@ sub schedule_workers {
                 next ANALYSIS;
             }
 
-            # If the analysis is synching, just wait (at most 50 seconds) until the sync is done
-            if ($analysis_stats->sync_lock) {
-                my $max_refresh_attempts = 5;
-                do {
-                    sleep(10);
-                    $analysis_stats->refresh();
-                } while($analysis_stats->sync_lock and $max_refresh_attempts--);   # another Worker/Beekeeper is synching this analysis right now
-
-            } else {
-
                 push @$log_buffer, "Analysis '$logic_name' is ".$analysis_stats->status.", safe-synching it...";
 
                 # Do a (safe) sync to get up-to-date job-counts and status
@@ -235,7 +227,6 @@ sub schedule_workers {
                 } else {
                     push @$log_buffer, "Safe-sync of Analysis '$logic_name' could not be run at this moment, will use old stats.";
                 }
-            }
 
             if( ($analysis_stats->status eq 'BLOCKED') or (($analysis_stats->sync_lock) and scalar(@{ $analysis->control_rules_collection() }))) {
                 push @$log_buffer, "Analysis '$logic_name' is still ".$analysis_stats->status.", skipping it.";
@@ -253,7 +244,7 @@ sub schedule_workers {
             $total_extra_workers_required += $extra_workers_this_analysis;    # also keep the total number required so far (if nothing required we may need a resync later)
 
                 # setting up all negotiating limiters:
-            $queen_capacity_limiter->multiplier( $analysis_stats->hive_capacity );
+            $queen_capacity_limiter->multiplier( $analysis->hive_capacity );
             my @limiters = (
                 $submit_capacity_limiter,
                 $queen_capacity_limiter,

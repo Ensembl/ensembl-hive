@@ -18,7 +18,7 @@
 
     Each worker is linked to an analysis_id, registers its self on creation
     into the Hive, creates a RunnableDB instance of the Analysis->module,
-    gets $analysis->stats->batch_size jobs from the job table, does its work,
+    gets $analysis->batch_size jobs from the job table, does its work,
     creates the next layer of job entries by interfacing to
     the DataflowRuleAdaptor to determine the analyses it needs to pass its
     output data to and creates jobs on the next analysis database.
@@ -71,22 +71,37 @@ use warnings;
 use File::Path 'make_path';
 use List::Util qw(max);
 
-use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash');  # NB: needed by invisible code
+use Bio::EnsEMBL::Hive::Utils::Config;
+use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash', 'whoami');  # NB: needed by invisible code
 use Bio::EnsEMBL::Hive::Role;
 use Bio::EnsEMBL::Hive::Scheduler;
+use Bio::EnsEMBL::Hive::Valley;
 use Bio::EnsEMBL::Hive::Worker;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
-
 
 sub default_table_name {
     return 'worker';
 }
 
 
-sub default_insertion_method {
-    return 'INSERT';
+sub default_input_column_mapping {
+    my $self    = shift @_;
+    my $driver  = $self->dbc->driver();
+    return  {
+        'when_submitted' => {
+                            'mysql'     => "UNIX_TIMESTAMP()-UNIX_TIMESTAMP(when_submitted) seconds_since_when_submitted ",
+                            'sqlite'    => "strftime('%s','now')-strftime('%s',when_submitted) seconds_since_when_submitted ",
+                            'pgsql'     => "EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - when_submitted) seconds_since_when_submitted ",
+        }->{$driver},
+    };
 }
+
+
+sub do_not_update_columns {
+    return ['when_submitted'];
+}
+
 
 
 sub object_class {
@@ -116,13 +131,29 @@ sub create_new_worker {
     my $self    = shift @_;
     my %flags   = @_;
 
-    my ($meadow_type, $meadow_name, $process_id, $meadow_host, $meadow_user, $resource_class_id, $resource_class_name,
-        $no_write, $debug, $worker_log_dir, $hive_log_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $can_respecialize)
-     = @flags{qw(-meadow_type -meadow_name -process_id -meadow_host -meadow_user -resource_class_id -resource_class_name
-            -no_write -debug -worker_log_dir -hive_log_dir -job_limit -life_span -no_cleanup -retry_throwing_jobs -can_respecialize)};
+    my ($preregistered, $resource_class_id, $resource_class_name, $beekeeper_id,
+            $no_write, $debug, $worker_log_dir, $hive_log_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $can_respecialize,
+            $worker_delay_startup_seconds, $worker_crash_on_startup_prob, $config_files)
+     = @flags{qw(-preregistered -resource_class_id -resource_class_name -beekeeper_id
+            -no_write -debug -worker_log_dir -hive_log_dir -job_limit -life_span -no_cleanup -retry_throwing_jobs -can_respecialize
+            -worker_delay_startup_seconds -worker_crash_on_startup_prob -config_files)};
 
-    foreach my $prev_worker_incarnation (@{ $self->fetch_all( "status!='DEAD' AND meadow_type='$meadow_type' AND meadow_name='$meadow_name' AND process_id='$process_id'" ) }) {
-            # so far 'RELOCATED events' has been detected on LSF 9.0 in response to sending signal #99 or #100
+    sleep( $worker_delay_startup_seconds // 0 );    # NB: undefined parameter would have caused eternal sleep!
+
+    if( defined( $worker_crash_on_startup_prob ) ) {
+        if( rand(1) < $worker_crash_on_startup_prob ) {
+            die "This is a requested crash of the Worker (with probability=$worker_crash_on_startup_prob)";
+        }
+    }
+
+    my $default_config = Bio::EnsEMBL::Hive::Utils::Config->new(@$config_files);
+    my ($meadow, $process_id, $meadow_host, $meadow_user) = Bio::EnsEMBL::Hive::Valley->new( $default_config )->whereami();
+    die "Valley is not fully defined" unless ($meadow && $process_id && $meadow_host && $meadow_user);
+    my $meadow_type = $meadow->type;
+    my $meadow_name = $meadow->cached_name;
+
+    foreach my $prev_worker_incarnation (@{ $self->find_previous_worker_incarnations($meadow_type, $meadow_name, $process_id) }) {
+            # So far 'RELOCATED events' has been detected on LSF 9.0 in response to sending signal #99 or #100
             # Since I don't know how to avoid them, I am trying to register them when they happen.
             # The following snippet buries the previous incarnation of the Worker before starting a new one.
             #
@@ -133,42 +164,68 @@ sub create_new_worker {
         $self->register_worker_death( $prev_worker_incarnation );
     }
 
-    my $resource_class;
+    my $worker;
 
-    if( defined($resource_class_name) ) {
-        $resource_class = $self->db->get_ResourceClassAdaptor->fetch_by_name($resource_class_name)
-            or die "resource_class with name='$resource_class_name' could not be fetched from the database";
-    } elsif( defined($resource_class_id) ) {
-        $resource_class = $self->db->get_ResourceClassAdaptor->fetch_by_dbID($resource_class_id)
-            or die "resource_class with dbID='$resource_class_id' could not be fetched from the database";
+    if($preregistered) {
+
+        my $max_registration_seconds    = $meadow->config_get('MaxRegistrationSeconds');
+        my $seconds_waited              = 0;
+        my $seconds_more                = 5;    # step increment
+
+        until( $worker = $self->fetch_preregistered_worker($meadow_type, $meadow_name, $process_id) ) {
+            my $log_message_adaptor = $self->db->get_LogMessageAdaptor;
+            if( defined($max_registration_seconds) and ($seconds_waited > $max_registration_seconds) ) {
+                my $msg = "Preregistered Worker $meadow_type/$meadow_name:$process_id timed out waiting to occupy its entry, bailing out";
+                $log_message_adaptor->store_hive_message($msg, 'WORKER_ERROR' );
+                die $msg;
+            } else {
+                $log_message_adaptor->store_hive_message("Preregistered Worker $meadow_type/$meadow_name:$process_id waiting $seconds_more more seconds to fetch itself...", 'WORKER_CAUTION' );
+                sleep($seconds_more);
+                $seconds_waited += $seconds_more;
+            }
+        }
+
+            # only update the fields that were not available at the time of submission:
+        $worker->meadow_host( $meadow_host );
+        $worker->meadow_user( $meadow_user );
+        $worker->when_born(   'CURRENT_TIMESTAMP' );
+        $worker->status(      'READY' );
+
+        $self->update( $worker );
+
+    } else {
+        my $resource_class;
+
+        if( defined($resource_class_name) ) {
+            $resource_class = $self->db->hive_pipeline->collection_of('ResourceClass')->find_one_by('name' => $resource_class_name)
+                or die "resource_class with name='$resource_class_name' could not be fetched from the database";
+        } elsif( defined($resource_class_id) ) {
+            $resource_class = $self->db->hive_pipeline->collection_of('ResourceClass')->find_one_by('dbID', $resource_class_id)
+                or die "resource_class with dbID='$resource_class_id' could not be fetched from the database";
+        }
+
+        $worker = Bio::EnsEMBL::Hive::Worker->new(
+            'meadow_type'       => $meadow_type,
+            'meadow_name'       => $meadow_name,
+            'process_id'        => $process_id,
+            'resource_class'    => $resource_class,
+            'beekeeper_id'      => $beekeeper_id,
+
+            'meadow_host'       => $meadow_host,
+            'meadow_user'       => $meadow_user,
+        );
+
+        if (ref($self)) {
+            $self->store( $worker );
+
+            $worker->when_born(   'CURRENT_TIMESTAMP' );
+            $self->update_when_born( $worker );
+
+            $self->refresh( $worker );
+        }
     }
 
-    my $worker = Bio::EnsEMBL::Hive::Worker->new(
-        'meadow_type'       => $meadow_type,
-        'meadow_name'       => $meadow_name,
-        'meadow_host'       => $meadow_host,
-        'meadow_user'       => $meadow_user,
-        'process_id'        => $process_id,
-        'resource_class'    => $resource_class,
-    );
-    $self->store( $worker );
-    my $worker_id = $worker->dbID;
-
-    $worker = $self->fetch_by_dbID( $worker_id )    # refresh the object to get the fields initialized at SQL level (timestamps in this case)
-        or die "Could not fetch worker with dbID=$worker_id";
-
-    if($hive_log_dir or $worker_log_dir) {
-        my $dir_revhash = dir_revhash($worker_id);
-        $worker_log_dir ||= $hive_log_dir .'/'. ($dir_revhash ? "$dir_revhash/" : '') .'worker_id_'.$worker_id;
-
-        eval {
-            make_path( $worker_log_dir );
-            1;
-        } or die "Could not create '$worker_log_dir' directory : $@";
-
-        $worker->log_dir( $worker_log_dir );
-        $self->update_log_dir( $worker );   # autoloaded
-    }
+    $worker->set_log_directory_name($hive_log_dir, $worker_log_dir);
 
     $worker->init;
 
@@ -217,7 +274,7 @@ sub specialize_worker {
 
     if( $job_id ) {
 
-        warn "resetting and fetching job for job_id '$job_id'\n";
+        $worker->worker_say("resetting and fetching job for job_id '$job_id'");
 
         my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
 
@@ -228,17 +285,17 @@ sub specialize_worker {
         if($job_status =~/(CLAIMED|PRE_CLEANUP|FETCH_INPUT|RUN|WRITE_OUTPUT|POST_HEALTHCHECK|POST_CLEANUP)/ ) {
             die "Job with dbID='$job_id' is already in progress, cannot run";   # FIXME: try GC first, then complain
         } elsif($job_status =~/(DONE|SEMAPHORED)/ and !$force) {
-            die "Job with dbID='$job_id' is $job_status, please use -force 1 to override";
+            die "Job with dbID='$job_id' is $job_status, please use --force to override";
         }
 
         $analysis = $job->analysis;
         if(($analysis->stats->status eq 'BLOCKED') and !$force) {
-            die "Analysis is BLOCKED, can't specialize a worker. Please use -force 1 to override";
+            die "Analysis is BLOCKED, can't specialize a worker. Please use --force to override";
         }
 
-        if(($job_status eq 'DONE') and $job->semaphored_job_id) {
-            warn "Increasing the semaphore count of the dependent job";
-            $job_adaptor->increase_semaphore_count_for_jobid( $job->semaphored_job_id );
+        if(($job_status eq 'DONE') and my $controlled_semaphore = $job->controlled_semaphore) {
+            $worker->worker_say("Increasing the semaphore count of the dependent job");
+            $controlled_semaphore->increase_by( [ $job ] );
         }
 
         my %status2counter = ('FAILED' => 'failed_job_count', 'READY' => 'ready_job_count', 'DONE' => 'done_job_count', 'PASSED_ON' => 'done_job_count', 'SEMAPHORED' => 'semaphored_job_count');
@@ -247,7 +304,7 @@ sub specialize_worker {
     } else {
 
         $analyses_pattern //= '%';  # for printing
-        my $analyses_matching_pattern   = $self->db->hive_pipeline->collection_of( 'Analysis' )->find_all_by_pattern( $analyses_pattern );
+        my $analyses_matching_pattern   = $worker->hive_pipeline->collection_of( 'Analysis' )->find_all_by_pattern( $analyses_pattern );
 
             # refresh the stats of matching analyses before re-specialization:
         foreach my $analysis ( @$analyses_matching_pattern ) {
@@ -317,7 +374,7 @@ sub register_worker_death {
         # List of cause_of_death:
         # only happen before or after a batch: 'NO_ROLE','NO_WORK','JOB_LIMIT','HIVE_OVERLOAD','LIFESPAN','SEE_MSG'
         # can happen whilst the worker is running a batch: 'CONTAMINATED','RELOCATED','KILLED_BY_USER','MEMLIMIT','RUNLIMIT','SEE_MSG','UNKNOWN'
-        my $release_undone_jobs = ($cause_of_death =~ /^(CONTAMINATED|RELOCATED|KILLED_BY_USER|MEMLIMIT|RUNLIMIT|SEE_MSG|UNKNOWN)$/);
+        my $release_undone_jobs = ($cause_of_death =~ /^(CONTAMINATED|RELOCATED|KILLED_BY_USER|MEMLIMIT|RUNLIMIT|SEE_MSG|UNKNOWN|SEE_EXIT_STATUS)$/);
         $current_role->worker($worker); # So that release_undone_jobs_from_role() has the correct cause_of_death and work_done
         $current_role->when_finished( $worker_died );
         $self->db->get_RoleAdaptor->finalize_role( $current_role, $release_undone_jobs );
@@ -329,15 +386,41 @@ sub register_worker_death {
             . " WHERE worker_id='$worker_id' ";
 
     $self->dbc->protected_prepare_execute( [ $sql ],
-        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $worker, "register_worker_death".$after, 0 ); }
+        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $worker, "register_worker_death".$after, 'INFO' ); }
     );
 }
 
 
-sub meadow_type_2_name_2_users_of_running_workers {
+sub cached_resource_mapping {
+    my $self = shift;
+    $self->{'_cached_resource_mapping'} ||= { map { $_->dbID => $_->name } $self->db->hive_pipeline->collection_of('ResourceClass')->list };
+    return $self->{'_cached_resource_mapping'};
+}
+
+
+sub registered_workers_attributes {
     my $self = shift @_;
 
-    return $self->count_all("status!='DEAD'", ['meadow_type', 'meadow_name', 'meadow_user']);
+    return $self->fetch_all("status!='DEAD'", 1, ['meadow_type', 'meadow_name', 'meadow_user', 'process_id'], 'status' );
+}
+
+
+sub get_submitted_worker_counts_by_meadow_type_rc_name_for_meadow_user {
+    my ($self, $meadow_user) = @_;
+
+    my $worker_counts_by_meadow_type_rc_id  = $self->count_all("status='SUBMITTED' AND meadow_user='$meadow_user'", ['meadow_type', 'resource_class_id'] );
+    my $cached_resource_mapping             = $self->cached_resource_mapping;
+
+    my %counts_by_meadow_type_rc_name = ();
+
+    while(my ($meadow_type, $counts_by_rc_id) = each %$worker_counts_by_meadow_type_rc_id) {
+        while(my ($rc_id, $count) = each %$counts_by_rc_id) {
+            my $rc_name = $cached_resource_mapping->{ $rc_id } || '__undefined_rc_name__';
+            $counts_by_meadow_type_rc_name{ $meadow_type }{ $rc_name } = $count;
+        }
+    }
+
+    return \%counts_by_meadow_type_rc_name;
 }
 
 
@@ -346,64 +429,64 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
     my $last_few_seconds            = 5;    # FIXME: It is probably a good idea to expose this parameter for easier tuning.
 
-    warn "GarbageCollector:\tChecking for lost Workers...\n";
+    print "GarbageCollector:\tChecking for lost Workers...\n";
 
-    my $meadow_type_2_name_2_users      = $self->meadow_type_2_name_2_users_of_running_workers();
-    my %signature_and_pid_to_worker_status = ();
+    # all non-DEAD workers found in the database, with their meadow status
+    my $reconciled_worker_statuses          = $valley->query_worker_statuses( $self->registered_workers_attributes );
+    # selects the workers available in this valley. does not query the database / meadow
+    my $signature_and_pid_to_worker_status  = $valley->status_of_all_our_workers_by_meadow_signature( $reconciled_worker_statuses );
+    # this may pick up workers that have been created since the last fetch
+    my $queen_overdue_workers               = $self->fetch_overdue_workers( $last_few_seconds );    # check the workers we have not seen active during the $last_few_seconds
 
-    while(my ($meadow_type, $level2) = each %$meadow_type_2_name_2_users) {
-
-        if(my $meadow = $valley->available_meadow_hash->{$meadow_type}) {   # if this Valley supports $meadow_type at all...
-            while(my ($meadow_name, $level3) = each %$level2) {
-
-                if($meadow->cached_name eq $meadow_name) {  # and we can reach the same $meadow_name from this Valley...
-                    my $meadow_users_of_interest    = [ keys %$level3 ];
-                    my $meadow_signature            = $meadow_type.'/'.$meadow_name;
-
-                    $signature_and_pid_to_worker_status{$meadow_signature} ||= $meadow->status_of_all_our_workers( $meadow_users_of_interest );
-                }
-            }
-        }
+    if (@$queen_overdue_workers) {
+        print "GarbageCollector:\tOut of the ".scalar(@$queen_overdue_workers)." Workers that haven't checked in during the last $last_few_seconds seconds...\n";
+    } else {
+        print "GarbageCollector:\tfound none (all have checked in during the last $last_few_seconds seconds)\n";
     }
 
-    my $queen_overdue_workers       = $self->fetch_overdue_workers( $last_few_seconds );    # check the workers we have not seen active during the $last_few_seconds
-    warn "GarbageCollector:\t[Queen:] out of ".scalar(@$queen_overdue_workers)." Workers that haven't checked in during the last $last_few_seconds seconds...\n";
-
+    my $this_meadow_user            = whoami();
 
     my %meadow_status_counts        = ();
     my %mt_and_pid_to_lost_worker   = ();
     foreach my $worker (@$queen_overdue_workers) {
 
         my $meadow_signature    = $worker->meadow_type.'/'.$worker->meadow_name;
-        if(my $pid_to_worker_status = $signature_and_pid_to_worker_status{$meadow_signature}) {   # the whole Meadow subhash is either present or the Meadow is unreachable
+        if(my $pid_to_worker_status = $signature_and_pid_to_worker_status->{$meadow_signature}) {   # the whole Meadow subhash is either present or the Meadow is unreachable
 
             my $meadow_type = $worker->meadow_type;
             my $process_id  = $worker->process_id;
-            my $status = $pid_to_worker_status->{$process_id};
+            my $status = $pid_to_worker_status->{$process_id} // 'DEFERRED_CHECK';  # Workers that have been created between registered_workers_attributes and fetch_overdue_workers
 
             if($bury_unkwn_workers and ($status eq 'UNKWN')) {
                 if( my $meadow = $valley->find_available_meadow_responsible_for_worker( $worker ) ) {
                     if($meadow->can('kill_worker')) {
-                        if($worker->meadow_user eq $ENV{'USER'}) {  # if I'm actually allowed to kill the worker...
-                            warn "GarbageCollector:\tKilling/forgetting the UNKWN worker by process_id $process_id";
+                        if($worker->meadow_user eq $this_meadow_user) {  # if I'm actually allowed to kill the worker...
+                            print "GarbageCollector:\tKilling/forgetting the UNKWN worker by process_id $process_id";
 
                             $meadow->kill_worker($worker, 1);
-                            $status = ''; # make it look like LOST
+                            $status = 'LOST';
                         }
                     }
                 }
             }
 
-            if($status) {  # can be RUN|PEND|xSUSP
-                $meadow_status_counts{$meadow_signature}{$status}++;
-                my $update_when_seen_sql = "UPDATE worker SET when_seen=CURRENT_TIMESTAMP WHERE worker_id='".$worker->dbID."'";
-                $self->dbc->protected_prepare_execute( [ $update_when_seen_sql ],
-                    sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $worker, "see_worker".$after, 0 ); }
-                );
-            } else {
-                $meadow_status_counts{$meadow_signature}{'LOST'}++;
+            $meadow_status_counts{$meadow_signature}{$status}++;
+
+            if(($status eq 'LOST') or ($status eq 'SUBMITTED')) {
 
                 $mt_and_pid_to_lost_worker{$meadow_type}{$process_id} = $worker;
+
+            } elsif ($status eq 'DEFERRED_CHECK') {
+
+                # do nothing now, wait until the next pass to check on this worker
+
+            } else {
+
+                # RUN|PEND|xSUSP handling
+                my $update_when_seen_sql = "UPDATE worker SET when_seen=CURRENT_TIMESTAMP WHERE worker_id='".$worker->dbID."'";
+                $self->dbc->protected_prepare_execute( [ $update_when_seen_sql ],
+                    sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $worker, "see_worker".$after, 'INFO' ); }
+                );
             }
         } else {
             $meadow_status_counts{$meadow_signature}{'UNREACHABLE'}++;   # Worker is unreachable from this Valley
@@ -412,35 +495,54 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
         # print a quick summary report:
     while(my ($meadow_signature, $status_count) = each %meadow_status_counts) {
-        warn "GarbageCollector:\t[$meadow_signature Meadow:]\t".join(', ', map { "$_:$status_count->{$_}" } keys %$status_count )."\n\n";
+        print "GarbageCollector:\t[$meadow_signature Meadow:]\t".join(', ', map { "$_:$status_count->{$_}" } keys %$status_count )."\n\n";
     }
 
     while(my ($meadow_type, $pid_to_lost_worker) = each %mt_and_pid_to_lost_worker) {
         my $this_meadow = $valley->available_meadow_hash->{$meadow_type};
 
         if(my $lost_this_meadow = scalar(keys %$pid_to_lost_worker) ) {
-            warn "GarbageCollector:\tDiscovered $lost_this_meadow lost $meadow_type Workers\n";
+            print "GarbageCollector:\tDiscovered $lost_this_meadow lost $meadow_type Workers\n";
 
             my $report_entries;
 
-            if($this_meadow->can('find_out_causes')) {
-                die "Your Meadow::$meadow_type driver now has to support get_report_entries_for_process_ids() method instead of find_out_causes(). Please update it.\n";
+            if($report_entries = $this_meadow->get_report_entries_for_process_ids( keys %$pid_to_lost_worker )) {
+                my $lost_with_known_cod = scalar( grep { $_->{'cause_of_death'} } values %$report_entries);
+                print "GarbageCollector:\tFound why $lost_with_known_cod of $meadow_type Workers died\n";
+            }
 
-            } else {
-                if ($report_entries = $this_meadow->get_report_entries_for_process_ids( keys %$pid_to_lost_worker )) {
-                    my $lost_with_known_cod = scalar( grep { $_->{'cause_of_death'} } values %$report_entries);
-                    warn "GarbageCollector:\tFound why $lost_with_known_cod of $meadow_type Workers died\n";
+            print "GarbageCollector:\tRecording workers' missing attributes, registering their death, releasing their jobs and cleaning up temp directories\n";
+            while(my ($process_id, $worker) = each %$pid_to_lost_worker) {
+                if(my $report_entry = $report_entries && $report_entries->{$process_id}) {
+                    my @updated_attribs = ();
+                    foreach my $worker_attrib ( qw(when_born meadow_host when_died cause_of_death) ) {
+                        if( defined( $report_entry->{$worker_attrib} ) ) {
+                            $worker->$worker_attrib( $report_entry->{$worker_attrib} );
+                            push @updated_attribs, $worker_attrib;
+                        }
+                    }
+                    $self->update( $worker, @updated_attribs ) if(scalar(@updated_attribs));
+                }
+
+                my $max_limbo_seconds = $this_meadow->config_get('MaxLimboSeconds') // 0;   # The maximum time for a Meadow to start showing the Worker (even in PEND state) after submission.
+                                                                                            # We use it as a timeout for burying SUBMITTED and Meadow-invisible entries in the 'worker' table.
+
+                if( ($worker->status ne 'SUBMITTED')
+                 || $worker->when_died                                                      # reported by Meadow as DEAD (only if Meadow supports get_report_entries_for_process_ids)
+                 || ($worker->seconds_since_when_submitted > $max_limbo_seconds) ) {        # SUBMITTED and Meadow-invisible for too long => we consider them LOST
+
+                    $worker->cause_of_death('LIMBO') if( ($worker->status eq 'SUBMITTED') and !$worker->cause_of_death);    # LIMBO cause_of_death means: found in SUBMITTED state, exceeded the timeout, Meadow did not tell us more
+
+                    $self->register_worker_death( $worker );
+
+                    if( ($worker->status ne 'SUBMITTED')                 # There is no worker_temp_directory before specialization
+                    and ($worker->meadow_user eq $this_meadow_user) ) {  # if I'm actually allowed to kill the worker...
+                            $valley->cleanup_left_temp_directory( $worker );
+                    }
                 }
             }
 
-            warn "GarbageCollector:\tReleasing the jobs\n";
-            while(my ($process_id, $worker) = each %$pid_to_lost_worker) {
-                $worker->when_died(         $report_entries->{$process_id}{'when_died'} );
-                $worker->cause_of_death(    $report_entries->{$process_id}{'cause_of_death'} );
-                $self->register_worker_death( $worker );
-            }
-
-            if( %$report_entries ) {    # use the opportunity to also store resource usage of the buried workers:
+            if( $report_entries && %$report_entries ) {    # use the opportunity to also store resource usage of the buried workers:
                 my $processid_2_workerid = { map { $_ => $pid_to_lost_worker->{$_}->dbID } keys %$pid_to_lost_worker };
                 $self->store_resource_usage( $report_entries, $processid_2_workerid );
             }
@@ -452,39 +554,62 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
         my $role_adaptor = $self->db->get_RoleAdaptor;
         my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
 
-        warn "GarbageCollector:\tChecking for orphan roles...\n";
+        print "GarbageCollector:\tChecking for orphan roles...\n";
         my $orphan_roles = $role_adaptor->fetch_all_unfinished_roles_of_dead_workers();
         if(my $orphan_role_number = scalar @$orphan_roles) {
-            warn "GarbageCollector:\tfound $orphan_role_number orphan roles, finalizing...\n\n";
+            print "GarbageCollector:\tfound $orphan_role_number orphan roles, finalizing...\n\n";
             foreach my $orphan_role (@$orphan_roles) {
                 $role_adaptor->finalize_role( $orphan_role );
             }
         } else {
-            warn "GarbageCollector:\tfound none\n";
+            print "GarbageCollector:\tfound none\n";
         }
 
-        warn "GarbageCollector:\tChecking for roles buried in haste...\n";
+        print "GarbageCollector:\tChecking for roles buried in haste...\n";
         my $buried_in_haste_roles = $role_adaptor->fetch_all_finished_roles_with_unfinished_jobs();
         if(my $bih_number = scalar @$buried_in_haste_roles) {
-            warn "GarbageCollector:\tfound $bih_number buried roles with unfinished jobs, reclaiming.\n\n";
+            print "GarbageCollector:\tfound $bih_number buried roles with unfinished jobs, reclaiming.\n\n";
             foreach my $role (@$buried_in_haste_roles) {
                 $job_adaptor->release_undone_jobs_from_role( $role );
             }
         } else {
-            warn "GarbageCollector:\tfound none\n";
+            print "GarbageCollector:\tfound none\n";
         }
 
-        warn "GarbageCollector:\tChecking for orphan jobs...\n";
+        print "GarbageCollector:\tChecking for orphan jobs...\n";
         my $orphan_jobs = $job_adaptor->fetch_all_unfinished_jobs_with_no_roles();
         if(my $sj_number = scalar @$orphan_jobs) {
-            warn "GarbageCollector:\tfound $sj_number unfinished jobs with no roles, reclaiming.\n\n";
+            print "GarbageCollector:\tfound $sj_number unfinished jobs with no roles, reclaiming.\n\n";
             foreach my $job (@$orphan_jobs) {
                 $job_adaptor->release_and_age_job($job->dbID, $job->analysis->max_retry_count, 1);
             }
         } else {
-            warn "GarbageCollector:\tfound none\n";
+            print "GarbageCollector:\tfound none\n";
         }
     }
+}
+
+
+    # To tackle the RELOCATED event: this method checks whether there are already workers with these attributes
+sub find_previous_worker_incarnations {
+    my ($self, $meadow_type, $meadow_name, $process_id) = @_;
+
+    # This happens in standalone mode, when there is no database
+    return [] unless ref($self);
+
+    return $self->fetch_all( "status!='DEAD' AND status!='SUBMITTED' AND meadow_type='$meadow_type' AND meadow_name='$meadow_name' AND process_id='$process_id'" );
+}
+
+
+sub fetch_preregistered_worker {
+    my ($self, $meadow_type, $meadow_name, $process_id) = @_;
+
+    # This happens in standalone mode, when there is no database
+    return [] unless ref($self);
+
+    my ($worker) = @{ $self->fetch_all( "status='SUBMITTED' AND meadow_type='$meadow_type' AND meadow_name='$meadow_name' AND process_id='$process_id'" ) };
+
+    return $worker;
 }
 
 
@@ -495,7 +620,7 @@ sub check_in_worker {
     my $sql = "UPDATE worker SET when_checked_in=CURRENT_TIMESTAMP, status='".$worker->status."', work_done='".$worker->work_done."' WHERE worker_id='".$worker->dbID."'";
 
     $self->dbc->protected_prepare_execute( [ $sql ],
-        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $worker, "check_in_worker".$after, 0 ); }
+        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $worker, "check_in_worker".$after, 'INFO' ); }
     );
 }
 
@@ -543,11 +668,11 @@ sub fetch_overdue_workers {
 
     $overdue_secs = 3600 unless(defined($overdue_secs));
 
-    my $constraint = "status!='DEAD' AND ".{
+    my $constraint = "status!='DEAD' AND (when_checked_in IS NULL OR ".{
             'mysql'     =>  "(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(when_checked_in)) > $overdue_secs",
             'sqlite'    =>  "(strftime('%s','now')-strftime('%s',when_checked_in)) > $overdue_secs",
             'pgsql'     =>  "EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - when_checked_in) > $overdue_secs",
-        }->{ $self->dbc->driver };
+        }->{ $self->dbc->driver }.' )';
 
     return $self->fetch_all( $constraint );
 }
@@ -570,14 +695,14 @@ sub synchronize_hive {
 
     my $start_time = time();
 
-    print STDERR "\nSynchronizing the hive (".scalar(@$list_of_analyses)." analyses this time):\n";
+    print "\nSynchronizing the hive (".scalar(@$list_of_analyses)." analyses this time):\n";
     foreach my $analysis (@$list_of_analyses) {
         $self->synchronize_AnalysisStats($analysis->stats);
-        print STDERR ( ($analysis->stats()->status eq 'BLOCKED') ? 'x' : 'o');
+        print ( ($analysis->stats()->status eq 'BLOCKED') ? 'x' : 'o');
     }
-    print STDERR "\n";
+    print "\n";
 
-    print STDERR ''.((time() - $start_time))." seconds to synchronize_hive\n\n";
+    print ''.((time() - $start_time))." seconds to synchronize_hive\n\n";
 }
 
 
@@ -599,6 +724,7 @@ sub safe_synchronize_AnalysisStats {
     my ($self, $stats) = @_;
 
     $stats->refresh();
+    my $was_synching = $stats->sync_lock;
 
     my $max_refresh_attempts = 5;
     while($stats->sync_lock and $max_refresh_attempts--) {   # another Worker/Beekeeper is synching this analysis right now
@@ -607,15 +733,29 @@ sub safe_synchronize_AnalysisStats {
         $stats->refresh();  # just try to avoid collision
     }
 
+    # The sync has just completed and we have the freshest stats
+    if ($was_synching && !$stats->sync_lock) {
+        return 'sync_done_by_friend';
+    }
+
     unless( ($stats->status eq 'DONE')
          or ( ($stats->status eq 'WORKING') and defined($stats->seconds_since_when_updated) and ($stats->seconds_since_when_updated < 3*60) ) ) {
 
+        # In case $stats->sync_lock is set, this is basically giving it one last chance
         my $sql = "UPDATE analysis_stats SET status='SYNCHING', sync_lock=1 ".
                   "WHERE sync_lock=0 and analysis_id=" . $stats->analysis_id;
 
         my $row_count = $self->dbc->do($sql);   # try to claim the sync_lock
 
         if( $row_count == 1 ) {     # if we managed to obtain the lock, let's go and perform the sync:
+            if ($stats->sync_lock) {
+                # Actually the sync has just been completed by another agent. Save time and load the stats it computed
+                $stats->refresh();
+                # And release the lock
+                $stats->sync_lock(0);
+                $stats->adaptor->update_sync_lock($stats);
+                return 'sync_done_by_friend';
+            }
             $self->synchronize_AnalysisStats($stats, 1);
             return 'sync_done';
         } else {
@@ -624,7 +764,7 @@ sub safe_synchronize_AnalysisStats {
         }
     }
 
-    return 'stats_fresh_enough';
+    return $stats->sync_lock ? 0 : 'stats_fresh_enough';
 }
 
 
@@ -645,7 +785,7 @@ sub synchronize_AnalysisStats {
 
     if( $stats and $stats->analysis_id ) {
 
-        $stats->refresh() unless $has_refresh_just_been_done; ## Need to get the new hive_capacity for dynamic analyses
+        $stats->refresh() unless $has_refresh_just_been_done;
 
         my $job_counts = $stats->hive_pipeline->hive_use_triggers() ? undef : $self->db->get_AnalysisJobAdaptor->fetch_job_counts_hashed_by_status( $stats->analysis_id );
 
@@ -687,54 +827,105 @@ sub check_nothing_to_run_but_semaphored {   # make sure it is run after a recent
 =head2 print_status_and_return_reasons_to_exit
 
   Arg [1]    : $list_of_analyses
+  Arg [2]    : $debug
   Example    : my $reasons_to_exit = $queen->print_status_and_return_reasons_to_exit( [ $analysis_A, $analysis_B ] );
-  Description: Runs through all analyses in the given list, reports failed analyses, computes some totals, prints a combined status line
-                and returns a pair of ($failed_analyses_counter, $total_jobs_to_do)
+             : foreach my $reason_to_exit (@$reasons_to_exit) {
+             :     my $exit_message  = $reason_to_exit->{'message'};
+             :     my $exit_status   = $reason_to_exit->{'exit_status'};
+  Description: Runs through all analyses in the given list, reports failed analyses, and computes some totals.
+             : It returns a list of exit messages and status codes. Each element of the list is a hashref,
+             : with the exit message keyed by 'message' and the status code keyed by 'exit_status'
+             :
+             : Possible status codes are:
+             :   'JOB_FAILED'
+             :   'ANALYSIS_FAILED'
+             :   'NO_WORK'
+             :
+             : If $debug is set, the list will contain all analyses. Otherwise, empty and done analyses
+             : will not be listed
   Exceptions : none
   Caller     : beekeeper.pl
 
 =cut
 
 sub print_status_and_return_reasons_to_exit {
-    my ($self, $list_of_analyses) = @_;
+    my ($self, $list_of_analyses, $debug) = @_;
 
-    my ($total_done_jobs, $total_failed_jobs, $total_jobs, $cpumsec_to_do) = (0) x 4;
-    my $reasons_to_exit = '';
-
-    my $max_logic_name_length = max(map {length($_->logic_name)} @$list_of_analyses);
+    my ($total_done_jobs, $total_failed_jobs, $total_jobs, $total_excluded_jobs, $cpumsec_to_do) = (0) x 5;
+    my %skipped_analyses = ('EMPTY' => [], 'DONE' => []);
+    my @analyses_to_display;
+    my @reasons_to_exit;
 
     foreach my $analysis (sort {$a->dbID <=> $b->dbID} @$list_of_analyses) {
         my $stats               = $analysis->stats;
         my $failed_job_count    = $stats->failed_job_count;
+        my $is_excluded         = $stats->is_excluded;
 
-        print $stats->toString($max_logic_name_length) . "\n";
-
-        if( $stats->status eq 'FAILED') {
-            my $logic_name    = $analysis->logic_name;
-            my $tolerance     = $analysis->failed_job_tolerance;
-            $reasons_to_exit .= "### Analysis '$logic_name' has FAILED  (failed Jobs: $failed_job_count, tolerance: $tolerance\%) ###\n";
+        if ($debug or !$skipped_analyses{$stats->status}) {
+            push @analyses_to_display, $analysis;
+        } else {
+            push @{$skipped_analyses{$stats->status}}, $analysis;
         }
 
+        if ($failed_job_count > 0) {
+           synchronize_AnalysisStats($stats);
+           $stats->determine_status();
+            my $exit_status;
+            my $failure_message;
+            my $logic_name = $analysis->logic_name;
+            my $tolerance = $analysis->failed_job_tolerance;
+            if( $stats->status eq 'FAILED') {
+                $exit_status = 'ANALYSIS_FAILED';
+                $failure_message =  "### Analysis '$logic_name' has FAILED  (failed jobs: $failed_job_count, tolerance: $tolerance\%) ###";
+            } else {
+                $exit_status = 'JOB_FAILED';
+                $failure_message = "### Analysis '$logic_name' has failed jobs (failed jobs: $failed_job_count, tolerance: $tolerance\%) ###";
+            }
+            push (@reasons_to_exit, {'message'     => $failure_message,
+                                     'exit_status' => $exit_status});
+        }
+
+        if ($is_excluded) {
+            my $excluded_job_count = $stats->total_job_count - $stats->done_job_count - $failed_job_count;
+            $total_excluded_jobs += $excluded_job_count;
+            push @{$skipped_analyses{'EXCLUDED'}}, $analysis;
+        }
         $total_done_jobs    += $stats->done_job_count;
         $total_failed_jobs  += $failed_job_count;
         $total_jobs         += $stats->total_job_count;
         $cpumsec_to_do      += $stats->ready_job_count * $stats->avg_msec_per_job;
     }
 
-    my $total_jobs_to_do        = $total_jobs - $total_done_jobs - $total_failed_jobs;         # includes SEMAPHORED, READY, CLAIMED, INPROGRESS
+    my $total_jobs_to_do        = $total_jobs - $total_done_jobs - $total_failed_jobs - $total_excluded_jobs;         # includes SEMAPHORED, READY, CLAIMED, INPROGRESS
     my $cpuhrs_to_do            = $cpumsec_to_do / (1000.0*60*60);
     my $percentage_completed    = $total_jobs
                                     ? (($total_done_jobs+$total_failed_jobs)*100.0/$total_jobs)
                                     : 0.0;
 
-    printf("total over %d analyses : %6.2f%% complete (< %.2f CPU_hrs) (%d to_do + %d done + %d failed = %d total)\n",
-                scalar(@$list_of_analyses), $percentage_completed, $cpuhrs_to_do, $total_jobs_to_do, $total_done_jobs, $total_failed_jobs, $total_jobs);
+    my $max_logic_name_length = max(map {length($_->logic_name)} @analyses_to_display);
+    foreach my $analysis (@analyses_to_display) {
+        print $analysis->stats->toString($max_logic_name_length) . "\n";
+    }
+    print "\n";
+    if (@{$skipped_analyses{'EMPTY'}}) {
+        printf("%d analyses not shown because they don't have any jobs.\n", scalar(@{$skipped_analyses{'EMPTY'}}));
+    }
+    if (@{$skipped_analyses{'DONE'}}) {
+        printf("%d analyses not shown because all their jobs are done.\n", scalar(@{$skipped_analyses{'DONE'}}));
+    }
+    printf("total over %d analyses : %6.2f%% complete (< %.2f CPU_hrs) (%d to_do + %d done + %d failed + %d excluded = %d total)\n",
+           scalar(@$list_of_analyses), $percentage_completed, $cpuhrs_to_do, $total_jobs_to_do, $total_done_jobs, $total_failed_jobs, $total_excluded_jobs, $total_jobs);
 
     unless( $total_jobs_to_do ) {
-        $reasons_to_exit .= "### No jobs left to do ###\n";
+        if ($total_excluded_jobs > 0) {
+            push (@reasons_to_exit, {'message' => "### Some analyses are excluded ###",
+                                     'exit_status' => 'NO_WORK'});
+        }
+        push (@reasons_to_exit, {'message' => "### No jobs left to do ###",
+                                 'exit_status' => 'NO_WORK'});
     }
 
-    return $reasons_to_exit;
+    return \@reasons_to_exit;
 }
 
 
@@ -763,7 +954,7 @@ sub interval_workers_with_unknown_usage {
     my %meadow_to_interval = ();
 
     my $sql_times = qq{
-        SELECT meadow_type, meadow_name, min(when_born), max(when_died), count(*)
+        SELECT meadow_type, meadow_name, MIN(when_submitted), IFNULL(max(when_died), MAX(when_submitted)), COUNT(*)
         FROM worker w
         LEFT JOIN worker_resource_usage u USING(worker_id)
         WHERE u.worker_id IS NULL
@@ -771,9 +962,9 @@ sub interval_workers_with_unknown_usage {
     };
     my $sth_times = $self->prepare( $sql_times );
     $sth_times->execute();
-    while( my ($meadow_type, $meadow_name, $min_born, $max_died, $workers_count) = $sth_times->fetchrow_array() ) {
+    while( my ($meadow_type, $meadow_name, $min_submitted, $max_died, $workers_count) = $sth_times->fetchrow_array() ) {
         $meadow_to_interval{$meadow_type}{$meadow_name} = {
-            'min_born'      => $min_born,
+            'min_submitted' => $min_submitted,
             'max_died'      => $max_died,
             'workers_count' => $workers_count,
         };
@@ -807,7 +998,7 @@ sub store_resource_usage {
                 1;
             } or do {
                 if($@ =~ /execute failed: Duplicate entry/s) {     # ignore the collision with another parallel beekeeper
-                    $self->db->get_LogMessageAdaptor()->store_worker_message($worker_id, "Collision detected when storing resource_usage", 0 );
+                    $self->db->get_LogMessageAdaptor()->store_worker_message($worker_id, "Collision detected when storing resource_usage", 'WORKER_CAUTION' );
                 } else {
                     die $@;
                 }

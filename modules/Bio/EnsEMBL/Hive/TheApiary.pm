@@ -41,18 +41,28 @@ use strict;
 use warnings;
 use Data::Dumper;
 
+use Bio::EnsEMBL::Hive::Utils::Collection;
 use Bio::EnsEMBL::Hive::Utils::URL;
 use Bio::EnsEMBL::Hive::HivePipeline;
 
 
     # global instance to cache HivePipeline objects:
-my $_global_Apiary_hash;
+my $_global_Apiary_collection;
 
 
 sub pipelines_collection {
     my $class   = shift @_;
 
-    return $_global_Apiary_hash ||= {};
+    return $_global_Apiary_collection ||= Bio::EnsEMBL::Hive::Utils::Collection->new;
+}
+
+
+sub pipelines_except {
+    my ($class, $except_pipeline)   = @_;
+
+    my $except_unambig_key  = $except_pipeline->unambig_key;
+
+    return [ grep { $_->unambig_key ne $except_unambig_key } $class->pipelines_collection->list ];
 }
 
 
@@ -60,10 +70,11 @@ sub find_by_url {
     my $class            = shift @_;
     my $url              = shift @_;
     my $default_pipeline = shift @_;
+    my $no_die           = shift @_;
 
     if(my $parsed_url = Bio::EnsEMBL::Hive::Utils::URL::parse( $url )) {
 
-        my $unambig_url     = $parsed_url->{'unambig_url'};
+        my $unambig_key     = Bio::EnsEMBL::Hive::Utils::URL::hash_to_unambig_url( $parsed_url );
         my $query_params    = $parsed_url->{'query_params'};
         my $conn_params     = $parsed_url->{'conn_params'};
 
@@ -72,17 +83,17 @@ sub find_by_url {
 
         my $hive_pipeline;
 
-        if($parsed_url->{'unambig_url'} eq ':///') {
+        if($unambig_key eq ':///') {
 
             $hive_pipeline = $default_pipeline;
 
-        } elsif( not ($hive_pipeline = $class->pipelines_collection->{ $unambig_url }) ) {
+        } elsif( not ($hive_pipeline = $class->pipelines_collection->find_one_by( 'unambig_key', $unambig_key ) ) ) {
 
             if($query_params and ($query_params->{'object_type'} eq 'NakedTable') ) {  # do not check schema version when performing table dataflow:
                 $no_sql_schema_version_check = 1;
             }
 
-            $class->pipelines_collection->{ $unambig_url } = $hive_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
+            $hive_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(         # calling HivePipeline->new() triggers automatic addition to TheApiary
                 -url                        => $parsed_url->{'dbconn_part'},
                 -disconnect_when_inactive   => $disconnect_when_inactive,
                 -no_sql_schema_version_check=> $no_sql_schema_version_check,
@@ -90,7 +101,7 @@ sub find_by_url {
         }
 
         return  $query_params
-            ? $hive_pipeline->find_by_query( $query_params )
+            ? $hive_pipeline->find_by_query( $query_params, $no_die )
             : $hive_pipeline;
 
     } else {
@@ -98,5 +109,22 @@ sub find_by_url {
     }
 }
 
+
+sub fetch_remote_semaphores_controlling_this_one {      # NB! This method has a (potentially unwanted) side-effect of adding @extra_pipelines to TheApiary. Use with caution.
+    my ($class, $this_semaphore_or_url, @extra_pipelines) = @_;
+
+    my $this_semaphore_url = ref($this_semaphore_or_url)
+                                ? $this_semaphore_or_url->relative_url( 0 )     # turn a semaphore into its global URL
+                                : $this_semaphore_or_url;                       # just use the provided URL
+
+    my @remote_controlling_semaphores = ();
+
+    foreach my $remote_pipeline ($class->pipelines_collection->list, @extra_pipelines ) {
+
+        push @remote_controlling_semaphores, @{ $remote_pipeline->hive_dba->get_SemaphoreAdaptor->fetch_all_by_dependent_semaphore_url( $this_semaphore_url ) };
+    }
+
+    return \@remote_controlling_semaphores;
+}
 
 1;

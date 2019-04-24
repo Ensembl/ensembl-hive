@@ -118,42 +118,49 @@ sub new {
 }
 
 
-=head2 param_init
+=head2 fuse_param_hashes
 
-    Description: First parses the parameters from all sources in the reverse precedence order (supply the lowest precedence hash first),
-                 then preforms "total" parameter substitution.
-                 Will fail on detecting a substitution loop.
+    Description: Performs the actual task of evaluating and fusing/merging a preference list of parameter hashes into one parameter hash.
 
 =cut
 
-sub param_init {
-                    
-    my $self                = shift @_;
+sub fuse_param_hashes {
+    my $self = shift @_; # NB: other parameters will be shifted off it
 
-    my %unsubstituted_param_hash = ();
+    my %fused_hash = ();
 
     foreach my $source (@_) {
         if(ref($source) ne 'HASH') {
-            my $param_hash = eval($source) || {};
+            my $param_hash;
+               $param_hash = eval($source) if(defined($source));
+               $param_hash = {} if(!defined($param_hash));
+
             if($@) {
-                if($self->can('transient_error')) {
-                    $self->transient_error(0);
-                }
                 die "Could not evaluate '$source': $@\n";
             } elsif(ref($param_hash) ne 'HASH') {
-                if($self->can('transient_error')) {
-                    $self->transient_error(0);
-                }
                 die "Expected a {'param'=>'value'} hashref, but got the following string instead: '$source'\n";
             }
             $source = $param_hash;
         }
         while(my ($k,$v) = each %$source ) {
-            $unsubstituted_param_hash{$k} = $v;
+            $fused_hash{$k} = $v;
         }
     }
 
-    $self->{'_unsubstituted_param_hash'} = \%unsubstituted_param_hash;
+    return \%fused_hash;
+}
+
+
+=head2 param_init
+
+    Description: Sets up the unsubstituted parameters in the right precedence order (called by AnalysisJob::load_parameters)
+
+=cut
+
+sub param_init {
+    my $self = shift @_; # NB: other parameters will be shifted off it
+
+    $self->{'_unsubstituted_param_hash'} = $self->fuse_param_hashes( @_ );
     $self->{'_param_hash'} = {};
 }
 
@@ -417,6 +424,7 @@ sub _subst_one_hashpair {
 
     my $value;
 
+    # FIXME does not allow substitution of parameters names that have non-alphanumeric characters
     if($inside_hashes=~/^\w+$/) {
 
         $value =  $self->_param_possibly_overridden($inside_hashes, $overriding_hash);

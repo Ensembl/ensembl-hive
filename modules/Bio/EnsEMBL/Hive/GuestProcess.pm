@@ -133,7 +133,10 @@ use Data::Dumper;
 use base ('Bio::EnsEMBL::Hive::Process');
 
 
-our $VERSION = '0.2';
+# -------------------------------------- <versioning of the GuestProcess interface> -------------------------------------------------------
+
+our $GUESTPROCESS_PROTOCOL_VERSION = '3';       # Make sure you change this number whenever an incompatible change is introduced
+
 
 =head2 get_protocol_version
 
@@ -144,9 +147,19 @@ our $VERSION = '0.2';
 =cut
 
 sub get_protocol_version {
-    return $VERSION
+    return $GUESTPROCESS_PROTOCOL_VERSION;
 }
 
+sub check_version_compatibility {
+    my ($self, $other_version) = @_;
+
+    my $gpv = $self->get_protocol_version();
+#    warn "$self :  GPV='$gpv', MV='$other_version'\n";
+
+    return ((defined $other_version) and ($other_version=~/^$gpv\./)) ? 1 : 0;
+}
+
+# -------------------------------------- </versioning of the GuestProcess interface> ------------------------------------------------------
 
 
 =head2 new
@@ -163,7 +176,7 @@ sub get_protocol_version {
 
 sub new {
 
-    my ($class, $language, $module) = @_;
+    my ($class, $debug, $language, $module) = @_;
 
     die "GuestProcess must be told which language to interface with" unless $language;
 
@@ -174,10 +187,13 @@ sub new {
     pipe($PARENT_RDR, $CHILD_WTR) or die 'Could not create a pipe to send data to the child !';
     pipe($CHILD_RDR,  $PARENT_WTR) or die 'Could not create a pipe to get data from the child !';;
 
-    print STDERR "PARENT_RDR is ", fileno($PARENT_RDR), "\n";
-    print STDERR "PARENT_WTR is ", fileno($PARENT_WTR), "\n";
-    print STDERR "CHILD_RDR is ", fileno($CHILD_RDR), "\n";
-    print STDERR "CHILD_WTR is ", fileno($CHILD_WTR), "\n";
+    my $protocol_debug = ($debug && ($debug > 1));  # Only advanced levels of debug will show the GuestProcess protocol messages
+    if ($protocol_debug) {
+        print "PARENT_RDR is ", fileno($PARENT_RDR), "\n";
+        print "PARENT_WTR is ", fileno($PARENT_WTR), "\n";
+        print "CHILD_RDR is ", fileno($CHILD_RDR), "\n";
+        print "CHILD_WTR is ", fileno($CHILD_WTR), "\n";
+    }
 
     my $pid;
 
@@ -185,13 +201,13 @@ sub new {
         # In the parent
         close $PARENT_RDR;
         close $PARENT_WTR;
-        print STDERR "parent is PID $$\n";
+        print "parent is PID $$\n" if $protocol_debug;
     } else {
         die "cannot fork: $!" unless defined $pid;
         # In the child
         close $CHILD_RDR;
         close $CHILD_WTR;
-        print STDERR "child is PID $$\n";
+        print "child is PID $$\n" if $protocol_debug;
 
         # Do not close the non-standard file descriptors on exec(): the child process will need them !
         use Fcntl;
@@ -200,7 +216,7 @@ sub new {
         $flags = fcntl($PARENT_WTR, F_GETFD, 0);
         fcntl($PARENT_WTR, F_SETFD, $flags & ~FD_CLOEXEC);
 
-        exec($wrapper, 'run', $module, fileno($PARENT_RDR), fileno($PARENT_WTR));
+        exec($wrapper, 'run', $module, fileno($PARENT_RDR), fileno($PARENT_WTR), $debug//0);
     }
 
 
@@ -212,12 +228,13 @@ sub new {
     $self->child_in($CHILD_WTR);
     $self->child_pid($pid);
     $self->json_formatter( JSON->new()->indent(0) );
+    $self->{'_protocol_debug'} = $protocol_debug; # controls the GuestProcess protocol, not the worker
 
     $self->print_debug('CHECK VERSION NUMBER');
     my $other_version = $self->read_message()->{content};
-    if ($other_version ne $VERSION) {
+    if (!$self->check_version_compatibility($other_version)) {
         $self->send_response('NO');
-        die "eHive's protocol version is '$VERSION' but the wrapper's is '$other_version'\n";
+        die "eHive's protocol version is '".$self->get_protocol_version."' but the wrapper's is '$other_version'\n";
     } else {
         $self->send_response('OK');
     }
@@ -257,6 +274,32 @@ sub _get_wrapper_for_language {
 }
 
 
+=head2 _get_all_registered_wrappers
+
+  Example     : my $all_languages = Bio::EnsEMBL::Hive::GuestProcess::_get_all_registered_wrappers()
+  Description : Lists all the languages and wrappers that are registered (either
+                under via a EHIVE_WRAPPER environment variable, or via a "wrapper"
+                file under $EHIVE_ROOT_DIR/wrappers/).
+  Returntype  : Hashref { String => String }
+  Exceptions  : None
+
+=cut
+
+sub _get_all_registered_wrappers {
+    my %all_found;
+    foreach my $variable (keys %ENV) {
+        if ($variable =~ /^EHIVE_WRAPPER_(.*)$/) {
+            $all_found{lc $1} = $ENV{$variable};
+        }
+    }
+    foreach my $wrapper (glob $ENV{'EHIVE_ROOT_DIR'}.'/wrappers/*/wrapper' ) {
+        $wrapper =~ /\/wrappers\/(.*)\/wrapper$/;
+        $all_found{$1} = $wrapper;
+    }
+    return \%all_found;
+}
+
+
 =head2 DESTROY
 
   Description : Destructor: tells the child to exit by sending an empty JSON object
@@ -275,14 +318,14 @@ sub DESTROY {
 =head2 print_debug
 
   Example     : $process->print_debug("debug message");
-  Description : Prints a message if $self->debug is 2 or above
+  Description : Prints a message if $self->{'_protocol_debug'} is set
   Returntype  : none
 
 =cut
 
 sub print_debug {
     my ($self, $msg) = @_;
-    print STDERR sprintf("PERL %d: %s\n", $self->child_pid, $msg) if $self->debug > 1;
+    print sprintf("PERL %d: %s\n", $self->child_pid, $msg) if $self->{'_protocol_debug'};
 }
 
 ##############
@@ -508,7 +551,7 @@ sub life_cycle {
             $self->send_response('OK');
 
         } elsif ($event eq 'WARNING') {
-            $self->warning($content->{message}, $content->{is_error});
+            $self->warning($content->{message}, $content->{is_error}?'WORKER_ERROR':'INFO');
             $self->send_response('OK');
 
         } elsif ($event eq 'DATAFLOW') {

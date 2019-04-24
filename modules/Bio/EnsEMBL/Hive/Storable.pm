@@ -49,6 +49,7 @@ use Scalar::Util qw(weaken);
 use Bio::EnsEMBL::Hive::Utils ('throw');
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
+use base ( 'Bio::EnsEMBL::Hive::Cacheable' );   # All the Storable objects are attached to a pipeline, i.e. are Cacheable
 
 =head2 new
 
@@ -123,7 +124,7 @@ sub AUTOLOAD {
 
 #print "Storable::AUTOLOAD : attempting to run '$AUTOLOAD' (".join(', ', @_).")\n";
 
-    my $self = shift @_;
+    my $sub;
 
     if($AUTOLOAD =~ /::(\w+)$/) {
         my $name_to_parse = $1;
@@ -134,12 +135,12 @@ sub AUTOLOAD {
             throw("Storable::AUTOLOAD : could not parse '$name_to_parse'");
         } elsif ($is_an_id) {  # $name_to_parse was something like foo_dataflow_rule_id
 
+          $sub = sub {
+            my $self = shift @_;
             if(@_) {
                 $self->{$foo_id_method_name} = shift @_;
-                if( $self->{$foo_obj_method_name} ) {
-#                    warn "setting $foo_id_method_name in an object that had $foo_obj_method_name defined";
-                    $self->{$foo_obj_method_name} = undef;
-                }
+
+                $self->{$foo_obj_method_name} = undef;  # invalidate the object itself
 
                 # attempt to lazy-load:
             } elsif( !$self->{$foo_id_method_name} and my $foo_object=$self->{$foo_obj_method_name}) {
@@ -148,9 +149,12 @@ sub AUTOLOAD {
             }
 
             return $self->{$foo_id_method_name};
+          };
 
         } else {                # $name_to_parse was something like foo_dataflow_rule
 
+          $sub = sub {
+            my $self = shift @_;
             if(@_) {    # setter of the object itself
                 $self->{$foo_obj_method_name} = shift @_;
 
@@ -158,10 +162,10 @@ sub AUTOLOAD {
 
                 # attempt to lazy-load:
             } elsif( !$self->{$foo_obj_method_name} and my $foo_object_id = $self->{$foo_id_method_name}) {
-                my $collection = $self->can('hive_pipeline') && $self->hive_pipeline && $self->hive_pipeline->collection_of($AdaptorType);
-                   $collection = $self->adaptor && $self->adaptor->db->hive_pipeline->collection_of($AdaptorType) unless $collection;
+                my $collection = $self->hive_pipeline && $self->hive_pipeline->collection_of($AdaptorType);
 
                 if( $collection and $self->{$foo_obj_method_name} = $collection->find_one_by('dbID', $foo_object_id) ) { # careful: $AdaptorType may not be unique (aliases)
+                    weaken($self->{$foo_obj_method_name});
 #                    warn "Lazy-loading object from $AdaptorType collection\n";
                 } elsif(my $adaptor = $self->adaptor) {
 #                    warn "Lazy-loading object from $AdaptorType adaptor\n";
@@ -172,8 +176,14 @@ sub AUTOLOAD {
             }
 
             return $self->{$foo_obj_method_name};
+          };
 
         }   # choice of autoloadable functions
+        {
+            no strict 'refs'; ## no critic ProhibitNoStrict
+            *{$AUTOLOAD} = $sub;
+            goto &$sub;
+        }
 
     }
 }

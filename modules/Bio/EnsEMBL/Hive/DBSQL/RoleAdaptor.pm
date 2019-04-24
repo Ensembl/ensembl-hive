@@ -40,18 +40,12 @@ package Bio::EnsEMBL::Hive::DBSQL::RoleAdaptor;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Hive::Role;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
 
 sub default_table_name {
     return 'role';
-}
-
-
-sub default_insertion_method {
-    return 'INSERT';
 }
 
 
@@ -63,10 +57,8 @@ sub object_class {
 sub finalize_role {
     my ($self, $role, $release_undone_jobs) = @_;
 
-    my $role_id         = $role->dbID;
-    my $when_finished   = $role->when_finished ? "'".$role->when_finished."'" : 'CURRENT_TIMESTAMP';
-
-    $self->dbc->do( "UPDATE role SET when_finished=$when_finished WHERE role_id=$role_id" );
+    $role->when_finished( 'CURRENT_TIMESTAMP' );
+    $self->update_when_finished( $role );
 
     $self->db->get_AnalysisStatsAdaptor->increment_a_counter( 'num_running_workers', -1, $role->analysis_id );
 
@@ -93,7 +85,7 @@ sub get_hive_current_load {
     my $sql = qq{
         SELECT sum(1/hive_capacity)
         FROM role
-        JOIN analysis_stats USING(analysis_id)
+        JOIN analysis_base USING(analysis_id)
         WHERE when_finished IS NULL
         AND hive_capacity IS NOT NULL
         AND hive_capacity>0

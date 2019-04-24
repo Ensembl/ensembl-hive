@@ -1,0 +1,7 @@
+{
+    "Graph" : {
+        "Pad"  : "0.0",
+        "DisplayStats"          : "text",
+        "DisplayData"           : 2
+    }
+}

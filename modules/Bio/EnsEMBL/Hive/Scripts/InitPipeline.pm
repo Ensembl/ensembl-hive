@@ -36,8 +36,17 @@ sub init_pipeline {
     die "PipeConfig $pipeconfig_package_name not created\n" unless $pipeconfig_object;
     die "PipeConfig $pipeconfig_package_name is not a Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf\n" unless $pipeconfig_object->isa('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
 
+    print "> Parsing the command-line options.\n\n";
     $pipeconfig_object->process_options( 1 );
 
+    # Restore the password in the URL so that pipelines that need
+    # pipeline_url() don't see _EHIVE_HIDDEN_PASS
+    if ($pipeconfig_object->pipeline_url =~ /\$\{_EHIVE_HIDDEN_PASS\}/) {
+        my $real_password = $ENV{_EHIVE_HIDDEN_PASS};
+        $pipeconfig_object->root()->{'pipeline_url'} =~ s/\$\{_EHIVE_HIDDEN_PASS\}/$real_password/;
+    }
+
+    print "> Running the creation commands.\n\n";
     $pipeconfig_object->run_pipeline_create_commands();
 
     my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
@@ -46,14 +55,23 @@ sub init_pipeline {
 
     my $hive_dba = $pipeline->hive_dba()
         or die "HivePipeline could not be created for ".$pipeconfig_object->pipeline_url();
+    $hive_dba->dbc->requires_write_access();
 
+    print "> Parsing the PipeConfig file and adding objects (this may take a while).\n\n";
     $pipeconfig_object->add_objects_from_config( $pipeline );
 
     if($tweaks and @$tweaks) {
+        print "> Applying tweaks.\n";
         $pipeline->apply_tweaks( $tweaks );
+        print "\n";
     }
 
+    $pipeline->test_connections();
+
+    print "> Storing the pipeline in the database.\n\n";
     $pipeline->save_collections();
+
+    print "Pipeline successfully stored at ", $pipeconfig_object->pipeline_url, " !\n\n";
 
     print $pipeconfig_object->useful_commands_legend();
 

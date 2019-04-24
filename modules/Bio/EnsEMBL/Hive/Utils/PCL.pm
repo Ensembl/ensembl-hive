@@ -62,7 +62,7 @@ sub INPUT_PLUS {
 
 
 sub parse_wait_for {
-    my ($pipeline, $ctrled_analysis, $wait_for) = @_;
+    my ($pipeline, $ctrled_analysis, $wait_for, $verbose) = @_;
 
     $wait_for ||= [];
     $wait_for   = [ $wait_for ] unless(ref($wait_for) eq 'ARRAY'); # force scalar into an arrayref
@@ -71,9 +71,9 @@ sub parse_wait_for {
     foreach my $condition_url (@$wait_for) {
         if($condition_url =~ m{^\w+$}) {
             my $condition_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $condition_url)
-                or die "Could not find a local analysis '$condition_url' to create a control rule (in '".($ctrled_analysis->logic_name)."')\n";
+                or warn "WARNING: Could not find a local analysis '$condition_url' to create a control rule (in '".($ctrled_analysis->logic_name)."')\n";
         }
-        my ($c_rule) = $pipeline->add_new_or_update( 'AnalysisCtrlRule',   # NB: add_new_or_update returns a list
+        my ($c_rule) = $pipeline->add_new_or_update( 'AnalysisCtrlRule', $verbose,  # NB: add_new_or_update returns a list
                 'condition_analysis_url'    => $condition_url,
                 'ctrled_analysis'           => $ctrled_analysis,
         );
@@ -82,7 +82,7 @@ sub parse_wait_for {
 
 
 sub parse_flow_into {
-    my ($pipeline, $from_analysis, $flow_into) = @_;
+    my ($pipeline, $from_analysis, $flow_into, $verbose) = @_;
 
     $flow_into   = { 1 => $flow_into } unless(ref($flow_into) eq 'HASH'); # force non-hash into a hash
 
@@ -90,7 +90,7 @@ sub parse_flow_into {
 
     my $semaphore_sign = '->';
 
-    my @all_branch_tags = keys %$flow_into;
+    my @all_branch_tags = sort keys %$flow_into;
     foreach my $branch_tag ((grep {/^[A-Z]$semaphore_sign/} @all_branch_tags), (grep {/$semaphore_sign[A-Z]$/} @all_branch_tags), (grep {!/$semaphore_sign/} @all_branch_tags)) {
 
         my ($branch_name_or_code, $group_role, $group_tag);
@@ -151,6 +151,7 @@ sub parse_flow_into {
             my $this_cond_group_marker = shift @$cond_group;
             die "Expecting $cond_group_marker, got $this_cond_group_marker" unless($this_cond_group_marker eq $cond_group_marker);
 
+            my $suspended_targets = [];
             while(@$cond_group) {
                 my $on_condition    = shift @$cond_group;
                 my $heirs           = shift @$cond_group;
@@ -159,11 +160,12 @@ sub parse_flow_into {
                 $heirs = [ $heirs ] unless(ref($heirs));
                 $heirs = { map { ($_ => undef) } @$heirs } if(ref($heirs) eq 'ARRAY');
 
-                while(my ($heir_url, $input_id_template_list) = each %$heirs) {
+                foreach my $heir_url (sort keys %$heirs) {
+                    my $input_id_template_list = $heirs->{$heir_url};
 
                     if($heir_url =~ m{^\w+$}) {
                         my $heir_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $heir_url)
-                            or die "Could not find a local analysis named '$heir_url' (dataflow from analysis '".($from_analysis->logic_name)."')\n";
+                            or warn "WARNING: Could not find a local analysis named '$heir_url' (dataflow from analysis '".($from_analysis->logic_name)."')\n";
                     }
 
                     $input_id_template_list = [ $input_id_template_list ] unless(ref($input_id_template_list) eq 'ARRAY');  # allow for more than one template per analysis
@@ -173,25 +175,24 @@ sub parse_flow_into {
                         my $template_string = (ref($input_id_template) ? stringify($input_id_template) : $input_id_template);
                         my $extend_param_stack = ($template_string && $template_string=~s/^\+(.*)$/$1/) ? 1 : 0;
 
-                        my ($df_target) = $pipeline->add_new_or_update( 'DataflowTarget',   # NB: add_new_or_update returns a list
+                        my ($df_target) = $pipeline->add_new_or_update( 'DataflowTarget', $verbose,  # NB: add_new_or_update returns a list
                             'source_dataflow_rule'      => undef,           # NB: had to create the "suspended targets" to break the dependence circle
                             'on_condition'              => $on_condition,
                             'input_id_template'         => $template_string,
                             'extend_param_stack'        => $extend_param_stack,
                             'to_analysis_url'           => $heir_url,
                         );
+                        push @$suspended_targets, $df_target;
 
                     } # /for all templates
                 } # /for all heirs
             } # /for each condition and heir
 
-            my $suspended_targets = $pipeline->collection_of('DataflowTarget')->find_all_by( 'source_dataflow_rule', undef );
-
-            my ($df_rule, $df_rule_is_new) = $pipeline->add_new_or_update( 'DataflowRule',   # NB: add_new_or_update returns a list
+            my ($df_rule, $df_rule_is_new) = $pipeline->add_new_or_update( 'DataflowRule', $verbose,  # NB: add_new_or_update returns a list
                 'from_analysis'             => $from_analysis,
                 'branch_code'               => $branch_name_or_code,
                 'funnel_dataflow_rule'      => $funnel_dataflow_rule,
-                'unitargets'                => Bio::EnsEMBL::Hive::DataflowRule->unitargets($suspended_targets),
+                'unitargets'                => Bio::EnsEMBL::Hive::DataflowRule::_compute_unitargets($suspended_targets),
 #                'unitargets'                => $suspended_targets,
             );
 

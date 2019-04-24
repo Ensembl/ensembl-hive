@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# Gets the activity of each analysis along time, in a CSV file or in an image (see list of formats supported by GNUplot)
+# Gets the activity of each Analysis along time, in a CSV file or in an image (see list of formats supported by GNUplot)
 
 use strict;
 use warnings;
@@ -13,18 +13,21 @@ BEGIN {
     unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
 }
 
-
 use Getopt::Long qw(:config no_auto_abbrev);
 use List::Util qw(sum);
 use POSIX;
+use Pod::Usage;
 use Data::Dumper;
+use Scalar::Util qw(looks_like_number);
 use Time::Piece;
 use Time::Seconds;  # not sure if seconds-only arithmetic also needs it
 
 use Bio::EnsEMBL::Hive::HivePipeline;
-use Bio::EnsEMBL::Hive::Utils ('script_usage');
+use Bio::EnsEMBL::Hive::Utils::URL;
 
 no warnings qw{qw};
+
+Bio::EnsEMBL::Hive::Utils::URL::hide_url_password();
 
 # This replaces "when_died" when a role is still active
 my $now = localtime;
@@ -36,7 +39,7 @@ exit(0);
 
 sub main {
 
-    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $help, $verbose, $mode, $start_date, $end_date, $output, $top, $default_memory, $default_cores, $key);
+    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $help, $verbose, $mode, $start_date, $end_date, $output, $top, $default_memory, $default_cores, $key, $resolution);
 
     GetOptions(
                 # connect to the database:
@@ -44,7 +47,7 @@ sub main {
             'reg_conf|regfile|reg_file=s'         => \$reg_conf,
             'reg_type=s'                          => \$reg_type,
             'reg_alias|regname|reg_name=s'        => \$reg_alias,
-            'nosqlvc=i'                           => \$nosqlvc,      # using "=i" instead of "!" for consistency with scripts where it is a propagated option
+            'nosqlvc'                             => \$nosqlvc,      # using "nosqlvc" instead of "sqlvc!" for consistency with scripts where it is a propagated option
 
                 # miscellaneous options
             'verbose!'                   => \$verbose,
@@ -55,6 +58,7 @@ sub main {
             'end_date=s'                 => \$end_date,
             'mode=s'                     => \$mode,
             'key=s'                      => \$key,
+            'resolution=i'               => \$resolution,
             'top=f'                      => \$top,
             'mem=i'                      => \$default_memory,
             'n_core=i'                   => \$default_cores,
@@ -65,7 +69,9 @@ sub main {
         die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
     }
 
-    if ($help) { script_usage(0); }
+    if ($help) {
+        pod2usage({-exitvalue => 0, -verbose => 2});
+    }
 
     my $pipeline;
     if($url or $reg_alias) {
@@ -77,16 +83,15 @@ sub main {
                 -no_sql_schema_version_check    => $nosqlvc,
         );
     } else {
-        warn "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
-        script_usage(1);
+        die "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
     }
 
     # Check whether $mode is valid
     my %allowed_modes = (
-        workers => 'Number of workers',
+        workers => 'Number of Workers',
         memory => 'Memory asked / unused (Gb)',
         cores => 'Number of CPU cores asked / unused',
-        pending_workers => 'Number of pending workers',
+        pending_workers => 'Number of pending Workers',
         pending_time => 'Average instantaneous pending time (min.)',
     );
     if ($mode) {
@@ -97,15 +102,27 @@ sub main {
         $mode = 'workers';
     }
 
+    # Check whether $key is valid
     my %allowed_keys = (
         analysis => 'Analysis',
-        resource_class => 'Resource class',
+        resource_class => 'Resource Class',
     );
     if ($key) {
         die "Unknown key '$key'. Allowed keys are: ".join(", ", keys %allowed_keys) unless exists $allowed_keys{$key};
+        # Check whether the pair ($mode,$key) makes sense
+        if (($mode =~ /^pending/) and ($key eq 'analysis')) {
+            die "Timeline of pending workers can only be represented by resource-class, not analysis";
+        }
+
+    } elsif ($mode =~ /^pending/) {
+        $key = 'resource_class';
+
     } else {
         $key = 'analysis';
     }
+
+    # Durations are rounded up to a multiple of this (number of minutes)
+    $resolution ||= 1;
 
     # Palette generated with R: c(brewer.pal(9, "Set1"), brewer.pal(12, "Set3")). #FFFFB3 is removed because it is too close to white
     my @palette = qw(#E41A1C #377EB8 #4DAF4A #984EA3 #FF7F00 #FFFF33 #A65628 #F781BF #999999     #8DD3C7 #BEBADA #FB8072 #80B1D3 #FDB462 #B3DE69 #FCCDE5 #D9D9D9 #BC80BD #CCEBC5 #FFED6F    #2F4F4F);
@@ -128,7 +145,6 @@ sub main {
     }
 
     my $hive_dbc = $pipeline->hive_dba->dbc;
-    my $dbh = $hive_dbc->db_handle();
 
     # Get the memory usage from each resource_class
     my %mem_resources = ();
@@ -149,12 +165,12 @@ sub main {
     # Get the resource usage information of each worker
     my %used_res = ();
     if (($mode eq 'memory') or ($mode eq 'cores') or ($mode eq 'pending_workers') or ($mode eq 'pending_time')) {
-        my $sql_used_res = 'SELECT worker_id, mem_megs, cpu_sec/lifespan_sec, pending_sec FROM worker_resource_usage';
-        foreach my $db_entry (@{$dbh->selectall_arrayref($sql_used_res)}) {
+        my $sql_used_res = 'SELECT worker_id, mem_megs, cpu_sec/lifespan_sec FROM worker_resource_usage';
+        foreach my $db_entry (@{$hive_dbc->selectall_arrayref($sql_used_res)}) {
             my $worker_id = shift @$db_entry;
             $used_res{$worker_id} = $db_entry;
         }
-        warn scalar(keys %used_res), " worker info loaded from worker_resource_usage\n" if $verbose;
+        warn scalar(keys %used_res), " Worker info loaded from worker_resource_usage\n" if $verbose;
     }
 
     # Get the info about the analysis
@@ -169,13 +185,16 @@ sub main {
     my %layers = ();
     {
         my $sql = $key eq 'analysis'
-            ? 'SELECT when_born, when_died, worker_id, resource_class_id, analysis_id FROM worker LEFT JOIN role USING (worker_id)'
-            : 'SELECT when_born, when_died, worker_id, resource_class_id FROM worker';
-        my @tmp_dates = @{$dbh->selectall_arrayref($sql)};
+            ? 'SELECT when_submitted, when_started, when_finished, worker_id, resource_class_id, analysis_id FROM worker LEFT JOIN role USING (worker_id)'
+            : 'SELECT when_submitted, when_born, when_died, worker_id, resource_class_id FROM worker';
+        my @tmp_dates = @{$hive_dbc->selectall_arrayref($sql)};
         warn scalar(@tmp_dates), " rows\n" if $verbose;
 
         foreach my $db_entry (@tmp_dates) {
-            my ($when_born, $when_died, $worker_id, $resource_class_id, $analysis_id) = @$db_entry;
+            my ($when_submitted, $when_born, $when_died, $worker_id, $resource_class_id, $analysis_id) = @$db_entry;
+
+            # Workers that are submitted but not yet born
+            next unless $when_born;
 
             # In case $resource_class_id is undef
             next unless $resource_class_id or $analysis_id;
@@ -184,25 +203,22 @@ sub main {
             $key_value = -1 if not defined $key_value;
 
             if ($mode eq 'workers') {
-                add_event(\%events, $key_value, $when_born, $when_died, 1);
+                add_event(\%events, $key_value, $when_born, $when_died, 1, $resolution);
 
             } elsif ($mode eq 'memory') {
                 my $offset = ($mem_resources{$resource_class_id} || $default_memory) / 1024.;
-                add_event(\%events, $key_value, $when_born, $when_died, $offset);
+                add_event(\%events, $key_value, $when_born, $when_died, $offset, $resolution);
                 $offset = ($used_res{$worker_id}->[0]) / 1024. if exists $used_res{$worker_id} and $used_res{$worker_id}->[0];
-                add_event(\%layers, $key_value, $when_born, $when_died, $offset);
+                add_event(\%layers, $key_value, $when_born, $when_died, $offset, $resolution);
 
             } elsif ($mode eq 'cores') {
                 my $offset = ($cpu_resources{$resource_class_id} || $default_cores);
-                add_event(\%events, $key_value, $when_born, $when_died, $offset);
+                add_event(\%events, $key_value, $when_born, $when_died, $offset, $resolution);
                 $offset = $used_res{$worker_id}->[1] if exists $used_res{$worker_id} and $used_res{$worker_id}->[1];
-                add_event(\%layers, $key_value, $when_born, $when_died, $offset);
+                add_event(\%layers, $key_value, $when_born, $when_died, $offset, $resolution);
             } else {
-                if (exists $used_res{$worker_id} and $used_res{$worker_id}->[2]) {
-                    my $pending_sec = $used_res{$worker_id}->[2];
-                    add_event(\%events, $key_value, -$pending_sec, $when_born, 1);
-                    add_event(\%layers, $key_value, -$pending_sec, $when_born, $pending_sec/60);
-                }
+                add_event(\%events, $key_value, $when_submitted, $when_born, 1, $resolution);
+                add_event(\%layers, $key_value, $when_submitted, $when_born, 'length_by_60', $resolution);
             }
         }
     }
@@ -278,9 +294,21 @@ sub main {
             $plotted_analyses_desc = "the top $n_relevant_analysis analyses of ";
         }
     }
-    my $title = "Profile of ${plotted_analyses_desc}${safe_database_location}";
+    my $title = "Timeline of ${plotted_analyses_desc}${safe_database_location}";
     $title .= " from $start_date" if $start_date;
     $title .= " to $end_date" if $end_date;
+
+    unless (@xdata) {
+        if ($start_date || $end_date) {
+            die "No data to display in this time interval !";
+        } else {
+            die "No data to display !";
+        }
+    }
+
+    my $data_start = Time::Piece->strptime( $xdata[0] , '%Y-%m-%dT%H:%M:%S');
+    my $data_end   = Time::Piece->strptime( $xdata[-1], '%Y-%m-%dT%H:%M:%S');
+    my $xlabelfmt  = $data_end-$data_start >= 6*24*3600 ? '%b %d' : '%b %d\n %H:%M';
 
     # The main Gnuplot object
     my $chart = Chart::Gnuplot->new(
@@ -291,7 +319,7 @@ sub main {
             align => 'left',
         },
         xtics => {
-            labelfmt => '%b %d\n %H:%M',
+            labelfmt => $xlabelfmt,
             along => 'out nomirror',
         },
         bg => {
@@ -303,6 +331,7 @@ sub main {
         terminal => $terminal_mapping{$gnuplot_terminal},
         ylabel => $allowed_modes{$mode},
         yrange => [$pseudo_zero_value, undef],
+        ($start_date && $end_date) ? (xrange => [$start_date, $end_date]) : (),
     );
     $chart->plot2d(@datasets);
 
@@ -362,26 +391,31 @@ sub add_dataset {
 
 
 #####
-# Function to store add a new event to the hash.
-# Events are defined with birth and death dates (the birth can be defined
-# relatively to the death)
+# Function to add a new event to the hash.
+# Events are defined with birth and death dates.
 # NB: The dates are truncated to the minute: seconds are not recorded
 # NB: Does not add anything if birth and death are identical (after
 # truncation)
 #####
 
 sub add_event {
-    my ($events, $key, $when_born, $when_died, $offset) = @_;
+    my ($events, $key, $when_born, $when_died, $offset, $resolution) = @_;
 
-    return if $offset <= 0;
+    return if looks_like_number($offset) && ($offset <= 0);
 
         # temporary Time::Piece values
     my $death_datetime = $when_died ? Time::Piece->strptime( $when_died , '%Y-%m-%d %H:%M:%S') : $now;
-    my $birth_datetime = ($when_born =~ /^-[0-9]/) ? $death_datetime + $when_born : Time::Piece->strptime( $when_born , '%Y-%m-%d %H:%M:%S');
+    my $birth_datetime = Time::Piece->strptime( $when_born , '%Y-%m-%d %H:%M:%S');
 
-    # We don't need to draw things at the resolution of 1 second; 1 minute is enough
+    if ($offset =~ /length_by_(\d+)/) {
+        $offset = ($death_datetime - $birth_datetime) / $1;
+    }
+
+    # We don't need to draw things at the resolution of 1 second; round up to $resolution minutes
     $death_datetime->[0] = 0;
     $birth_datetime->[0] = 0;
+    $birth_datetime->[1] = $resolution*int($birth_datetime->[1] / $resolution);
+    $death_datetime->[1] = $resolution*int($death_datetime->[1] / $resolution);
 
         # string values:
     my $birth_date = $birth_datetime->date . 'T' . $birth_datetime->hms;
@@ -503,55 +537,124 @@ generate_timeline.pl
 
 =head1 DESCRIPTION
 
-    This script is used for offline examination of the allocation of workers.
+This script is used for offline examination of the allocation of Workers.
 
-    Based on the command-line parameters 'start_date' and 'end_date', or on the start time of the first
-    worker and end time of the last worker (as recorded in pipeline DB), it pulls the relevant data out
-    of the 'worker' table for accurate timing.
-    By default, the output is in CSV format, to allow extra analysis to be carried.
+Based on the command-line parameters "start_date" and "end_date", or on the start time of the first
+Worker and end time of the last Worker (as recorded in pipeline database), it pulls the relevant data out
+of the C<worker> table for accurate timing.
+By default, the output is in CSV format, to allow extra Analysis to be carried.
 
-    You can optionally ask the script to generate an image with Gnuplot.
+You can optionally ask the script to generate an image with Gnuplot.
 
 
 =head1 USAGE EXAMPLES
 
-        # Just run it the usual way: only the top 20 analysis will be reported in CSV format
+        # Just run it the usual way: only the top 20 Analysis will be reported in CSV format
     generate_timeline.pl -url mysql://username:secret@hostname:port/database > timeline.csv
 
-        # The same, but getting the analysis that fill 99.5% of the global activity in a PNG file
+        # The same, but getting the Analysis that fill 99.5% of the global activity in a PNG file
     generate_timeline.pl -url mysql://username:secret@hostname:port/database -top .995 -output timeline_top995.png
 
         # Assuming you are only interested in a precise interval (in a PNG file)
     generate_timeline.pl -url mysql://username:secret@hostname:port/database -start_date 2013-06-15T10:34 -end_date 2013-06-15T16:58 -output timeline_June15.png
 
-        # Get the required memory instead of the number of workers
+        # Get the required memory instead of the number of Workers
     generate_timeline.pl -url mysql://username:secret@hostname:port/database -mode memory -output timeline_memory.png
 
 
 =head1 OPTIONS
 
-    -help                   : print this help
-    -url <url string>       : url defining where hive database is located
-    -reg_conf               : path to a Registry configuration file 
-    -reg_type               : type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
-    -reg_alias              : species/alias name for the Hive DBAdaptor 
-    -nosqlvc                : Do not restrict the usage of this script to the current version of eHive
-                              Be aware that generate_timeline.pl uses raw SQL queries that may break on different schema versions
-    -verbose                : Print some info about the data loaded from the database
+=head2 Connection options
 
-    -start_date <date>      : minimal start date of a worker (the format is ISO8601, e.g. '2012-01-25T13:46')
-    -end_date <date>        : maximal end date of a worker (the format is ISO8601, e.g. '2012-01-25T13:46')
-    -top <float>            : maximum number (> 1) or fraction (< 1) of analysis to report (default: 20)
-    -output <string>        : output file: its extension must match one of the Gnuplot terminals. Otherwise, the CSV output is produced on stdout
-    -mode <string>          : what should be displayed on the y-axis. Allowed values are 'workers' (default), 'memory', 'cores', 'pending_workers', or 'pending_time'
-    -key                    : 'analysis' (default) or 'resource_class': how to bin the workers
+=over
 
-    -n_core <int>           : the default number of cores allocated to a worker (default: 1)
-    -mem <int>              : the default memory allocated to a worker (default: 100Mb)
+=item --help
+
+print this help
+
+=item --url <url string>
+
+URL defining where eHive database is located
+
+=item --reg_conf
+
+path to a Registry configuration file
+
+=item --reg_type
+
+type of the registry entry ("hive", "core", "compara", etc - defaults to "hive")
+
+=item --reg_alias
+
+species/alias name for the eHive DBAdaptor
+
+=item --nosqlvc
+
+"No SQL Version Check" - set if you want to force working with a database created by a potentially schema-incompatible API
+Be aware that generate_timeline.pl uses raw SQL queries that may break on different schema versions
+
+=item --verbose
+
+Print some info about the data loaded from the database
+
+=back
+
+=head2 Timeline configuration
+
+=over
+
+=item --start_date <date>
+
+minimal start date of a Worker (the format is ISO8601, e.g. "2012-01-25T13:46")
+
+=item --end_date <date>
+
+maximal end date of a Worker (the format is ISO8601, e.g. "2012-01-25T13:46")
+
+=item --top <float>
+
+maximum number (> 1) or fraction (< 1) of Analysis to report (default: 20)
+
+=item --output <string>
+
+output file: its extension must match one of the Gnuplot terminals. Otherwise, the CSV output is produced on stdout
+
+=item --mode <string>
+
+what should be displayed on the y-axis. Allowed values are "workers" (default), "memory", "cores", "pending_workers", or "pending_time"
+
+=item --key <string>
+
+"analysis" (default) or "resource_class": how to bin the Workers
+
+=item --resolution <integer>
+
+Timestamps are rounded up to multiples of this amount of minutes (default: 1).
+Increase this value when displaying timelines of very large pipelines.
+
+=back
+
+=head2 Farm configuration
+
+=over
+
+=item --n_core <int>
+
+the default number of cores allocated to a Worker (default: 1)
+
+=item --mem <int>
+
+the default memory allocated to a Worker (default: 100Mb)
+
+=back
 
 =head1 EXTERNAL DEPENDENCIES
 
-    Chart::Gnuplot
+=over
+
+=item Chart::Gnuplot
+
+=back
 
 =head1 LICENSE
 
@@ -569,7 +672,7 @@ See the License for the specific language governing permissions and limitations 
 
 =head1 CONTACT
 
-Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the eHive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss eHive-related questions or to be notified of our updates
 
 =cut
 

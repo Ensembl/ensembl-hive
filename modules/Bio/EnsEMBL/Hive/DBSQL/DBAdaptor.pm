@@ -45,7 +45,6 @@ use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('throw');
-use Bio::EnsEMBL::Hive::Utils::Collection;
 
 use Bio::EnsEMBL::Hive::MetaParameters;
 use Bio::EnsEMBL::Hive::PipelineWideParameters;
@@ -65,7 +64,11 @@ sub new {
     my ($dbc, $url, $reg_conf, $reg_type, $reg_alias, $species, $no_sql_schema_version_check)
         = delete @flags{qw(-dbconn -url -reg_conf -reg_type -reg_alias -species -no_sql_schema_version_check)};
 
-    $url .= ';no_sql_schema_version_check=1' if($url && $no_sql_schema_version_check);
+    if ($url && $no_sql_schema_version_check) {
+        #check to see if the url has been quoted. If so, move the quote
+        #after the no_sql_schema_version_check
+        $url =~ s/([\'\"]?)$/;no_sql_schema_version_check=1$1/;
+    }
 
     if($reg_conf or $reg_alias) {   # need to initialize Registry even if $reg_conf is not really given
         require Bio::EnsEMBL::Registry;
@@ -114,7 +117,10 @@ sub new {
     unless($no_sql_schema_version_check) {
 
         my $dbc = $self->dbc();
-        my $safe_url = $dbc->url('EHIVE_PASS');
+
+        # Make a safe URL without affecting EHIVE_PASS, which could have been set by the user
+        my $safe_url = $dbc->url('EHIVE_TMP_PASSWORD');
+        $safe_url =~ s/EHIVE_TMP_PASSWORD/EHIVE_PASS/;
 
         my $code_sql_schema_version = Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version()
             || die "DB($safe_url) Could not establish code_sql_schema_version, please check that 'EHIVE_ROOT_DIR' environment variable is set correctly";
@@ -201,6 +207,7 @@ our %adaptor_type_2_package_name = (
     'AnalysisData'          => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor',
     'AnalysisJob'           => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor',
     'AnalysisStats'         => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor',
+    'Beekeeper'             => 'Bio::EnsEMBL::Hive::DBSQL::BeekeeperAdaptor',
     'DataflowRule'          => 'Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor',
     'DataflowTarget'        => 'Bio::EnsEMBL::Hive::DBSQL::DataflowTargetAdaptor',
     'LogMessage'            => 'Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor',
@@ -210,6 +217,7 @@ our %adaptor_type_2_package_name = (
     'ResourceClass'         => 'Bio::EnsEMBL::Hive::DBSQL::ResourceClassAdaptor',
     'ResourceDescription'   => 'Bio::EnsEMBL::Hive::DBSQL::ResourceDescriptionAdaptor',
     'Role'                  => 'Bio::EnsEMBL::Hive::DBSQL::RoleAdaptor',
+    'Semaphore'             => 'Bio::EnsEMBL::Hive::DBSQL::SemaphoreAdaptor',
     'Queen'                 => 'Bio::EnsEMBL::Hive::Queen',
 
         # aliases:

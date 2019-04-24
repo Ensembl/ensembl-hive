@@ -11,13 +11,14 @@ BEGIN {
     unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
 }
 
-
 use Getopt::Long qw(:config pass_through no_auto_abbrev);
 use Pod::Usage;
 
 use Bio::EnsEMBL::Hive::HivePipeline;
-use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module');
+use Bio::EnsEMBL::Hive::Utils ('load_file_or_module');
+use Bio::EnsEMBL::Hive::Utils::URL;
 
+Bio::EnsEMBL::Hive::Utils::URL::hide_url_password();
 
 main();
 
@@ -33,7 +34,7 @@ sub main {
         'reg_conf|reg_file=s'   => \$self->{'reg_conf'},
         'reg_type=s'            => \$self->{'reg_type'},
         'reg_alias|reg_name=s'  => \$self->{'reg_alias'},
-        'nosqlvc=i'             => \$self->{'nosqlvc'},     # using "=i" instead of "!" for consistency with scripts where it is a propagated option
+        'nosqlvc'             => \$self->{'nosqlvc'},     # using "nosqlvc" instead of "sqlvc!" for consistency with scripts where it is a propagated option
 
         'tweak|SET=s@'          => \$tweaks,
         'DELETE=s'              => sub { my ($opt_name, $opt_value) = @_; push @$tweaks, $opt_value.'#'; },
@@ -62,13 +63,13 @@ sub main {
         );
 
     } else {
-        pod2usage({-exitvalue => 0, -verbose => 2});
-
+        die "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
     }
 
     if(@$tweaks) {
         my $need_write = $pipeline->apply_tweaks( $tweaks );
         if ($need_write) {
+            $pipeline->hive_dba()->dbc->requires_write_access();
             $pipeline->save_collections();
         }
     }
@@ -82,58 +83,62 @@ __DATA__
 
 =head1 NAME
 
-    tweak_pipeline.pl
+tweak_pipeline.pl
 
 =head1 SYNOPSIS
 
-    ./tweak_pipeline.pl [ -url mysql://user:pass@server:port/dbname | -reg_conf <reg_conf_file> -reg_alias <reg_alias> ] -tweak 'analysis[mafft%].analysis_capacity=undef'
+    tweak_pipeline.pl [ -url mysql://user:pass@server:port/dbname | -reg_conf <reg_conf_file> -reg_alias <reg_alias> ] -tweak 'analysis[mafft%].analysis_capacity=undef'
 
 =head1 DESCRIPTION
 
-    This is a script to "tweak" attributes or parameters of an existing Hive pipeline.
+This is a script to "tweak" attributes or parameters of an existing eHive pipeline.
 
 =head1 OPTIONS
 
-B<--url>
+=over
 
-    url defining where hive database is located
+=item --url <url>
 
-B<--reg_conf>
+URL defining where eHive database is located
 
-    path to a Registry configuration file
+=item --reg_conf <path>
 
-B<--reg_type>
+path to a Registry configuration file
 
-    Registry type of the Hive DBAdaptor
+=item --reg_type <name>
 
-B<--reg_alias>
+Registry type of the eHive DBAdaptor
 
-    species/alias name for the Hive DBAdaptor
+=item --reg_alias <name>
 
-B<--nosqlvc>
+species/alias name for the eHive DBAdaptor
 
-    "No SQL Version Check" - set this to one if you want to force working with a database created by a potentially schema-incompatible API (0 by default)
+=item --nosqlvc
 
-B<--tweak>
+"No SQL Version Check" - set if you want to force working with a database created by a potentially schema-incompatible API
 
-    An assignment command that performs one individual "tweak". You can "tweak" global/analysis parameters, analysis attributes and resource classes:
+=item --tweak <string>
 
-        -tweak 'pipeline.param[take_time]=20'                   # override a value of a pipeline-wide parameter; can also create a non-existent parameter
-        -tweak 'analysis[take_b_apart].param[base]=10'          # override a value of an analysis-wide parameter; can also create a non-existent parameter
-        -tweak 'analysis[add_together].analysis_capacity=undef' # override a value of an analysis attribute
-        -tweak 'analysis[add_together].batch_size=15'           # override a value of an analysis_stats attribute
-        -tweak 'analysis[part_multiply].resource_class=urgent'  # set the resource class of an analysis (whether a resource class with this name existed or not)
-        -tweak 'resource_class[urgent].LSF=-q yesteryear'       # update or create a new resource description
+An assignment command that performs one individual "tweak". You can "tweak" global/Analysis parameters, Analysis attributes and Resource Classes:
 
-    If multiple "tweaks" are requested, they will be performed in the given order.
+    -tweak 'pipeline.param[take_time]=20'                   # override a value of a pipeline-wide parameter; can also create a non-existent parameter
+    -tweak 'analysis[take_b_apart].param[base]=10'          # override a value of an Analysis-wide parameter; can also create a non-existent parameter
+    -tweak 'analysis[add_together].analysis_capacity=undef' # override a value of an Analysis attribute
+    -tweak 'analysis[add_together].batch_size=15'           # override a value of an Analysis_stats attribute
+    -tweak 'analysis[part_multiply].resource_class=urgent'  # set the Resource Class of an Analysis (whether a Resource Class with this name existed or not)
+    -tweak 'resource_class[urgent].LSF=-q yesteryear'       # update or create a new Resource Description
 
-B<--DELETE>
+If multiple "tweaks" are requested, they will be performed in the given order.
 
-    Shortcut to delete a parameter
+=item --DELETE <selector>
 
-B<--SHOW>
+Shortcut to delete a parameter
 
-    Shortcut to show a parameter value
+=item --SHOW <selector>
+
+Shortcut to show a parameter value
+
+=back
 
 =head1 LICENSE
 
@@ -151,7 +156,7 @@ B<--SHOW>
 
 =head1 CONTACT
 
-    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the eHive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss eHive-related questions or to be notified of our updates
 
 =cut
 

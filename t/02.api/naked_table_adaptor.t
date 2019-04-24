@@ -20,7 +20,6 @@ use strict;
 use warnings;
 
 use Test::More;
-use File::Temp qw{tempdir};
 use Data::Dumper;
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
@@ -29,42 +28,21 @@ use File::Basename ();
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Hive::Utils::Test qw(get_test_urls make_new_db_from_sqls run_sql_on_db);
 
-my $dir = tempdir CLEANUP => 1;
-my $orig = Cwd::getcwd;
-chdir $dir;
+my $ehive_test_pipeline_urls = get_test_urls();
 
+foreach my $test_url (@$ehive_test_pipeline_urls) {
+subtest 'Test on '.$test_url => sub {
 
-my $ehive_test_pipeline_urls = $ENV{'EHIVE_TEST_PIPELINE_URLS'} || "sqlite:///${dir}/test_db";
-
-foreach my $pipeline_url (split( /[\s,]+/, $ehive_test_pipeline_urls )) {
-
+my $sql_create_table = [
+    'CREATE TABLE final_result (a_multiplier varchar(40) NOT NULL, b_multiplier varchar(40) NOT NULL, result varchar(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))',
+    'CREATE TABLE analysis_base (name char(40) NOT NULL)',
+];
+my $dbc = make_new_db_from_sqls($test_url, $sql_create_table, 'Database with a few tables');
 
 # -no_sql_schema_version_check is needed because the database does not have the eHive schema
-my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $pipeline_url, -no_sql_schema_version_check => 1);
-my $dbc = $hive_dba->dbc();
-
-# To ensure we start with the database being absent
-system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') });
-
-is(system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE IF EXISTS') }), 0, "Don't complain if asked to drop a database that doesn't exist");
-if ($dbc->driver eq 'sqlite') {
-    is(system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') }), 0, "'rm -f' doesn't care about missing files");
-} else {
-    is(system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') }), 256, "Cannot drop a database that doesn't exist");
-}
-is(system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE') }), 0, 'Can create a database');
-is(system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE IF NOT EXISTS') }), 0, 'Further CREATE DATABASE statements are ignored') unless $dbc->driver eq 'pgsql';
-is(system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') }), 0, "Can drop a database that exists");
-if ($dbc->driver eq 'pgsql') {
-    # PostgreSQL doesn't understand the IF NOT EXISTS version, so we fallback to a regular CREATE DATABASE
-    is(system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE') }), 0, 'Can create a database');
-} else {
-    is(system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE IF NOT EXISTS') }), 0, 'Can create a database');
-}
-
-$dbc->do('CREATE TABLE final_result (a_multiplier varchar(40) NOT NULL, b_multiplier varchar(40) NOT NULL, result varchar(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'),
-$dbc->do('CREATE TABLE analysis_base (analysis_id INT NOT NULL)');
+my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-dbconn => $dbc, -no_sql_schema_version_check => 1);
 
 my $final_result_nta    = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );
 my $analysis_nta        = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'analysis_base' );
@@ -103,10 +81,11 @@ if($dbc->driver ne 'pgsql') {
     is_deeply($last_result, $first_hash_plus_one, "Replaced the value correctly");
 }
 
-system( @{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
+$dbc->disconnect_if_idle;
+run_sql_on_db($test_url, 'DROP DATABASE');
 
+};
 }
 
-chdir $orig;
 
 done_testing();

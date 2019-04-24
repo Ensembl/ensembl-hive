@@ -15,27 +15,31 @@
         # optionally also seed it with your specific values:
     seed_pipeline.pl -url $CLIENT_HIVE_URL -logic_name take_b_apart -input_id '{ "a_multiplier" => "12345678", "b_multiplier" => "3359559666" }'
 
-        # run the "server" (it will have to be stopped manually when the "client" is done):
-    beekeeper.pl -url $SERVER_HIVE_URL -keep_alive
+        # run the first analysis of the "Client" in order to seed the first jobs into the "Server" pipeline
+    runWorker.pl -url $CLIENT_HIVE_URL
 
-        # run the "client" (it will exit by itself):
-    beekeeper.pl -url $CLIENT_HIVE_URL -loop
+        # run the "Server" (it will exit when all its jobs are done)
+    beekeeper.pl -url $SERVER_HIVE_URL -loop_until NO_WORK
+
+        # run the "Client" (it will exit when all its jobs are done)
+    beekeeper.pl -url $CLIENT_HIVE_URL -loop_until NO_WORK
 
 =head1 DESCRIPTION
 
-    This is the "server" PipeConfig file of a special two-part version of the long multiplication example pipeline.
+    This is the "Client" PipeConfig file of a special two-part version of the long multiplication example pipeline.
     Please make sure you FULLY understand how the LongMult_conf works before trying this one.
 
-    We have split the original LongMult_conf into two parts, the "client" and the "server" that can be used to initialize
+    We have split the original LongMult_conf into two parts, the "Client" and the "Server" that can be used to initialize
     two separate Hive pipeline databases.
 
-    The "client" kept 'take_apart' and 'add_together' analyses and the 'final_result' table, but the 'part_multpily' analysis
-    has been outsourced into the "server" which also maintains its local 'intermediate_result' table.
+    The "Client" kept all the original analyses and the 'final_result' table, but prefers to delegate some of the jobs on the "Server" side.
+    So the "Server" has its own 'part_multiply' to do some of the multiplication work, and its own 'add_together' and the 'final_result'
+    table to do some of the final additions.
 
-    There are 3 links between the pipelines, all established from the "client" side (the "server" doesn't know about them) :
-        1. The "client" seeds the "server" via a cross-database dataflow rule ('take_b_apart'#2 -> 'part_multiply)
-        2. The "client" waits for the 'part_multiply' analysis to complete on the "server" via an analysis_ctrl_rule
-        3. The "client" reads the data from the 'intermediate_result' table of the "server"
+    The link between the pipelines is established via the -server_url command line flag that is passed to the Client database.
+    Thanks to the support of cross-database semaphores we no longer need to depend on static tables, and use cross-database accumulators
+    for returning the data, whether from a local or a remote fan (in this example we have a mix).
+
 
 =head1 LICENSE
 
@@ -64,7 +68,6 @@ use strict;
 use warnings;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use INPUT_PLUS
 
 sub pipeline_create_commands {
     my ($self) = @_;
@@ -72,7 +75,7 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
 
             # additional tables needed for long multiplication pipeline's operation:
-        $self->db_cmd('CREATE TABLE intermediate_result (a_multiplier varchar(255) NOT NULL, digit char(1) NOT NULL, partial_product varchar(255) NOT NULL, PRIMARY KEY (a_multiplier, digit))'),
+        $self->db_cmd('CREATE TABLE final_result (a_multiplier varchar(40) NOT NULL, b_multiplier varchar(40) NOT NULL, result varchar(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'),
     ];
 }
 
@@ -90,15 +93,23 @@ sub pipeline_wide_parameters {
 sub pipeline_analyses {
     my ($self) = @_;
     return [
+            # the "Server"-side fan analysis (performs multiplication by higher digits)
         {   -logic_name => 'part_multiply',
             -module     => 'Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::PartMultiply',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
-                1 => {
-                    '?table_name=intermediate_result' => INPUT_PLUS( { 'partial_product' => '#product#' } ),
-                }
+                1 => '?accu_name=partial_product&accu_address={digit}&accu_input_variable=product',
             },
         },
+
+            # the "Server"-side funnel:
+        {   -logic_name => 'add_together',
+            -module     => 'Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::AddTogether',
+            -flow_into => {
+                1 => '?table_name=final_result',
+            },
+        },
+
     ];
 }
 

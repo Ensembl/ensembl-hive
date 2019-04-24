@@ -1,0 +1,39 @@
+digraph test {
+	ratio="compress"; concentrate = "true"; name = "AnalysisWorkflow"; pad = "0.0";
+	analysis_add_together [fillcolor="grey", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">add_together (3)</td></tr><tr><td colspan="1"> </td></tr><tr><td colspan="1">2s</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_part_multiply [fillcolor="green", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">part_multiply (2)</td></tr><tr><td colspan="1"> </td></tr><tr><td colspan="1">8r</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_take_b_apart [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">take_b_apart (1)</td></tr><tr><td colspan="1"> </td></tr><tr><td colspan="1">2d</td></tr></table>>, shape="Mrecord", style="filled"];
+	dfr_1_mp [fixedsize="1", height="0.01", label="dfr_1_mp", shape="point", width="0.01"];
+	dfr_2_mp [fillcolor="blueviolet", fontcolor="white", fontname="Courier", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1">i<tr><td></td></tr><tr><td port="cond_0">WHEN #digit#&gt;1</td></tr></table>>, shape="egg", style="filled"];
+	sink_dfr_1_mp [fillcolor="darkgreen", fontcolor="white", fontname="Courier", label="Accu", shape="invhouse", style="filled"];
+	table_final_result [fillcolor="orange", fontcolor="black", fontname="Courier", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="3">final_result</td></tr><tr><td colspan="3"> </td></tr><tr><td bgcolor="orangered" border="1">a_multiplier</td><td bgcolor="orangered" border="1">b_multiplier</td><td bgcolor="orangered" border="1">result</td></tr></table>>, shape="tab", style="filled"];
+	analysis_add_together -> table_final_result [color="blue", fontcolor="blue", fontname="Helvetica", label="#1\n"];
+	analysis_part_multiply -> sink_dfr_1_mp [arrowtail="crow", color="darkgreen", dir="both", fontcolor="darkgreen", fontname="Helvetica", label="#1\n=> partial_product{digit}:=product", style="dashed"];
+	analysis_take_b_apart -> dfr_1_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#1"];
+	analysis_take_b_apart -> dfr_2_mp [arrowhead="normal", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#2"];
+	dfr_1_mp -> analysis_add_together [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
+	dfr_2_mp -> analysis_part_multiply [color="blue", fontcolor="blue", fontname="Helvetica", label="\nINPUT_PLUS ", tailport="cond_0"];
+	dfr_2_mp -> dfr_1_mp [arrowhead="tee", arrowtail="crow", color="red", dir="both", style="dashed"];
+
+subgraph cluster_long_mult {
+	label="long_mult";
+	style="bold,filled";
+	colorscheme="pastel19";
+	fillcolor="3";
+	color="";
+	analysis_add_together;
+	analysis_take_b_apart;
+	subgraph cluster_cl_dfr_1_mp {
+		label="";
+		style="filled";
+		colorscheme="blues9";
+		fillcolor="2";
+		color="2";
+		analysis_part_multiply;
+		sink_dfr_1_mp;
+	}
+	dfr_1_mp;
+	dfr_2_mp;
+	table_final_result;
+}
+}

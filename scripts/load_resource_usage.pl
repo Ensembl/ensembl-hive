@@ -11,12 +11,14 @@ BEGIN {
     unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
 }
 
-
 use Getopt::Long qw(:config no_auto_abbrev);
+use Pod::Usage;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Hive::Utils ('script_usage');
+use Bio::EnsEMBL::Hive::Utils::URL;
 use Bio::EnsEMBL::Hive::Valley;
+
+Bio::EnsEMBL::Hive::Utils::URL::hide_url_password();
 
 main();
 exit(0);
@@ -32,7 +34,7 @@ sub main {
             'reg_conf|regfile=s'    => \$reg_conf,
             'reg_type=s'            => \$reg_type,
             'reg_alias|regname=s'   => \$reg_alias,
-            'nosqlvc=i'             => \$nosqlvc,       # using "=i" instead of "!" for consistency with scripts where it is a propagated option
+            'nosqlvc'               => \$nosqlvc,       # using "nosqlvc" instead of "sqlvc!" for consistency with scripts where it is a propagated option
 
             'username=s'            => \$username,      # say "-user all" if the pipeline was run by several people
             'source_line=s'         => \$source_line,
@@ -44,7 +46,9 @@ sub main {
         die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
     }
 
-    if ($help) { script_usage(0); }
+    if ($help) {
+        pod2usage({-exitvalue => 0, -verbose => 2});
+    }
 
     my $hive_dba;
     if($url or $reg_alias) {
@@ -55,15 +59,16 @@ sub main {
                 -reg_alias                      => $reg_alias,
                 -no_sql_schema_version_check    => $nosqlvc,
         );
+        $hive_dba->dbc->requires_write_access();
     } else {
-        warn "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
-        script_usage(1);
+        die "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
     }
 
     my $queen = $hive_dba->get_Queen;
     my $meadow_2_pid_wid = $queen->fetch_HASHED_FROM_meadow_type_AND_meadow_name_AND_process_id_TO_worker_id();
 
-    my $valley = Bio::EnsEMBL::Hive::Valley->new();
+    my $config = Bio::EnsEMBL::Hive::Utils::Config->new();
+    my $valley = Bio::EnsEMBL::Hive::Valley->new($config);
 
     if( $source_line ) {
 
@@ -84,7 +89,7 @@ sub main {
             warn "\nFinding out the time interval when the pipeline was run on Meadow ".$meadow->signature."\n";
 
             if(my $our_interval = $meadow_2_interval->{ $meadow->type }{ $meadow->cached_name } ) {
-                if(my $report_entries = $meadow->get_report_entries_for_time_interval( $our_interval->{'min_born'}, $our_interval->{'max_died'}, $username ) ) {
+                if(my $report_entries = $meadow->get_report_entries_for_time_interval( $our_interval->{'min_submitted'}, $our_interval->{'max_died'}, $username ) ) {
                     $queen->store_resource_usage( $report_entries, $meadow_2_pid_wid->{$meadow->type}{$meadow->cached_name} );
                 }
             } else {
@@ -100,30 +105,30 @@ __DATA__
 
 =head1 NAME
 
-    load_resource_usage.pl
+load_resource_usage.pl
 
 =head1 DESCRIPTION
 
-    This script obtains resource usage data for your pipeline from the Meadow and stores it in 'worker_resource_usage' table.
-    Your Meadow class/plugin has to support offline examination of resources in order for this script to work.
+This script obtains resource usage data for your pipeline from the Meadow and stores it in the C<worker_resource_usage> table.
+Your Meadow class/plugin has to support offline examination of resources in order for this script to work.
 
-    Based on the start time of the first Worker and end time of the last Worker (as recorded in pipeline DB),
-    it pulls the relevant data out of your Meadow (runs 'bacct' script in case of LSF), parses the report and stores in 'worker_resource_usage' table.
-    You can join this table to 'worker' table USING(meadow_name,process_id) in the usual MySQL way
-    to filter by analysis_id, do various stats, etc.
+Based on the start time of the first Worker and end time of the last Worker (as recorded in the pipeline database),
+it pulls the relevant data out of your Meadow (runs the C<bacct> script in case of LSF), parses the report and stores in the C<worker_resource_usage> table.
+You can join this table to the C<worker> table USING(meadow_name,process_id) in the usual MySQL way
+to filter by analysis_id, do various stats, etc.
 
-    You can optionally provide an an external filename or command to get the data from it (don't forget to append a '|' to the end!)
-    and then the data will be taken from your source and parsed from there.
+You can optionally provide an an external filename or command to get the data from it (don't forget to append a "|" to the end!)
+and then the data will be taken from your source and parsed from there.
 
 =head1 USAGE EXAMPLES
 
-        # Just run it the usual way: query and store the relevant data into 'worker_resource_usage' table:
+        # Just run it the usual way: query and store the relevant data into "worker_resource_usage" table:
     load_resource_usage.pl -url mysql://username:secret@hostname:port/long_mult_test
 
-        # The same, but assuming another user 'someone_else' ran the pipeline:
+        # The same, but assuming another user "someone_else" ran the pipeline:
     load_resource_usage.pl -url mysql://username:secret@hostname:port/long_mult_test -username someone_else
 
-        # Assuming the dump file existed. Load the dumped bacct data into 'worker_resource_usage' table:
+        # Assuming the dump file existed. Load the dumped bacct data into "worker_resource_usage" table:
     load_resource_usage.pl -url mysql://username:secret@hostname:port/long_mult_test -source long_mult.bacct
 
         # Provide your own command to fetch and parse the worker_resource_usage data from:
@@ -131,11 +136,33 @@ __DATA__
 
 =head1 OPTIONS
 
-    -help                   : print this help
-    -url <url string>       : url defining where hive database is located
-    -username <username>    : if it wasn't you who ran the pipeline, the name of that user can be provided
-    -source <filename>      : alternative source of worker_resource_usage data. Can be a filename or a pipe-from command.
-    -meadow_type <type>     : only used when -source is given. Tells which meadow type the source filename relates to. Defaults to the first available meadow (LOCAL being considered as the last available)
+=over
+
+=item --help
+
+print this help
+
+=item --url <url string>
+
+URL defining where eHive database is located
+
+=item --username <username>
+
+if it wasn't you who ran the pipeline, the name of that user can be provided
+
+=item --source <filename>
+
+alternative source of worker_resource_usage data. Can be a filename or a pipe-from command.
+
+=item --meadow_type <type>
+
+only used when -source is given. Tells which meadow type the source filename relates to. Defaults to the first available meadow (LOCAL being considered as the last available)
+
+=item --nosqlvc
+
+"No SQL Version Check" - set if you want to force working with a database created by a potentially schema-incompatible API
+
+=back
 
 =head1 LICENSE
 
@@ -153,7 +180,7 @@ __DATA__
 
 =head1 CONTACT
 
-    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the eHive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss eHive-related questions or to be notified of our updates
 
 =cut
 

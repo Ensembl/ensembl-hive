@@ -29,6 +29,10 @@
 
         param('max_chunk_length');  # Maximum total length of sequences in a chunk: 'max_chunk_length' => '200000'
 
+        param('max_chunk_size');    # Defines the maximum allowed number of sequences to be included in each output file.
+
+        param('seq_filter');        # Can be used to exclude sequences from output files. e.g. '^TF' would exclude all sequences starting with TF.
+
         param('output_prefix');     # A common prefix for output files: 'output_prefix' => 'my_special_chunk_'
 
         param('output_suffix');     # A common suffix for output files: 'output_suffix' => '.nt'
@@ -87,8 +91,10 @@ sub param_defaults {
 
     return {
         'max_chunk_length'  => 100000,
+        'max_chunk_size'    => 0,
         'output_prefix'     => 'my_chunk_',
         'output_suffix'     => '.#input_format#',
+        'seq_filter'        => undef,
         'hash_directories'  => 0,
         'input_format'      => 'fasta',
         'output_dir'        => '',
@@ -117,6 +123,7 @@ sub fetch_input {
         $self->param('input_fh', $in_fh);
     } else {
         $input_seqio = Bio::SeqIO->new(-file => $inputfile);
+        $self->param('input_fh', undef);
     }
     die "Could not open or parse '$inputfile', please investigate" unless $input_seqio;
 
@@ -148,6 +155,7 @@ sub write_output {
 
     my $input_seqio         = $self->param('input_seqio');
     my $max_chunk_length    = $self->param('max_chunk_length');
+    my $max_chunk_size      = $self->param('max_chunk_size');
     my $output_prefix       = $self->param('output_prefix');
     my $output_suffix       = $self->param('output_suffix');
     my $output_dir          = $self->param('output_dir');
@@ -156,6 +164,7 @@ sub write_output {
     my $chunk_length = 0;   # total length of the current chunk
     my $chunk_size   = 0;   # number of sequences in the current chunk
     my $chunk_name   = $output_prefix.$chunk_number.$output_suffix;
+    my $seq_filter   = $self->param('seq_filter');
 
     # No need to check param('hash_directories') because even in this mode
     # the first file is in the required directory
@@ -167,11 +176,13 @@ sub write_output {
     
     while (my $seq_object = $input_seqio->next_seq) {
 
+        next if ( ( defined($seq_filter) ) && ( $seq_object->id =~ /$seq_filter/ ) );
+
         $chunk_seqio->write_seq( $seq_object );
         $chunk_length += $seq_object->length();
         $chunk_size   += 1;
 	
-        if ($chunk_length > $max_chunk_length) {
+        if (($max_chunk_length && ($chunk_length > $max_chunk_length)) or ($max_chunk_size && ($chunk_size > $max_chunk_size))) {
 
                 # dataflow the current chunk:
             $self->dataflow_output_id( {
@@ -223,7 +234,7 @@ sub write_output {
 
 =head2 post_cleanup
 
-    Description : Close the file handle open in fetch_input()
+    Description : Close the file handle open in fetch_input() even if the job fails or write_output never runs
 
 =cut
 

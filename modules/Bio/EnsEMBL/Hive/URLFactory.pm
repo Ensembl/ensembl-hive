@@ -39,10 +39,6 @@
 
 =cut
 
-
-    # global instance to cache connections and limit the number of open DB connections:
-my $_URLFactory_global_instance;
-
 package Bio::EnsEMBL::Hive::URLFactory;
 
 use strict;
@@ -53,6 +49,11 @@ use Bio::EnsEMBL::Hive::Accumulator;
 use Bio::EnsEMBL::Hive::NakedTable;
 
 #use Data::Dumper;
+
+
+    # global instance to cache connections and limit the number of open DB connections:
+my $_URLFactory_global_instance;
+
 
 sub new {
     my $class = shift @_;

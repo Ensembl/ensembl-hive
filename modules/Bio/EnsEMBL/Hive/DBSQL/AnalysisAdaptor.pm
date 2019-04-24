@@ -51,11 +51,6 @@ sub default_table_name {
 }
 
 
-sub default_insertion_method {
-    return 'INSERT';
-}
-
-
 sub object_class {
     return 'Bio::EnsEMBL::Hive::Analysis';
 }

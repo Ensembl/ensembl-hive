@@ -168,7 +168,7 @@ sub fetch_input {
 
     if ($need_a_shell) {
         my ($join_needed, $flat_cmd) = join_command_args(\@cmd);
-        $flat_cmd =~ s/ '(-p\$EHIVE_TMP_PASSWORD_\d+)' / $1 /g;
+        $flat_cmd =~ s/ '(\S*\$EHIVE_TMP_PASSWORD_\d+)' / $1 /g;
         $self->param('cmd', $prefix.$flat_cmd.$postfix);
     } else {
         $self->param('cmd', \@cmd);
