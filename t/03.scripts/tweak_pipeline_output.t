@@ -43,46 +43,46 @@ my @tweak_requests = ();
 my @tweak_request_errors = ();
 
 #Check pipeline.param (show, delete, set)
-push @tweak_requests,  ["-SET" => "pipeline.param[take_time]=20", "-json_screen"];
-push @tweak_requests,  ["-SHOW" => "pipeline.param[take_time]", "-json_screen"];
-push @tweak_requests,  ["-DELETE" => "pipeline.param[take_time]", "-json_screen"];
+push @tweak_requests,  ["-SET" => "pipeline.param[take_time]=20", "-json_screen", "-disable_terminal_text"];
+push @tweak_requests,  ["-SHOW" => "pipeline.param[take_time]", "-json_screen", "-disable_terminal_text"];
+push @tweak_requests,  ["-DELETE" => "pipeline.param[take_time]", "-json_screen", "-disable_terminal_text"];
 
 #Check pipeline (show, set, error)
-push @tweak_requests,  ["-tweak" => "pipeline.hive_use_param_stack=20", "-json_screen"];
-push @tweak_requests,  ["-tweak" => "pipeline.hive_use_param_stack?", "-json_screen"];
-push @tweak_requests,  ["-tweak" => "pipeline.hive_use_param_stac?", "-json_screen"];
+push @tweak_requests,  ["-tweak" => "pipeline.hive_use_param_stack=20", "-json_screen", "-disable_terminal_text"];
+push @tweak_requests,  ["-tweak" => "pipeline.hive_use_param_stack?", "-json_screen", "-disable_terminal_text"];
+push @tweak_requests,  ["-tweak" => "pipeline.hive_use_param_stac?", "-json_screen", "-disable_terminal_text"];
 
 #Check analysis (show, delete, set) / (resource_class / is_excluded / error)
-push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].resource_class?", "-json_screen"];
-push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].resource_class=20", "-json_screen"];
-push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].resource_class#", "-json_screen"];
+push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].resource_class?", "-json_screen", "-disable_terminal_text"];
+push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].resource_class=20", "-json_screen", "-disable_terminal_text"];
+push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].resource_class#", "-json_screen", "-disable_terminal_text"];
 
-push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].is_excluded?", "-json_screen"];
-push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].is_excluded=20", "-json_screen"];
-push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].is_excluded#", "-json_screen"];
+push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].is_excluded?", "-json_screen", "-disable_terminal_text"];
+push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].is_excluded=20", "-json_screen", "-disable_terminal_text"];
+push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].is_excluded#", "-json_screen", "-disable_terminal_text"];
 
-push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].some_wrong_attr?", "-json_screen"];
-push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].some_wrong_attr=20", "-json_screen"];
-push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].some_wrong_attr#", "-json_screen"];
+push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].some_wrong_attr?", "-json_screen", "-disable_terminal_text"];
+push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].some_wrong_attr=20", "-json_screen", "-disable_terminal_text"];
+push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].some_wrong_attr#", "-json_screen", "-disable_terminal_text"];
 
 #Check analysis.wait_for (show, delete, set)
-push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].wait_for=perform_cmd", "-json_screen"];
-push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].wait_for?", "-json_screen"];
-push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].wait_for#", "-json_screen"];
+push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].wait_for=perform_cmd", "-json_screen", "-disable_terminal_text"];
+push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].wait_for?", "-json_screen", "-disable_terminal_text"];
+push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].wait_for#", "-json_screen", "-disable_terminal_text"];
 
 #Check analysis.flow_into (show, delete, set)
-push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].flow_into=perform_cmd", "-json_screen"];
-push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].flow_into?", "-json_screen"];
-push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].flow_into#", "-json_screen"];
+push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].flow_into=perform_cmd", "-json_screen", "-disable_terminal_text"];
+push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].flow_into?", "-json_screen", "-disable_terminal_text"];
+push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].flow_into#", "-json_screen", "-disable_terminal_text"];
 
 #Check analysis.param (show, delete, set)
-push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].param[base]=10", "-json_screen"];
-push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].param[base]?", "-json_screen"];
-push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].param[base]#", "-json_screen"];
+push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].param[base]=10", "-json_screen", "-disable_terminal_text"];
+push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].param[base]?", "-json_screen", "-disable_terminal_text"];
+push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].param[base]#", "-json_screen", "-disable_terminal_text"];
 
 #Check resource_class (show, set, error)
-push @tweak_requests,  ["-tweak" => "resource_class[urgent].LSF=-q yesteryear", "-json_screen"];
-push @tweak_requests,  ["-tweak" => "resource_class[urgent].LSF?", "-json_screen"];
+push @tweak_requests,  ["-tweak" => "resource_class[urgent].LSF=-q yesteryear", "-json_screen", "-disable_terminal_text"];
+push @tweak_requests,  ["-tweak" => "resource_class[urgent].LSF?", "-json_screen", "-disable_terminal_text"];
 
 foreach my $request (@tweak_requests) {
     my $stdout = capture_stdout {

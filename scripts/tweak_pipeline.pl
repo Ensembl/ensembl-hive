@@ -38,10 +38,10 @@ sub main {
         'reg_alias|reg_name=s'  => \$self->{'reg_alias'},
         'nosqlvc'               => \$self->{'nosqlvc'},     # using "nosqlvc" instead of "sqlvc!" for consistency with scripts where it is a propagated option
         'json_screen'           => \$self->{'json_screen'},
-        'text_screen'           => \$self->{'text_screen'},
-        'log_level'             => \$self->{'log_level'},
-        'json_logfile'          => \$self->{'json_logfile'},
-        'text_logfile'          => \$self->{'text_logfile'},
+        'disable_terminal_text' => \$self->{'disable_terminal_text'},
+        'log_level=s'           => \$self->{'log_level'},
+        'json_logfile=s'        => \$self->{'json_logfile'},
+        'text_logfile=s'        => \$self->{'text_logfile'},
         'tweak|SET=s@'          => \$tweaks,
         'DELETE=s'              => sub { my ($opt_name, $opt_value) = @_; push @$tweaks, $opt_value.'#'; },
         'SHOW=s'                => sub { my ($opt_name, $opt_value) = @_; push @$tweaks, $opt_value.'?'; },
@@ -78,7 +78,7 @@ sub main {
             -json_logfile           => $self->{'json_logfile'},
             -text_logfile           => $self->{'text_logfile'},
             -json_screen            => $self->{'json_screen'},
-            -text_screen            => $self->{'text_screen'},
+            -disable_terminal_text  => $self->{'disable_terminal_text'},
         );
 
         my ($need_write, $response_structure) = $pipeline->apply_tweaks( $tweaks );

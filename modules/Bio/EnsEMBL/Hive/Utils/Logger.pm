@@ -47,14 +47,14 @@ sub init_logger {
     my $class = shift @_;
     my %flags = @_;
 
-    my ($log_level, $json_logfile, $text_logfile, $json_screen, $text_screen)
-        = delete @flags{qw(-log_level -json_logfile -text_logfile -json_screen -text_screen)};
+    my ($log_level, $json_logfile, $text_logfile, $json_screen, $disable_terminal_text)
+        = delete @flags{qw(-log_level -json_logfile -text_logfile -json_screen -disable_terminal_text)};
 
 
     # Init text settings
-    my $textLogging = $log_level ? $log_level : 'DEBUG, ';                                                  #DEBUG level set by default
-    $textLogging = ($text_screen && $text_screen eq '0' && !$text_logfile) ? 'OFF, Screen' : $textLogging;  #Switching msgs OFF if screen view is switched off and no logfile provided
-    $textLogging = $textLogging . ($text_screen && $text_screen ne '0' ? ' Screen, ' : '');                 #Append screen and log file if appicable
+    my $textLogging = $log_level ? $log_level : 'DEBUG, ';                             #DEBUG level set by default
+    $textLogging = ($disable_terminal_text && !$text_logfile) ? 'OFF' : $textLogging;  #Switching msgs OFF if screen view is switched off and no logfile provided
+    $textLogging = $textLogging . ($disable_terminal_text ? '' : ' Screen, ');         #Append screen and log file if appicable
     $textLogging = $textLogging . ($text_logfile ? 'TextLogfile' : '');
 
     my  $jsonLogging = ($json_screen || $json_logfile) ? 'DEBUG, ' : 'OFF, ';      #OFF level set by default, debug for all other levels,json is only INFO msgs tho
