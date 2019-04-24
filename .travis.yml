@@ -60,5 +60,10 @@ notifications:
     on_success: always
     on_failure: always
   slack:
-    secure: "fbxQ+yuUAKKI10MUmNeCUbLqmVoOHUhGdM2KetqT5DmSn2rHxb099040Ira2tBYmUEPb5QvIMfPZ1xgS27he4xsZIpvOLsd1Or9OOL8XqyeTLcZ/IG4rpky0ehltVXs3s4ClM+YXwCHIoR2FwVghLVn6znmRkYm3TreSDtEUC2o="
+    rooms:
+      # coregithub
+      - secure: gL6s4PRts/S293qOTVDFub8i7DWxqXVpDz5il8Vx7LxSYgOiA9AJcbT1zuXxhfONA5RwXJ62gRze0LllDcAS9TiUl199SSq7x+hBMBKzGxWV5I0P6m5aPMRi2vdC4yiATMQYF97PaH3zWobEDiGEHRAS+mkGNBExXY1hwZSasy8=
+      # ehive-commits
+      - secure: XUShBwss607RlWDQyn4tkVDX390+aIXv1ntaUzr9MtsXMpCNm5X/7PPle7Cq6FZ57vHzkIOM0+FM3kIou7vbc3ediwHEv9/o8PwDah7xH46/ukjCsI+labR6jxoX8YX9SRvUUm4FV9Vo2gkWi0IYM+k+VI6AyDFyhEzyJOIGHEY=
+    on_failure: change
 
