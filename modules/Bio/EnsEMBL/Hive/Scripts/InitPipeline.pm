@@ -61,10 +61,9 @@ sub init_pipeline {
     $pipeconfig_object->add_objects_from_config( $pipeline );
 
     if($tweaks and @$tweaks) {
+        # TODO: init logger
         print "> Applying tweaks.\n";
-        my ($need_write, $msg_list_ref, $json) = $pipeline->apply_tweaks( $tweaks );
-        print join("\n", $msg_list_ref);
-        print "\n";
+        my ($need_write, $json) = $pipeline->apply_tweaks( $tweaks );
     }
 
     $pipeline->test_connections();

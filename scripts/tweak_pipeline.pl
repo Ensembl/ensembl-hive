@@ -72,7 +72,7 @@ sub main {
         die "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
     }
     if(@$tweaks) {
-       
+
         Bio::EnsEMBL::Hive::Utils::Logger->init_logger(
             -log_level              => $self->{'log_level'},
             -json_logfile           => $self->{'json_logfile'},
@@ -81,14 +81,14 @@ sub main {
             -text_screen            => $self->{'text_screen'},
         );
 
-        my ($need_write, $msg_list_ref, $response_structure) = $pipeline->apply_tweaks( $tweaks );
+        my ($need_write, $response_structure) = $pipeline->apply_tweaks( $tweaks );
 
         $response_structure->{URL} = $self->{'url'};
         my $json = JSON->new->allow_nonref;
 
         my $json_logger = Bio::EnsEMBL::Hive::Utils::Logger->get_jsonLogger();
-
         $json_logger->info($json->encode($response_structure));
+
         if ($need_write) {
             $pipeline->hive_dba()->dbc->requires_write_access();
             $pipeline->save_collections();
