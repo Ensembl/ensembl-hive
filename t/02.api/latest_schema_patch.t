@@ -60,14 +60,19 @@ sub schema_from_url {
         }
         return \%schema;
     } elsif ($dbc->driver eq 'pgsql') {
-        # PostgreSQL language does not have a way of forcing the position
-        # of a column. This means that patches that add columns cannot
-        # produce the same new schema, so we can't use the ORDINAL position
-        # when comparing the schemas
         my $sth = $dbc->column_info(undef, undef, '%', '%');
         my $schema = $sth->fetchall_hashref(['TABLE_NAME', 'COLUMN_NAME']);
         foreach my $s (values %$schema) {
+            # PostgreSQL language does not have a way of forcing the position
+            # of a column. This means that patches that add columns cannot
+            # produce the same new schema, so we can't use the ORDINAL position
+            # when comparing the schemas
             delete $_->{'ORDINAL_POSITION'} for values %$s;
+            # Since version 3.8.0 DBD::Pg returns the database name in
+            # TABLE_CAT. Since we are comparing different databases (i.e.
+            # travis_ehive_test_old_patched vs travis_ehive_test_new), we
+            # can't use TABLE_CAT in the comparison
+            delete $_->{'TABLE_CAT'} for values %$s;
         }
         $sth->finish();
         return $schema;
