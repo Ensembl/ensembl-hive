@@ -9,6 +9,7 @@ requires 'Time::Piece';
 requires 'JSON';
 requires 'Proc::Daemon', '0.23';
 requires 'Email::Stuffer';
+requires 'Log::Log4perl';
 
 on 'test' => sub {
 	requires 'Test::Exception';
@@ -26,4 +27,3 @@ recommends 'Getopt::ArgvFile';
 recommends 'BSD::Resource';
 recommends 'Chart::Gnuplot';
 recommends 'GraphViz';
-
