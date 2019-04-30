@@ -898,7 +898,7 @@ sub print_status_and_return_reasons_to_exit {
         }
 
         if ($failed_job_count > 0) {
-           synchronize_AnalysisStats($stats);
+           $self->synchronize_AnalysisStats($stats);
            $stats->determine_status();
             my $exit_status;
             my $failure_message;
