@@ -35,13 +35,9 @@ FROM ubuntu:16.04
 # Install git and java (taken from https://github.com/dockerfile/java/blob/master/oracle-java8/Dockerfile)
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y \
-    && apt-get install -y git software-properties-common \
-    && (echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | debconf-set-selections) \
-    && add-apt-repository -y ppa:webupd8team/java \
-    && apt-get update -y \
-    && apt-get install -y oracle-java8-installer ant \
+    && apt-get install -y git software-properties-common openjdk-8-jdk ant \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/cache/oracle-jdk8-installer
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Clone the repo
 RUN mkdir /repo && git clone -b version/2.5 https://github.com/Ensembl/ensembl-hive.git /repo/ensembl-hive
@@ -53,7 +49,6 @@ RUN /repo/ensembl-hive/docker/setup_os.Ubuntu-16.04.sh \
 ENV EHIVE_ROOT_DIR "/repo/ensembl-hive"
 ENV PATH "/repo/ensembl-hive/scripts:$PATH"
 ENV PERL5LIB "/repo/ensembl-hive/modules:$PERL5LIB"
-ENV JAVA_HOME /usr/lib/jvm/java-8-oracle
 
 ENTRYPOINT [ "/repo/ensembl-hive/scripts/dev/simple_init.py" ]
 CMD [ "/bin/bash" ]
