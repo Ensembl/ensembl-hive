@@ -659,7 +659,7 @@ sub apply_tweaks {
                 my $tweakStructure;
                 $tweakStructure->{Object}->{Type} = $self->{TWEAK_OBJECT_TYPE}->{ANALYSIS};
                 $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
-                $tweakStructure->{Object}->{Id} = $analysis->dbID + 0;
+                $tweakStructure->{Object}->{Id} = defined $analysis->dbID ? $analysis->dbID + 0 : undef;
                 $tweakStructure->{Object}->{Name} = $analysis_name;
                 $tweakStructure->{Return}->{Field} = $param_name;
                 $tweakStructure->{Return}->{OldValue} =  exists($param_hash->{ $param_name }) ? stringify($param_hash->{ $param_name }) : undef;
@@ -708,7 +708,7 @@ sub apply_tweaks {
                 my $tweakStructure;
                 $tweakStructure->{Object}->{Type} = $self->{TWEAK_OBJECT_TYPE}->{ANALYSIS};
                 $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
-                $tweakStructure->{Object}->{Id} = $analysis->dbID + 0;
+                $tweakStructure->{Object}->{Id} = defined $analysis->dbID ? $analysis->dbID + 0 : undef;
                 $tweakStructure->{Object}->{Name} = $analysis_name;
                 $tweakStructure->{Return}->{Field} = $attrib_name;
                 if( $attrib_name eq 'wait_for' ) {
@@ -792,7 +792,7 @@ sub apply_tweaks {
                 my $analysis_name = $analysis->logic_name;
                 my $tweakStructure;
                 $tweakStructure->{Object}->{Type} = $self->{TWEAK_OBJECT_TYPE}->{ANALYSIS};
-                $tweakStructure->{Object}->{Id} = $analysis->dbID + 0;
+                $tweakStructure->{Object}->{Id} = defined $analysis->dbID ? $analysis->dbID + 0 : undef;
                 $tweakStructure->{Object}->{Name} = $analysis_name;
                 $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
                 $tweakStructure->{Return}->{Field} = $attrib_name;
@@ -888,7 +888,7 @@ sub apply_tweaks {
                     my $rc_name = $rc->name;
                     my $tweakStructure;
                     $tweakStructure->{Object}->{Type} = $self->{TWEAK_OBJECT_TYPE}->{RESOURCE_CLASS};
-                    $tweakStructure->{Object}->{Id} = $rc->dbID + 0;
+                    $tweakStructure->{Object}->{Id} = defined $rc->dbID ? $rc->dbID + 0 : undef;
                     $tweakStructure->{Object}->{Name} = $rc_name;
                     $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
 
@@ -915,7 +915,7 @@ sub apply_tweaks {
                     my $tweakStructure;
                     $tweakStructure->{Object}->{Type} = $self->{TWEAK_OBJECT_TYPE}->{RESOURCE_CLASS};
                     $tweakStructure->{Action} = $self->{TWEAK_ACTION}->{substr($operator, 0, 1)};
-                    $tweakStructure->{Object}->{Id} = $rc->dbID + 0;
+                    $tweakStructure->{Object}->{Id} = defined $rc->dbID ? $rc->dbID + 0 : undef;
                     $tweakStructure->{Object}->{Name} = $rc_name;
 
                     if(my $rd = $self->collection_of( 'ResourceDescription' )->find_one_by('resource_class', $rc, 'meadow_type', $meadow_type)) {
