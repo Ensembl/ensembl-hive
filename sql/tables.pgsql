@@ -509,6 +509,7 @@ CREATE INDEX ON analysis_data (md5sum);
 @column when_seen           when the Worker was last seen by the Meadow
 @column when_died           if defined, when the Worker died (or its premature death was first detected by GC)
 @column cause_of_death      if defined, why did the Worker exit (or why it was killed)
+@column temp_directory_name a filesystem directory where this Worker can store temporary data
 @column log_dir             if defined, a filesystem directory where this Worker's output is logged
 */
 
@@ -529,6 +530,7 @@ CREATE TABLE worker (
     when_seen               TIMESTAMP            DEFAULT NULL,
     when_died               TIMESTAMP            DEFAULT NULL,
     cause_of_death          VARCHAR(255)         DEFAULT NULL,      -- expected values: 'NO_ROLE', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'RELOCATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'LIMBO', 'UNKNOWN'
+    temp_directory_name     VARCHAR(255)         DEFAULT NULL,
     log_dir                 VARCHAR(255)         DEFAULT NULL
 );
 CREATE INDEX ON worker (meadow_type, meadow_name, process_id);
