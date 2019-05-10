@@ -947,6 +947,7 @@ sub set_temp_directory_name {
     }
 
     $self->temp_directory_name( $temp_directory_name );
+    $self->adaptor->update_temp_directory_name( $self ) if $self->adaptor;  # autoloaded
 }
 
 
