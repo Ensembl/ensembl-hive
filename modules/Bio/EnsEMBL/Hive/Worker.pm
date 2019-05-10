@@ -76,6 +76,7 @@ use strict;
 use warnings;
 use POSIX;
 use File::Path 'make_path';
+use File::Spec;
 
 use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Hive::Limiter;
@@ -927,15 +928,16 @@ sub set_log_directory_name {
 
   Title       : set_temp_directory_name
   Description : Generates and sets the name of a temporary directory suitable for this worker.
-                It will be under the base directory requested by $base_temp_dir, or /tmp
-                otherwise, and includes worker attributes to make the path unique.
+                It will be under the base directory requested by $base_temp_dir, or the standard
+                location otherwise (as advised by File::Spec), and includes worker attributes
+                to make the path unique.
 
 =cut
 
 sub set_temp_directory_name {
     my ($self, $base_temp_dir) = @_;
 
-    $base_temp_dir //= '/tmp';
+    $base_temp_dir //= File::Spec->tmpdir();
 
     my $temp_directory_name;
     if ($self->adaptor) {

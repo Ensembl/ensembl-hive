@@ -9,7 +9,7 @@
     "Meadow" : {
         "REMARKS" : {
             "HOWTO"             : "These parameters are optional. When setting them, move them out of the REMARKS section at the same time",
-            "BaseTempDirectory" : "Where to create temporary directories for workers. When null or missing, workers will use /tmp",
+            "BaseTempDirectory" : "Where to create temporary directories for workers. When null or missing, workers will ask File::Spec, which choses $TMPDIR or /tmp",
             "RunWorkerPath"     : "The path of runWorker.pl . When null or missing, beekeeper will use $EHIVE_ROOT_DIR or its own path. When RunWorkerPath is '', beekeeper assumes runWorker.pl is in $PATH"
         },
         "CleanupTempDirectoryKilledWorkers" : 0,
