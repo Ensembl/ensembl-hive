@@ -414,4 +414,23 @@ sub run_on_host {
     return system('timeout', '3m', 'ssh', @extra_args, '-o', 'BatchMode=yes', '-o', 'ServerAliveInterval=30', sprintf('%s@%s', $meadow_user, $meadow_host), @$command);
 }
 
+
+=head2 cleanup_temp_directory
+
+    Title   :  cleanup_temp_directory
+    Function:  Cleanup the temp directory assigned to the worker
+
+=cut
+
+sub cleanup_temp_directory {
+    my ($self, $worker) = @_;
+
+    # The feature can be disabled for this actual meadow
+    return unless $self->config_get('CleanupTempDirectoryKilledWorkers');
+
+    print "GarbageCollector:\tCleaning-up ".$worker->temp_directory_name."\n";
+    my $rc = $self->run_on_host($worker->meadow_host, $worker->meadow_user, ['rm', '-rf', $worker->temp_directory_name]);
+    $worker->worker_say(sprintf("Error: could not clean %s's temp directory '%s': %s\n", $worker->meadow_host, $worker->temp_directory_name, $@)) if $rc;
+}
+
 1;
