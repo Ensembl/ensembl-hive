@@ -571,7 +571,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
                     if( ($worker->status ne 'SUBMITTED')                 # There is no worker_temp_directory before specialization
                     and ($worker->meadow_user eq $this_meadow_user) ) {  # if I'm actually allowed to kill the worker...
-                            $valley->cleanup_left_temp_directory( $worker );
+                            $this_meadow->cleanup_temp_directory( $worker );
                     }
                 }
             }
