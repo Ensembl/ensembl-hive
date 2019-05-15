@@ -525,7 +525,7 @@ sub life_cycle {
         input_job => {
             parameters => $job->{_unsubstituted_param_hash},
             input_id => $job->input_id,
-            dbID => $job->dbID + 0,
+            dbID => defined $job->dbID ? $job->dbID + 0 : 0,
             retry_count => $job->retry_count + 0,
         },
         execute_writes => $self->execute_writes || 0,
