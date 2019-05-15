@@ -59,7 +59,6 @@ sub standaloneJob {
         'logic_name'    => 'Standalone_Dummy_Analysis',     # looks nicer when printing out DFRs
         'module'        => $runnable_module,
         'language'      => $language,
-        'dbID'          => -1,
     );
 
     my $role = Bio::EnsEMBL::Hive::Role->new(
@@ -72,7 +71,6 @@ sub standaloneJob {
         'hive_pipeline' => $hive_pipeline,
         'analysis'      => $dummy_analysis,
         'input_id'      => $input_id,
-        'dbID'          => -1,
     );
 
     $worker->compile_runnable;
