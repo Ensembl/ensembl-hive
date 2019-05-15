@@ -676,6 +676,12 @@ sub specialize_and_compile_wrapper {
     };
 
     if( !$self->cause_of_death() ) {
+        $self->compile_runnable;
+    }
+}
+
+sub compile_runnable {
+    my $self = shift;
         eval {
             $self->enter_status('COMPILATION');
 
@@ -693,7 +699,6 @@ sub specialize_and_compile_wrapper {
             my $last_err = $@;
             $self->handle_compilation_failure($last_err);
         };
-    }
 }
 
 sub handle_compilation_failure {
