@@ -23,7 +23,7 @@ addons:
     packages:
     - python3
     #- oracle-java8-installer      # Installed by default on Trusty
-    - ant
+    - maven
     - graphviz
 
 cache:
@@ -42,15 +42,14 @@ before_install:
     - export PATH=$PWD:$PATH
     - mkdir deps
     - ln -s /usr/share/perl5/PgCommon.pm deps/
-    - export PATH=/usr/lib/jvm/java-8-oracle/jre/bin/:$PATH
-    - export JAVA_HOME=/usr/lib/jvm/java-8-oracle
     - java -version
-    - ant -version
+    - mvn -version
     - mysql --version
     - sqlite3 --version
     - env
     - cd wrappers/java
-    - ant clean jar
+    - mvn clean
+    - mvn install
     - cd ../..
 
 

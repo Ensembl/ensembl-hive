@@ -69,7 +69,7 @@ foreach my $f (@source_files) {
     # Docker-swarm tutorial
     next if $f =~ /docs\/contrib\/docker-swarm\/tutorial\.rst$/;
     # Binary files
-    next if $f =~ /\.(png|jpg|pdf|pyc|tgz)$/;
+    next if $f =~ /\.(jar|class|png|jpg|pdf|pyc|tgz)$/;
     # Unicode-art
     next if $f =~ /modules\/Bio\/EnsEMBL\/Hive\/(Analysis|HivePipeline)\.pm$/;
     next if $f =~ /\/generate_graph\/.*::PipeConfig::.*\.txt$/;
