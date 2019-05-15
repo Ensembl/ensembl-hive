@@ -1,2 +1,3 @@
 /build/
-/lib/ehive-*.jar
+/*.jar
+/target/
