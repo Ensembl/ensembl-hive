@@ -50,20 +50,23 @@ sub standaloneJob {
         -debug                 => $flags->{debug},
     );
 
-    my $runnable_module = $language ? 'Bio::EnsEMBL::Hive::GuestProcess' : load_file_or_module( $module_or_file );
-
-
-    my $runnable_object = $runnable_module->new($flags->{debug}, $language, $module_or_file);    # Only GuestProcess will read the arguments
-    die "Runnable $module_or_file not created\n" unless $runnable_object;
-    $runnable_object->worker($worker);
+    # NOTE: `load_file_or_module` already checks that (Perl) modules can be compiled
+    my $runnable_module = $language ? $module_or_file : load_file_or_module( $module_or_file );
 
     my $hive_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new();
 
     my ($dummy_analysis) = $hive_pipeline->add_new_or_update( 'Analysis',   # NB: add_new_or_update returns a list
         'logic_name'    => 'Standalone_Dummy_Analysis',     # looks nicer when printing out DFRs
-        'module'        => ref($runnable_object),
+        'module'        => $runnable_module,
+        'language'      => $language,
         'dbID'          => -1,
     );
+
+    my $role = Bio::EnsEMBL::Hive::Role->new(
+        'worker'        => $worker,
+        'analysis'      => $dummy_analysis,
+    );
+    $worker->current_role( $role );
 
     my $job = Bio::EnsEMBL::Hive::AnalysisJob->new(
         'hive_pipeline' => $hive_pipeline,
@@ -72,6 +75,8 @@ sub standaloneJob {
         'dbID'          => -1,
     );
 
+    $worker->compile_runnable;
+    my $runnable_object = $worker->runnable_object;
     $job->load_parameters( $runnable_object );
 
 
