@@ -35,7 +35,7 @@ rt=$?
 
 (cd wrappers/python3; python3 -m unittest -v eHive.Process)
 rtp=$?
-(cd wrappers/java; ant run_tests)
+(cd wrappers/java; mvn test)
 rtj=$?
 
 if [[ ($rt -eq 0) && ($rtp -eq 0) && ($rtj -eq 0) ]]; then
