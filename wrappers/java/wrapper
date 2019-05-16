@@ -33,7 +33,7 @@ wrapper_dir=$(dirname "$0")
 cd "$wrapper_dir"
 
 if [ "$action" == "version" ]; then
-	exec mvn -S -q version
+	exec mvn --version
 elif [ "$action" == "compile" ]; then
 	if [[ -z "$module" ]]; then
 		echo "Syntax error"
@@ -41,7 +41,9 @@ elif [ "$action" == "compile" ]; then
 		exit 1
 	fi
 	#echo "compiling:" mvn package
-	exec mvn package
+	mvn package
+  	exec java -cp target/eHive-*-jar-with-dependencies.jar org.ensembl.hive.CompileWrapper "$module"
+
 elif [ "$action" == "run" ]; then
 	if [[ -z "$module" || -z "$fd_in" || -z "$fd_out" || -z "$debug" ]]; then
 		echo "Syntax error"
@@ -50,8 +52,8 @@ elif [ "$action" == "run" ]; then
 	fi
 
 	#echo "Running in $PWD:" java -cp "lib/*" org.ensembl.hive.RunWrapper "$module" "$fd_in" "$fd_out" "$debug"
-  
-	exec java -cp target/eHive-1.0-jar-with-dependencies.jar org.ensembl.hive.RunWrapper "$module" "$fd_in" "$fd_out" "$debug"
+
+	exec java -cp target/eHive-*-jar-with-dependencies.jar org.ensembl.hive.RunWrapper "$module" "$fd_in" "$fd_out" "$debug"
 else
 	echo "Command-line error: No mode provided"
 	echo "$usage"
