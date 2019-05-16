@@ -49,7 +49,7 @@ before_install:
     - env
     - cd wrappers/java
     - mvn clean
-    - mvn install
+    - mvn package
     - cd ../..
 
 
