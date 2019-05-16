@@ -3,7 +3,7 @@
 
   <groupId>org.ensembl.hive</groupId>
   <artifactId>eHive</artifactId>
-  <version>1.0</version>
+  <version>3.1</version>
 
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
@@ -39,11 +39,6 @@
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>
-          <archive>
-            <manifest>
-              <mainClass>fully.qualified.MainClass</mainClass>
-            </manifest>
-          </archive>
           <descriptorRefs>
             <descriptorRef>jar-with-dependencies</descriptorRef>
           </descriptorRefs>
