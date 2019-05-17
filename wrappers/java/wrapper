@@ -33,7 +33,7 @@ wrapper_dir=$(dirname "$0")
 cd "$wrapper_dir"
 
 if [ "$action" == "version" ]; then
-	exec mvn --version
+	exec mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec
 elif [ "$action" == "compile" ]; then
 	if [[ -z "$module" ]]; then
 		echo "Syntax error"
@@ -42,7 +42,7 @@ elif [ "$action" == "compile" ]; then
 	fi
 	#echo "compiling:" mvn package
 	mvn package
-  	exec java -cp target/eHive-*-jar-with-dependencies.jar org.ensembl.hive.CompileWrapper "$module"
+	exec java -cp target/eHive-*-jar-with-dependencies.jar org.ensembl.hive.CompileWrapper "$module"
 
 elif [ "$action" == "run" ]; then
 	if [[ -z "$module" || -z "$fd_in" || -z "$fd_out" || -z "$debug" ]]; then
