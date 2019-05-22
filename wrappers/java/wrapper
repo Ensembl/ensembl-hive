@@ -42,7 +42,7 @@ elif [ "$action" == "compile" ]; then
 	fi
 	#echo "compiling:" mvn package
 	mvn package
-	exec java -cp target/eHive-*-jar-with-dependencies.jar org.ensembl.hive.CompileWrapper --add-exports java.base/jdk.internal.access=ALL-UNNAMED "$module"
+	exec java -cp target/eHive-*-jar-with-dependencies.jar --add-exports java.base/jdk.internal.access=ALL-UNNAMED org.ensembl.hive.CompileWrapper "$module"
 
 elif [ "$action" == "run" ]; then
 	if [[ -z "$module" || -z "$fd_in" || -z "$fd_out" || -z "$debug" ]]; then
