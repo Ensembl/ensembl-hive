@@ -42,7 +42,7 @@ elif [ "$action" == "compile" ]; then
 	fi
 	#echo "compiling:" mvn package
 	mvn package
-	exec java -cp target/eHive-*-jar-with-dependencies.jar org.ensembl.hive.CompileWrapper "$module"
+	exec java -cp target/eHive-*-jar-with-dependencies.jar --add-exports java.base/jdk.internal.access=ALL-UNNAMED org.ensembl.hive.CompileWrapper "$module"
 
 elif [ "$action" == "run" ]; then
 	if [[ -z "$module" || -z "$fd_in" || -z "$fd_out" || -z "$debug" ]]; then
@@ -53,7 +53,7 @@ elif [ "$action" == "run" ]; then
 
 	#echo "Running in $PWD:" java -cp "lib/*" org.ensembl.hive.RunWrapper "$module" "$fd_in" "$fd_out" "$debug"
 
-	exec java -cp target/eHive-*-jar-with-dependencies.jar org.ensembl.hive.RunWrapper "$module" "$fd_in" "$fd_out" "$debug"
+	exec java -cp target/eHive-*-jar-with-dependencies.jar --add-exports java.base/jdk.internal.access=ALL-UNNAMED org.ensembl.hive.RunWrapper "$module" "$fd_in" "$fd_out" "$debug"
 else
 	echo "Command-line error: No mode provided"
 	echo "$usage"

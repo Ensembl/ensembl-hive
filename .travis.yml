@@ -36,7 +36,17 @@ before_install:
     - export PATH=$PWD:$PATH
     - mkdir deps
     - ln -s /usr/share/perl5/PgCommon.pm deps/
+    - export EHIVE_HOME=$PWD
+    - cd ../
+    - wget https://download.java.net/java/early_access/jdk13/21/GPL/openjdk-13-ea+21_linux-x64_bin.tar.gz
+    - tar xvzf openjdk-13-ea+21_linux-x64_bin.tar.gz
+    - export JAVA_HOME=$PWD/jdk-13
+    - export PATH=$JAVA_HOME/bin:$PATH
+    - export JAVA_JRE=$JAVA_HOME
+    - cd $EHIVE_HOME
+    - ls $JAVA_HOME
     - java -version
+    - javac -version
     - mvn -version
     - mysql --version
     - sqlite3 --version
@@ -65,4 +75,3 @@ notifications:
       # ehive-commits
       - secure: XUShBwss607RlWDQyn4tkVDX390+aIXv1ntaUzr9MtsXMpCNm5X/7PPle7Cq6FZ57vHzkIOM0+FM3kIou7vbc3ediwHEv9/o8PwDah7xH46/ukjCsI+labR6jxoX8YX9SRvUUm4FV9Vo2gkWi0IYM+k+VI6AyDFyhEzyJOIGHEY=
     on_failure: change
-
