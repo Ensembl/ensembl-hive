@@ -37,7 +37,7 @@ sub peek {
     $job->load_parameters;
 
     my $unsub_params = $job->{'_unsubstituted_param_hash'};
-    print Dumper $unsub_params;
+    print Data::Dumper->Dump( [ $unsub_params ], [ qw(*unsubstituted_param_hash) ] );
     
     # my @ordered_params = sort { lc($a) cmp lc($b) } keys %$unsub_params;
     # print "{\n";
