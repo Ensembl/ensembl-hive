@@ -24,6 +24,7 @@ use strict;
 use warnings;
 
 use Data::Dumper;
+$Data::Dumper::Sortkeys = 1;
 
 sub peek {
     my ($pipeline, $job_id) = @_;
