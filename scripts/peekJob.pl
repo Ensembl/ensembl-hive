@@ -96,7 +96,7 @@ sub main {
         die "ERROR : no database connection, the pipeline could not be accessed\n\n";
     }
 
-    Bio::EnsEMBL::Hive::Scripts::PeekJob::peek($pipeline, $job_id);
+    print Bio::EnsEMBL::Hive::Scripts::PeekJob::peek($pipeline, $job_id);
 }
 
 
