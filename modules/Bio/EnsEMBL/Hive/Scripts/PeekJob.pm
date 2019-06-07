@@ -35,7 +35,7 @@ sub peek {
     $job->load_parameters;
 
     my $unsub_params = $job->{'_unsubstituted_param_hash'};
-    print Data::Dumper->Dump( [ $unsub_params ], [ qw(*unsubstituted_param_hash) ] );
+    return Data::Dumper->Dump( [ $unsub_params ], [ qw(*unsubstituted_param_hash) ] );
 }
 
 1;
