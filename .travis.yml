@@ -4,6 +4,10 @@ perl:
   - "5.14"
   - "5.26"
 
+services:
+  - mysql
+  - postgresql
+
 env:
   - COVERALLS=true
   - COVERALLS=false
