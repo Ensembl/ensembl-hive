@@ -41,7 +41,6 @@ before_install:
     - tar xvzf openjdk-12.0.1_linux-x64_bin.tar.gz
     - export JAVA_HOME=$PWD/jdk-12.0.1
     - export PATH=$JAVA_HOME/bin:$PATH
-    - export JAVA_JRE=$JAVA_HOME
     - cd $EHIVE_HOME
     - ls $JAVA_HOME
     - java -version
