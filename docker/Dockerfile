@@ -32,7 +32,7 @@
 
 FROM ubuntu:16.04
 
-# Install git and java (taken from https://github.com/dockerfile/java/blob/master/oracle-java8/Dockerfile)
+# Install git and java
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y \
     && apt-get install -y git software-properties-common openjdk-8-jdk ant \

@@ -22,7 +22,6 @@ addons:
   apt:
     packages:
     - python3
-    #- oracle-java8-installer      # Installed by default on Trusty
     - maven
     - graphviz
 
