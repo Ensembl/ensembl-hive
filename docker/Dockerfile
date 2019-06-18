@@ -32,12 +32,19 @@
 
 FROM ubuntu:16.04
 
-# Install git and java
+# Install some basic utilities
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y \
-    && apt-get install -y git software-properties-common openjdk-8-jdk ant \
+    && apt-get install -y git maven curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Intall java
+RUN mkdir -p /opt \
+    && curl -SL https://download.java.net/java/GA/jdk12.0.1/69cfe15208a647278a19ef0990eea691/12/GPL/openjdk-12.0.1_linux-x64_bin.tar.gz \
+    | tar -xzC /opt
+ENV JAVA_HOME=/opt/jdk-12.0.1
+ENV PATH=$JAVA_HOME/bin:$PATH
 
 # Clone the repo
 RUN mkdir /repo && git clone -b version/2.5 https://github.com/Ensembl/ensembl-hive.git /repo/ensembl-hive
