@@ -20,12 +20,9 @@ use strict;
 use warnings;
 
 use Test::More;
-use Data::Dumper;
-use Test::JSON;
-use JSON qw(decode_json);
 
 use Capture::Tiny ':all';
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper get_test_url_or_die run_sql_on_db peekJob);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline get_test_url_or_die peekJob);
 
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
@@ -43,7 +40,7 @@ my $stdout = capture_stdout {
     peekJob($pipeline_url, ["-job_id" => 1]);
 };
 $stdout =~ s/\s+//g;
-my $exp_stdout = "%unsubstituted_param_hash=('column_names'=>['value'],'inputlist'=>'#expr([0..#job_count#-1])expr#','job_count'=>10);";
+my $exp_stdout = "%unsubstituted_param_hash[Analysisgenerate_jobs(1)Job1]=('column_names'=>['value'],'inputlist'=>'#expr([0..#job_count#-1])expr#','job_count'=>10);";
 is( $stdout, $exp_stdout, 'Correct params reported' );
 
 done_testing();
