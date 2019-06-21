@@ -1,20 +1,4 @@
 #!/usr/bin/env perl
-
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2019] EMBL-European Bioinformatics Institute
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 use strict;
 use warnings;
 
@@ -29,7 +13,6 @@ BEGIN {
 use Getopt::Long qw(:config no_auto_abbrev);
 use Pod::Usage;
 
-use Bio::EnsEMBL::Hive::Version qw(report_versions);
 use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::Scripts::PeekJob;
 use Bio::EnsEMBL::Hive::Utils::URL;
@@ -40,10 +23,7 @@ main();
 
 
 sub main {
-    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $job_id); 
-    my ($help, $report_versions);
-
-    $|=1;   # make STDOUT unbuffered (STDERR is unbuffered anyway)
+    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $job_id, $help); 
 
     GetOptions(
 
@@ -59,7 +39,6 @@ sub main {
 
     # Other commands
                'h|help'                     => \$help,
-               'v|version|versions'         => \$report_versions,
     ) or die "Error in command line arguments\n";
 
     if (@ARGV) {
@@ -68,11 +47,6 @@ sub main {
 
     if ($help || !$job_id) {
         pod2usage({-exitvalue => 0, -verbose => 2});
-    }
-
-    if($report_versions) {
-        report_versions();
-        exit(0);
     }
 
     my $pipeline;
@@ -115,7 +89,7 @@ peekJob.pl is an eHive component script that allows us to peek into the paramete
 =head1 USAGE EXAMPLES
 
         # Check the params for job 123456
-    runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -job_id 12345
+    peekJob.pl -url mysql://username:secret@hostname:port/ehive_dbname -job_id 12345
 
 =head1 OPTIONS
 
@@ -151,7 +125,9 @@ URL defining where database is located
 
 =item --job_id <id>
 
-run a specific Job defined by its database id
+which Job (as defined by its database id) to peek at
+
+=back
 
 =head2 Other options:
 
@@ -161,16 +137,12 @@ run a specific Job defined by its database id
 
 print this help
 
-=item --versions
-
-report both eHive code version and eHive database schema version
-
 =back
 
 =head1 LICENSE
 
     Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-    Copyright [2016-2018] EMBL-European Bioinformatics Institute
+    Copyright [2016-2019] EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
