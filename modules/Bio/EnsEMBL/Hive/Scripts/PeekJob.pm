@@ -19,9 +19,7 @@ package Bio::EnsEMBL::Hive::Scripts::PeekJob;
 
 use strict;
 use warnings;
-
 use Data::Dumper;
-$Data::Dumper::Sortkeys = 1;
 
 sub peek {
     my ($pipeline, $job_id) = @_;
@@ -32,10 +30,23 @@ sub peek {
     # fetch job and populate params
     my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
     my $job = $job_adaptor->fetch_by_dbID( $job_id );
+    die "Cannot find job with id $job_id\n" unless $job;
     $job->load_parameters;
+    my $analysis_id = $job->analysis_id;
+    my $logic_name  = $job->analysis->logic_name;
 
-    my $unsub_params = $job->{'_unsubstituted_param_hash'};
-    return Data::Dumper->Dump( [ $unsub_params ], [ qw(*unsubstituted_param_hash) ] );
+    my $label = "[ Analysis $logic_name ($analysis_id) Job $job_id ]";
+    return _stringify_params($job->{'_unsubstituted_param_hash'}, $label);
+}
+
+sub _stringify_params {
+    my ($params, $label) = @_;
+    
+    local $Data::Dumper::Sortkeys = 1;
+    local $Data::Dumper::Deepcopy = 1;
+    local $Data::Dumper::Indent   = 1;
+    
+    return Data::Dumper->Dump( [ $params ], [ qq(*unsubstituted_param_hash $label) ] );
 }
 
 1;
