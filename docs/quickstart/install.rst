@@ -101,6 +101,20 @@ If installation of either DBD::mysql or DBD::Pg fails, check that the
 corresponding database system (MySQL or PostgreSQL) was installed
 correctly.
 
+Guest languages
+---------------
+
+If you wish to use runnable modules written in Python or Java, then an appropriate
+version of Python or Java will need to be installed on your system:
+
+-  *Python:*
+
+   Python 3 is required. It is known to work with Python 3.5.1 or later, earlier
+   Python versions may work but have not been tested.
+
+-  *Java:*
+
+   Requires OpenJDK version 12 or later, along with Apache Maven.
 
 Configuration
 -------------
