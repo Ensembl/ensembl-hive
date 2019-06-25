@@ -288,15 +288,6 @@ sub main {
 
     if($reset_job_id) { $queen->reset_job_by_dbID_and_sync($reset_job_id); }
 
-    if($reset_jobs_for_input_id and $self->{'analyses_pattern'}) {
-        my $analyses_list = $self->{'pipeline'}->collection_of('Analysis')->find_all_by_pattern( $self->{'analyses_pattern'});
-        $self->{'dba'}->get_AnalysisJobAdaptor->reset_job_by_input_id_and_sync($reset_jobs_for_input_id, $analyses_list);
-    }
-
-    if($reset_jobs_for_input_id and ! $self->{'analyses_pattern'}) {
-        die "Please use -reset_job_by_input_id in combination with -analyses_pattern <pattern>";
-    }
-
     if($job_id_for_output) {
         printf("===== Job output\n");
         my $job = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID($job_id_for_output);
@@ -386,6 +377,15 @@ sub main {
         }
         my $statuses_to_reset = $reset_failed_jobs ? [ 'FAILED' ] : ($reset_done_jobs ? [ 'DONE', 'PASSED_ON' ] : [ 'DONE', 'FAILED', 'PASSED_ON' ]);
         $self->{'dba'}->get_AnalysisJobAdaptor->reset_jobs_for_analysis_id( $list_of_analyses, $statuses_to_reset );
+    }
+
+    if($reset_jobs_for_input_id and $self->{'analyses_pattern'}) {
+        my $analyses_list = $self->{'pipeline'}->collection_of('Analysis')->find_all_by_pattern( $self->{'analyses_pattern'});
+        $self->{'dba'}->get_AnalysisJobAdaptor->reset_job_by_input_id_and_sync($reset_jobs_for_input_id, $analyses_list);
+    }
+
+    if($reset_jobs_for_input_id and ! $self->{'analyses_pattern'}) {
+        die "Please use -reset_job_by_input_id in combination with -analyses_pattern <pattern>";
     }
 
     if ($unblock_semaphored_jobs) {
@@ -1090,6 +1090,10 @@ mark READY Jobs of analyses matching -analyses_pattern as DONE, and update their
 =item --unblock_semaphored_jobs
 
 set SEMAPHORED Jobs of analyses matching -analyses_pattern to READY so they can start
+
+=item --reset_jobs_for_input_id <input_id> <analyses_pattern>
+
+reset DONE, FAILED and PASSED_ON Jobs of analyses matching -analyses_pattern and input_id matching -input_id back to READY so they can be rerun
 
 =back
 
