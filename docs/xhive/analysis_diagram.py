@@ -133,6 +133,8 @@ def generate_dot_diagram(pipeconfig_content):
 
     # Run generate_graph and read the content of the dot file
     graph_path = os.path.join(os.environ["EHIVE_ROOT_DIR"], "scripts", "generate_graph.pl")
+    if os.environ["PERL5LIB"][-2:] != ":.":
+        os.environ["PERL5LIB"] = os.environ["PERL5LIB"] + ":."
     dotcontent = subprocess.check_output([graph_path, "-pipeconfig", pipeconfig_fh.name, "--format", "dot", "-config_file", default_config_file, "-config_file", json_filename], stderr=sys.stderr)
 
     return dotcontent.decode()
