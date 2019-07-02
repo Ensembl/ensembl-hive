@@ -396,7 +396,7 @@ sub run_pipeline_create_commands {
         (my $dummy,$cmd) = join_command_args($cmd);
         $self->print_debug( "$cmd\n" );
         if(my $retval = system($cmd)) {
-            die "Return value = $retval, possibly an error\n";
+            die "Return value = $retval, possibly an error running $cmd\n";
         }
     }
     $self->print_debug( "\n" );

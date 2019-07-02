@@ -31,6 +31,6 @@ do
 	[ -f "$arg/cpanfile" ] && cpanm --installdeps --with-recommends "$arg"
 done
 # Cleanup the cache and remove the build dependencies to reduce the disk footprint
-rm -rf /var/lib/apt/lists/*
+rm -rf /var/lib/apt/lists/* /root/.cpanm
 apt-get purge -y --auto-remove $buildDeps
 
