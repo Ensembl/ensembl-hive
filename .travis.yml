@@ -1,8 +1,14 @@
+dist: trusty
+
 language: "perl"
 
 perl:
   - "5.14"
   - "5.26"
+
+services:
+  - mysql
+  - postgresql
 
 env:
   - COVERALLS=true
@@ -18,12 +24,6 @@ addons:
 
 before_install:
     - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
-    - echo -e '#!/bin/bash\n\nperl '`which psql`' "$@"' > psql
-    - chmod +x psql
-    - export PATH=$PWD:$PATH
-    - mkdir deps
-    - ln -s /usr/share/perl5/PgCommon.pm deps/
-
 
 install:
     - cpanm -v --installdeps --notest .
