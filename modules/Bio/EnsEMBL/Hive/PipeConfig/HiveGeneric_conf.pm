@@ -319,7 +319,7 @@ sub process_pipeline_name {
     my ($self, $ppn) = @_;
 
     $ppn=~s/([[:lower:]])([[:upper:]])/${1}_${2}/g;   # CamelCase into Camel_Case
-    $ppn=~s/\s/_/g;                                   # remove all spaces
+    $ppn=~s/[\s\/]/_/g;                               # remove all spaces and other annoying characters
     $ppn = lc($ppn);
 
     return $ppn;
