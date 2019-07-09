@@ -255,7 +255,7 @@ sub current_role {
         }
         my $new_role = shift @_;
         if( my $to_analysis = $new_role && $new_role->analysis ) {
-            $self->worker_say( "specializing to ".$to_analysis->logic_name.'('.($to_analysis->dbID // 'unstored').')' );
+            $self->worker_say( "specializing to " . $to_analysis->logic_name . '('.($to_analysis->dbID // 'unstored') . ')' );
         }
         $self->{'_current_role'} = $new_role;
     }
