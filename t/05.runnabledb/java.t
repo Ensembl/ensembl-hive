@@ -28,7 +28,7 @@ use Test::More;
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 
 SKIP: {
-    skip "mvn not installed", 1 unless(`mvn -version 2>/dev/null`);
+    skip "mvn not installed", 1 unless (`mvn -version 2>/dev/null`);
 
 plan tests => 1;
 
