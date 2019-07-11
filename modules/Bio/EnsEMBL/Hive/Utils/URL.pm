@@ -304,7 +304,7 @@ sub hide_url_password {
                 # Perform the substitution
                 my $pass_variable = '_EHIVE_HIDDEN_PASS';
                 $ENV{$pass_variable} = $possible_password;
-                # Double quotes are needed so that LSF doesn't expand the variable
+                # Single quotes are needed so that LSF doesn't expand the variable
                 $url = q{'} . $driver_and_user .'${'.$pass_variable . '}' . $url_remainder . q{'};
             }
             # Found the URL, let's push the remaining arguments and exec
