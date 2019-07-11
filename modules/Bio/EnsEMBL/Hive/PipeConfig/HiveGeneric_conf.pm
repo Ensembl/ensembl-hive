@@ -606,7 +606,7 @@ sub useful_commands_legend {
 
     my $pipeline_url = $self->pipeline_url();
     unless ($pipeline_url =~ /^[\'\"]/) {
-        my $pipeline_url    = '"' . $pipeline_url . '"';
+        $pipeline_url   = '"' . $pipeline_url . '"';
     }
     my $pipeline_name   = $self->o('pipeline_name');
     my $extra_cmdline   = $self->beekeeper_extra_cmdline_options();
