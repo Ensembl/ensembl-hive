@@ -44,6 +44,7 @@ sub init_pipeline {
     if ($pipeconfig_object->pipeline_url =~ /\$\{_EHIVE_HIDDEN_PASS\}/) {
         my $real_password = $ENV{_EHIVE_HIDDEN_PASS};
         $pipeconfig_object->root()->{'pipeline_url'} =~ s/\$\{_EHIVE_HIDDEN_PASS\}/$real_password/;
+        $pipeconfig_object->root()->{'pipeline_url'} =~ s/'//g;
     }
 
     print "> Running the creation commands.\n\n";
