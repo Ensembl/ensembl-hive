@@ -36,19 +36,22 @@ import sys
 
 
 def wait_for_all_processes(ref_pid):
-    child_errors = False
+    ref_status = None
+    first_non_zero_child_status = 0
     while True:
         try:
             # Wait for any child
             child_pid, child_status = os.waitpid(-1, 0)
-            #print("ripped a child", child_pid, child_status)
-            # Check its status (the reference child is not considered here since it will be checked later on)
-            if child_pid != ref_pid and child_status != 0:
-                child_errors = True
+            print("ripped a child", child_pid, child_status)
+            # Get the exit status (the reference process has the priority)
+            if child_pid == ref_pid:
+                ref_status = child_status
+            elif child_status != 0:
+                first_non_zero_child_status = child_status
         except OSError as e:
             if e.errno == errno.ECHILD:
-                # No more child found
-                return child_errors
+                # No more child found, return the compound exit status
+                return ref_status or first_non_zero_child_status
             else:
                 # Other errors
                 raise
@@ -60,11 +63,12 @@ def wait_for_all_processes(ref_pid):
 main_cmd = subprocess.Popen( sys.argv[1:] )
 
 # Wait for all the processes to end
-child_errors = wait_for_all_processes(main_cmd.pid)
+status = wait_for_all_processes(main_cmd.pid)
 
 # Return an approriate exit code
-cmd_ret = main_cmd.returncode
-if cmd_ret == 0:
-    cmd_ret = 1 if child_errors else 0
-sys.exit(cmd_ret)
+if status < 0:
+    sys.exit(status)
+if status >> 8:
+    sys.exit(status >> 8)
+sys.exit(status)
 
