@@ -135,7 +135,7 @@ use base ('Bio::EnsEMBL::Hive::Process');
 
 # -------------------------------------- <versioning of the GuestProcess interface> -------------------------------------------------------
 
-our $GUESTPROCESS_PROTOCOL_VERSION = '4';       # Make sure you change this number whenever an incompatible change is introduced
+our $GUESTPROCESS_PROTOCOL_VERSION = '5';       # Make sure you change this number whenever an incompatible change is introduced
 
 
 =head2 get_protocol_version
@@ -312,7 +312,7 @@ sub _get_all_registered_wrappers {
 sub assert_runnable_exists {
     my ($language, $runnable_module_name) = @_;
     my $wrapper = _get_wrapper_for_language($language);
-    if (system($wrapper, 'compile', $runnable_module_name)) {
+    if (system($wrapper, 'check_exists', $runnable_module_name)) {
         die "The runnable module '$runnable_module_name' cannot be loaded or compiled\n";
     }
 }
