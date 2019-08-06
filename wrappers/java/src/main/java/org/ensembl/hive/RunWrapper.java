@@ -25,6 +25,8 @@ import org.slf4j.LoggerFactory;
 
 import jdk.internal.access.SharedSecrets;
 
+import org.ensembl.hive.Utils;
+
 /**
  * Main class for running a hive worker in Java
  * 
@@ -34,7 +36,6 @@ import jdk.internal.access.SharedSecrets;
 public class RunWrapper {
 
 	public static void main(String[] args) throws Exception {
-
 
 		if (args.length != 4) {
 			System.err.println("Usage: java org.ensembl.hive.RunWrapper <Runnable class> <input pipe> <output pipe> <debug>");
@@ -67,27 +68,15 @@ public class RunWrapper {
 
 		}
 
-		Logger log = LoggerFactory.getLogger(RunWrapper.class);
-		log.info("Instantiating runnable module " + args[0]);
-		Class<?> clazz = Class.forName(args[0]);
-		if (!BaseRunnable.class.isAssignableFrom(clazz)) {
-			log.error("Class " + args[0] + " must extend "
-					+ BaseRunnable.class.getName());
-			System.exit(2);
-		}
-		Constructor<?> ctor = clazz.getConstructor();
-//		log.debug("Initializing runnable module " + clazz.getName() + " from " + args[1] + " and " + args[2]);
+		BaseRunnable runnable = Utils.findRunnable(args[0]);
 
         FileDescriptor inputDescriptor = new FileDescriptor();
         SharedSecrets.getJavaIOFileDescriptorAccess().set(inputDescriptor, Integer.parseInt(args[1]));
-
         FileDescriptor outputDescriptor = new FileDescriptor();
         SharedSecrets.getJavaIOFileDescriptorAccess().set(outputDescriptor, Integer.parseInt(args[2]));
-
-		BaseRunnable runnable = (BaseRunnable) (ctor.newInstance());
         runnable.setFileDescriptors(inputDescriptor, outputDescriptor);
-		runnable.processLifeCycle();
 
+		runnable.processLifeCycle();
 	}
 
 }
