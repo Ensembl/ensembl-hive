@@ -24,7 +24,7 @@ import unittest
 import warnings
 import traceback
 
-__version__ = "4.0"
+__version__ = "5.0"
 
 __doc__ = """
 This module mainly implements python's counterpart of GuestProcess. Read
