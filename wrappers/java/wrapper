@@ -21,7 +21,7 @@ fd_in=$3
 fd_out=$4
 debug=$5
 
-read -r -d '' usage << "EOF"
+read -r -d '' usage << EOF
 Usage:
         $0 compile module_name
         $0 run module_name fd_in fd_out debug
