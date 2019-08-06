@@ -29,9 +29,27 @@ Usage:
         $0 version
 EOF
 
+
 # change to java subdirectory
 wrapper_dir=$(dirname "$0")
 cd "$wrapper_dir"
+
+
+# Find the JAR
+jars=(target/eHive-*-jar-with-dependencies.jar)
+if [ ${#jars[@]} -eq 0 ]
+then
+	echo "No JAR found. Run '$0 build' first"
+	exit 1
+
+elif [ ${#jars[@]} -gt 1 ]
+then
+	echo "More than 1 JAR file found: ${jars[*]}"
+	exit 1
+fi
+jar=${jars[0]}
+#echo "Using this JAR: '$jar'"
+
 
 if [ "$action" == "build" ]; then
 	rm -rf target
@@ -46,7 +64,7 @@ elif [ "$action" == "check_exists" ]; then
 		echo "$usage"
 		exit 1
 	fi
-	exec java -cp target/eHive-*-jar-with-dependencies.jar --add-exports java.base/jdk.internal.access=ALL-UNNAMED org.ensembl.hive.CompileWrapper "$module"
+	exec java -cp "$jar" --add-exports java.base/jdk.internal.access=ALL-UNNAMED org.ensembl.hive.CompileWrapper "$module"
 
 elif [ "$action" == "run" ]; then
 	if [[ -z "$module" || -z "$fd_in" || -z "$fd_out" || -z "$debug" ]]; then
@@ -55,7 +73,8 @@ elif [ "$action" == "run" ]; then
 		exit 1
 	fi
 
-	exec java -cp target/eHive-*-jar-with-dependencies.jar --add-exports java.base/jdk.internal.access=ALL-UNNAMED org.ensembl.hive.RunWrapper "$module" "$fd_in" "$fd_out" "$debug"
+	exec java -cp "$jar" --add-exports java.base/jdk.internal.access=ALL-UNNAMED org.ensembl.hive.RunWrapper "$module" "$fd_in" "$fd_out" "$debug"
+
 else
 	echo "Command-line error: No mode provided"
 	echo "$usage"
