@@ -120,8 +120,10 @@ mode = sys.argv[1]
 if mode not in available_modes:
     usage('Unknown mode "{0}"'.format(mode))
 
-if len(sys.argv)-2 != len(available_modes[mode][1]):
+if len(sys.argv)-2 < len(available_modes[mode][1]):
     usage('Not enough arguments for mode "' + mode + '". Expecting: ' + ' '.join(available_modes[mode][1]))
+if len(sys.argv)-2 > len(available_modes[mode][1]):
+    usage('Too many arguments for mode "' + mode + '". Expecting: ' + (' '.join(available_modes[mode][1]) if len(available_modes[mode][1]) else '(none)'))
 
 available_modes[mode][0]()
 
