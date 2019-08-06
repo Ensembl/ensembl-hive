@@ -300,6 +300,24 @@ sub _get_all_registered_wrappers {
 }
 
 
+=head2 assert_runnable_exists
+
+  Example     : Bio::EnsEMBL::Hive::GuestProcess::assert_runnable_exists('python3', 'eHive.examples.TestRunnable');
+  Description : Ask the wrapper to check whether the runnable exists (can be loaded)
+  Returntype  : None
+  Exceptions  : Die if the runnable can't be loaded
+
+=cut
+
+sub assert_runnable_exists {
+    my ($language, $runnable_module_name) = @_;
+    my $wrapper = _get_wrapper_for_language($language);
+    if (system($wrapper, 'compile', $runnable_module_name)) {
+        die "The runnable module '$runnable_module_name' cannot be loaded or compiled\n";
+    }
+}
+
+
 =head2 DESTROY
 
   Description : Destructor: tells the child to exit by sending an empty JSON object

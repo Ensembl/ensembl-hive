@@ -177,10 +177,7 @@ sub get_compiled_module_name {
         or die "Analysis '".$self->logic_name."' does not have its 'module' defined";
 
     if ($self->language) {
-        my $wrapper = Bio::EnsEMBL::Hive::GuestProcess::_get_wrapper_for_language($self->language);
-        if (system($wrapper, 'compile', $runnable_module_name)) {
-            die "The runnable module '$runnable_module_name' cannot be loaded or compiled:\n";
-        }
+        Bio::EnsEMBL::Hive::GuestProcess::assert_runnable_exists($self->language, $runnable_module_name);
         return 'Bio::EnsEMBL::Hive::GuestProcess';
     }
 
