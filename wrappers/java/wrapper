@@ -64,7 +64,7 @@ elif [ "$action" == "check_exists" ]; then
 		echo "$usage"
 		exit 1
 	fi
-	exec java -cp "$jar" --add-exports java.base/jdk.internal.access=ALL-UNNAMED org.ensembl.hive.CompileWrapper "$module"
+	exec java -cp "$jar" org.ensembl.hive.CompileWrapper "$module"
 
 elif [ "$action" == "run" ]; then
 	if [[ -z "$module" || -z "$fd_in" || -z "$fd_out" || -z "$debug" ]]; then
