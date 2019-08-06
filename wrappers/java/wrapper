@@ -56,7 +56,7 @@ if [ "$action" == "build" ]; then
 	exec mvn package
 
 elif [ "$action" == "version" ]; then
-	exec mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec
+	exec java -cp "$jar" org.ensembl.hive.VersionWrapper
 
 elif [ "$action" == "check_exists" ]; then
 	if [[ -z "$module" ]]; then
