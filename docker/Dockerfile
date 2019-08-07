@@ -16,7 +16,7 @@
 # This is a Dockerfile to run eHive scripts (init_pipeline.pl, beekeeper.pl, runWorker.pl) in a container
 #
 ## Build the image
-# docker build -t ensembl-hive .
+# docker build -t ensembl-hive -f docker/Dockerfile $EHIVE_ROOT_DIR
 #
 ## Check that the test-suite works (guest_language.t is expected to fail
 # docker run -e EHIVE_TEST_PIPELINE_URLS=sqlite:/// ensembl-hive prove -r /repo/ensembl-hive/t
@@ -29,13 +29,21 @@
 # docker run -it ensembl-hive beekeeper.pl -url $URL -loop -sleep 0.2
 # docker run -it ensembl-hive runWorker.pl -url $URL
 
+# 1. Get the current ensembl-hive repo and remove stuff we don't want
+FROM alpine:3.9.4 AS repo
+RUN apk add git
+ADD . /tmp/ensembl-hive
+# git clean will remove things listed in .gitignore, incl. .pyc, .jar etc
+# but will leave local modifications and other files, thus allowing local tests
+RUN cd /tmp/ensembl-hive && git clean -d -X -f
+RUN rm -rf /tmp/ensembl-hive/.git
 
 FROM ubuntu:16.04
 
 # Install some basic utilities
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y \
-    && apt-get install -y git maven curl \
+    && apt-get install -y maven curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -46,8 +54,8 @@ RUN mkdir -p /opt \
 ENV JAVA_HOME=/opt/jdk-12.0.1
 ENV PATH=$JAVA_HOME/bin:$PATH
 
-# Clone the repo
-RUN mkdir /repo && git clone -b master https://github.com/Ensembl/ensembl-hive.git /repo/ensembl-hive
+# Get the repo
+COPY --from=repo /tmp/ensembl-hive /repo/ensembl-hive
 
 # Install all the dependencies
 RUN /repo/ensembl-hive/docker/setup_os.Ubuntu-16.04.sh \
