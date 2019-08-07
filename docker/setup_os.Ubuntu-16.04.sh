@@ -17,7 +17,7 @@
 
 set -e
 
-apt-get update
+apt-get update -y
 apt-get install -y curl perl-doc \
                    sqlite3 libdbd-sqlite3-perl postgresql-client libdbd-pg-perl mysql-client libdbd-mysql-perl libdbi-perl \
                    libcapture-tiny-perl libdatetime-perl libhtml-parser-perl libjson-perl libemail-mime-perl libemail-sender-perl libemail-simple-perl libproc-daemon-perl \
