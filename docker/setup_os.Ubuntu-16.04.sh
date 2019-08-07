@@ -33,6 +33,7 @@ apt-get install -y --no-install-recommends software-properties-common
 add-apt-repository -y ppa:openjdk-r/ppa
 apt-get update -y
 apt-get install -y --no-install-recommends openjdk-12-jre-headless
+dpkg-reconfigure ca-certificates-java
 apt-get purge -y --auto-remove software-properties-common
 
 ## Useful for debugging
