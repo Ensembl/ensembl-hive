@@ -42,7 +42,7 @@ def wait_for_all_processes(ref_pid):
         try:
             # Wait for any child
             child_pid, child_status = os.waitpid(-1, 0)
-            print("ripped a child", child_pid, child_status)
+            #print("ripped a child", child_pid, child_status)
             # Get the exit status (the reference process has the priority)
             if child_pid == ref_pid:
                 ref_status = child_status
