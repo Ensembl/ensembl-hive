@@ -4,7 +4,7 @@ language: "perl"
 
 perl:
   - "5.14"
-  - "5.26"
+  - "5.30"
 
 services:
   - mysql
@@ -39,5 +39,5 @@ matrix:
   exclude:
     - perl: "5.14"
       env: COVERALLS=true
-    - perl: "5.26"
+    - perl: "5.30"
       env: COVERALLS=false
