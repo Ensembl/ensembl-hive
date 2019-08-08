@@ -53,8 +53,8 @@ before_install:
     - sqlite3 --version
     - env
     - cd wrappers/java
-    - mvn clean
-    - mvn package
+    - mvn -Dmaven.repo.local=$HOME/deps/maven clean
+    - mvn -Dmaven.repo.local=$HOME/deps/maven package
     - cd ../..
 
 install:
