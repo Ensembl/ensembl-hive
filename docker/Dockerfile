@@ -43,15 +43,23 @@ FROM maven:3.6-jdk-12-alpine AS java_builder
 COPY --from=repo /tmp/ensembl-hive/wrappers/java /tmp/java_wrapper
 RUN cd /tmp/java_wrapper && mvn package
 
-# Combine everything together
-FROM ubuntu:16.04
+# Dependencies
+FROM ubuntu:16.04 AS os_installer
+ADD docker/setup_os.Ubuntu-16.04.sh /tmp/
+RUN /tmp/setup_os.Ubuntu-16.04.sh
+
+# In case not all the dependencies have been listed in setup_os.Ubuntu-16.04.sh
+FROM os_installer AS cpan_builder
+RUN apt-get update -y
+RUN apt-get install -y cpanminus build-essential
+ADD cpanfile /tmp/
+RUN cpanm --installdeps --with-recommends /tmp/
+
+# Bundle everything together
+FROM os_installer
 COPY --from=repo /tmp/ensembl-hive /repo/ensembl-hive
+COPY --from=cpan_builder /usr/local /usr/local
 COPY --from=java_builder /tmp/java_wrapper/target/eHive-*-jar-with-dependencies.jar /repo/ensembl-hive/wrappers/java/target/
-
-# Install all the dependencies
-RUN /repo/ensembl-hive/docker/setup_os.Ubuntu-16.04.sh \
-    && /repo/ensembl-hive/docker/setup_cpan.Ubuntu-16.04.sh /repo/ensembl-hive
-
 ENV EHIVE_ROOT_DIR "/repo/ensembl-hive"
 ENV PATH "/repo/ensembl-hive/scripts:$PATH"
 ENV PERL5LIB "/repo/ensembl-hive/modules:$PERL5LIB"
