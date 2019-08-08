@@ -318,6 +318,24 @@ sub assert_runnable_exists {
 }
 
 
+=head2 build_wrapper_for_language
+
+  Example     : Bio::EnsEMBL::Hive::GuestProcess::build_wrapper_for_language('java');
+  Description : Ask the wrapper to build all the necessary code to run Runnables of this language
+  Returntype  : None
+  Exceptions  : Die if the build fails
+
+=cut
+
+sub build_wrapper_for_language {
+    my $language = shift;
+    my $wrapper = _get_wrapper_for_language($language);
+    if (system($wrapper, 'build')) {
+        die "The $language wrapper cannot be built\n";
+    }
+}
+
+
 =head2 DESTROY
 
   Description : Destructor: tells the child to exit by sending an empty JSON object
