@@ -78,14 +78,12 @@ sub report_versions {
     print "GuestLanguageInterfaceVersion\t".Bio::EnsEMBL::Hive::GuestProcess->get_protocol_version()."\n";
     my $registered_wrappers = Bio::EnsEMBL::Hive::GuestProcess->_get_all_registered_wrappers;
     foreach my $language (sort keys %$registered_wrappers) {
-        my $wrapper_path = $registered_wrappers->{$language};
         my $status = 'unavailable';
         my $language_version;
-        if (-s $wrapper_path and -x $wrapper_path) {
-            $language_version = `$wrapper_path version 2> /dev/null`;
-            chomp $language_version;
+        eval {
+            $language_version = Bio::EnsEMBL::Hive::GuestProcess::get_wrapper_version($language);
             $status = Bio::EnsEMBL::Hive::GuestProcess->check_version_compatibility($language_version) ? 'available' : 'incompatible';
-        }
+        };
         print join("\t", "GuestLanguage[$language]", $language_version || 'N/A', $status)."\n";
     }
 }
