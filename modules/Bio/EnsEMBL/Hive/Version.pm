@@ -84,6 +84,10 @@ sub report_versions {
             $language_version = Bio::EnsEMBL::Hive::GuestProcess::get_wrapper_version($language);
             $status = Bio::EnsEMBL::Hive::GuestProcess->check_version_compatibility($language_version) ? 'available' : 'incompatible';
         };
+        if ($@) {
+            $status .= " - $@";
+            chomp $status;
+        }
         print join("\t", "GuestLanguage[$language]", $language_version || 'N/A', $status)."\n";
     }
 }
