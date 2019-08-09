@@ -302,6 +302,24 @@ sub _get_all_registered_wrappers {
 }
 
 
+=head2 get_wrapper_version
+
+  Example     : Bio::EnsEMBL::Hive::GuestProcess::get_wrapper_version();
+  Description : Ask the wrapper what version it is on. The major number is expected to match $GUESTPROCESS_PROTOCOL_VERSION
+  Returntype  : String
+  Exceptions  : Die if there is no wrapper
+
+=cut
+
+sub get_wrapper_version {
+    my $language = shift;
+    my $wrapper = _get_wrapper_for_language($language);
+    my $version = `$wrapper version 2> /dev/null`;
+    chomp $version;
+    return $version;
+}
+
+
 =head2 assert_runnable_exists
 
   Example     : Bio::EnsEMBL::Hive::GuestProcess::assert_runnable_exists('python3', 'eHive.examples.TestRunnable');
