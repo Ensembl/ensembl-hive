@@ -264,7 +264,7 @@ sub _get_wrapper_for_language {
     my $wrapper = $ENV{'EHIVE_WRAPPER_'.(uc $language)} # User-overriden wrapper
                     || sprintf('%s/wrappers/%s/wrapper', $ENV{'EHIVE_ROOT_DIR'}, $language);  # Embedded wrapper
     if (not -e $wrapper) {
-        die "$language is currently not supported\n";
+        die "The path '$wrapper' doesn't exist !\n";
     } elsif (not -s $wrapper) {
         die "The wrapper '$wrapper' is an empty file !\n";
     } elsif (not -x $wrapper) {
