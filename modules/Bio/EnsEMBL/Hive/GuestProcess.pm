@@ -280,6 +280,8 @@ sub _get_wrapper_for_language {
   Description : Lists all the languages and wrappers that are registered (either
                 under via a EHIVE_WRAPPER environment variable, or via a "wrapper"
                 file under $EHIVE_ROOT_DIR/wrappers/).
+                Note that those wrappers are not necessarily usable, as 1) _get_wrapper_for_language
+                performs additional checks and 2) the version numbers have to match
   Returntype  : Hashref { String => String }
   Exceptions  : None
 
@@ -305,7 +307,7 @@ sub _get_all_registered_wrappers {
   Example     : Bio::EnsEMBL::Hive::GuestProcess::assert_runnable_exists('python3', 'eHive.examples.TestRunnable');
   Description : Ask the wrapper to check whether the runnable exists (can be loaded)
   Returntype  : None
-  Exceptions  : Die if the runnable can't be loaded
+  Exceptions  : Die if there is no wrapper or the runnable can't be loaded
 
 =cut
 
@@ -323,7 +325,7 @@ sub assert_runnable_exists {
   Example     : Bio::EnsEMBL::Hive::GuestProcess::build_wrapper_for_language('java');
   Description : Ask the wrapper to build all the necessary code to run Runnables of this language
   Returntype  : None
-  Exceptions  : Die if the build fails
+  Exceptions  : Die if there is no wrapper or the build fails
 
 =cut
 
