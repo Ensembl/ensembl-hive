@@ -54,7 +54,7 @@ before_install:
     - env
     - cd wrappers/java
     - mvn -Dmaven.repo.local=$HOME/deps/maven clean
-    - mvn -Dmaven.repo.local=$HOME/deps/maven package
+    - mvn -Dmaven.repo.local=$HOME/deps/maven -Dmaven.test.skip=true package
     - cd ../..
 
 install:
