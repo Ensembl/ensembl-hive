@@ -4,11 +4,7 @@ language: "perl"
 
 perl:
   - "5.14"      # The other Ensembl components must be compatible with 5.14
-  #- "5.16"      # EOL but default in RHEL7
-  #- "5.18"      # EOL but default in Ubuntu 14.04 LTS
-  #- "5.22"      # EOL but default in Ubuntu 16.04 LTS
-  #- "5.24"      # Maintained
-  - "5.26"      # Maintained -- Latest
+  - "5.30"      # Maintained -- Latest
 
 git:
   depth: false
