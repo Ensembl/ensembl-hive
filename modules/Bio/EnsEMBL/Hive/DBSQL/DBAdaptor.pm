@@ -72,7 +72,8 @@ sub new {
 
     if($reg_conf or $reg_alias) {   # need to initialize Registry even if $reg_conf is not really given
         require Bio::EnsEMBL::Registry;
-        Bio::EnsEMBL::Registry->load_all($reg_conf);    # if undefined, default reg_conf will be used
+        # if undefined, default reg_conf will be used. If missing, will throw
+        Bio::EnsEMBL::Registry->load_all($reg_conf, undef, undef, undef, 'throw_if_missing');
     }
 
     my $self;
