@@ -20,6 +20,7 @@ use strict;
 use warnings;
 
 use Test::More;
+use Test::Exception;
 use Data::Dumper;
 
 use Bio::EnsEMBL::Hive::Utils qw(go_figure_dbc);
@@ -51,5 +52,9 @@ my $dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $pipeline_url,
 						   -no_sql_schema_version_check => 1);
 my $dba2dbc = go_figure_dbc($dba);
 isa_ok($dba2dbc, 'Bio::EnsEMBL::Hive::DBSQL::DBConnection');
+
+throws_ok {
+    Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-reg_conf => '/non_existent_file');
+} qr/Configuration file .* does not exist. Registry configuration not loaded/, 'Throws a relevant message if the path doesn\'t exist';
 
 done_testing();
