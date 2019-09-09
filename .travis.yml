@@ -39,6 +39,8 @@ before_install:
     - eval "$(perl -Mlocal::lib=${HOME}/deps)"
     - mkdir deps
     - cd deps
+    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl
+    - export PERL5LIB=$PWD/ensembl/modules:$PERL5LIB
     - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
     - export PERL5LIB=$PWD/bioperl-live:$PERL5LIB
     - mysql -u root -h localhost -e 'GRANT ALL PRIVILEGES ON *.* TO "travis"@"%"'
@@ -63,6 +65,7 @@ before_install:
 
 install:
     - cpanm -v --installdeps --with-recommends --notest .
+    - cpanm -v --installdeps --notest --cpanfile deps/ensembl/cpanfile .
     - cpanm -n Devel::Cover::Report::Coveralls
     - cpanm -n Devel::Cover::Report::Codecov
     - ls $HOME/deps
