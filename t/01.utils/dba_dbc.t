@@ -53,8 +53,24 @@ my $dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $pipeline_url,
 my $dba2dbc = go_figure_dbc($dba);
 isa_ok($dba2dbc, 'Bio::EnsEMBL::Hive::DBSQL::DBConnection');
 
-throws_ok {
-    Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-reg_conf => '/non_existent_file');
-} qr/Configuration file .* does not exist. Registry configuration not loaded/, 'Throws a relevant message if the path doesn\'t exist';
+SKIP: {
+    eval { require Bio::EnsEMBL::Registry; };
+
+    skip "The Ensembl Core API is not installed" if $@;
+
+    my $dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
+        -url => $pipeline_url,
+        -species => 'dummy_species',
+        -no_sql_schema_version_check => 1,
+    );
+
+    my $dba_from_registry = Bio::EnsEMBL::Registry->get_DBAdaptor('dummy_species', 'hive');
+    is($dba_from_registry, $dba, 'The DBAdaptor is registered in the Ensembl Registry');
+
+    throws_ok {
+        Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-reg_conf => '/non_existent_file');
+    } qr/Configuration file .* does not exist. Registry configuration not loaded/, 'Throws a relevant message if the path doesn\'t exist';
+
+}
 
 done_testing();
