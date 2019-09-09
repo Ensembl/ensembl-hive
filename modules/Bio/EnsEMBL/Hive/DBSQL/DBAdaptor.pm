@@ -56,6 +56,7 @@ use Bio::EnsEMBL::Hive::AnalysisCtrlRule;
 use Bio::EnsEMBL::Hive::DataflowRule;
 use Bio::EnsEMBL::Hive::DataflowTarget;
 
+my $default_reg_type = 'hive';
 
 sub new {
     my $class = shift @_;
@@ -99,7 +100,7 @@ sub new {
         }
 
         unless($self) {         # otherwise (or if not found) try a specific $reg_type
-            $reg_type ||= 'hive';
+            $reg_type ||= $default_reg_type;
             $self = Bio::EnsEMBL::Registry->get_DBAdaptor($reg_alias, $reg_type)
                 or die "Unable to connect to DBA using reg_conf='$reg_conf', reg_type='$reg_type', reg_alias='$reg_alias'\n";
         }
@@ -164,7 +165,7 @@ sub new {
 
     if($species) {      # [compatibility with core code] store the DBAdaptor in Registry:
         require Bio::EnsEMBL::Registry;
-        Bio::EnsEMBL::Registry->add_DBAdaptor( $species, 'hive', $self );
+        Bio::EnsEMBL::Registry->add_DBAdaptor( $species, $default_reg_type, $self );
     }
 
     return $self;
@@ -176,7 +177,7 @@ sub species {   # a stub to please Registry code
 }
 
 sub group {     # a stub to please Registry code
-    return 'hive';
+    return $default_reg_type;
 }
 
 
