@@ -52,19 +52,24 @@ my $dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $pipeline_url,
 						   -no_sql_schema_version_check => 1);
 my $dba2dbc = go_figure_dbc($dba);
 isa_ok($dba2dbc, 'Bio::EnsEMBL::Hive::DBSQL::DBConnection');
+like($dba->species, qr/^Bio::EnsEMBL::Hive::DBSQL::DBAdaptor=HASH\(0x[[:xdigit:]]+\)$/, 'The DBAdaptor has a unique "species" name');
 
 SKIP: {
     eval { require Bio::EnsEMBL::Registry; };
 
     skip "The Ensembl Core API is not installed" if $@;
 
+    my $registry_species_name = 'dummy_species';
+
     my $dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
         -url => $pipeline_url,
-        -species => 'dummy_species',
+        -species => $registry_species_name,
         -no_sql_schema_version_check => 1,
     );
 
-    my $dba_from_registry = Bio::EnsEMBL::Registry->get_DBAdaptor('dummy_species', 'hive');
+    is($dba->species, $registry_species_name, 'The DBAdaptor has the correct "species" name');
+
+    my $dba_from_registry = Bio::EnsEMBL::Registry->get_DBAdaptor($registry_species_name, 'hive');
     is($dba_from_registry, $dba, 'The DBAdaptor is registered in the Ensembl Registry');
 
     throws_ok {

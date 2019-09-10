@@ -165,6 +165,7 @@ sub new {
 
     if($species) {      # [compatibility with core code] store the DBAdaptor in Registry:
         require Bio::EnsEMBL::Registry;
+        $self->{'_species'} = $species;
         Bio::EnsEMBL::Registry->add_DBAdaptor( $species, $default_reg_type, $self );
     }
 
@@ -173,7 +174,8 @@ sub new {
 
 
 sub species {   # a stub to please Registry code
-    return @_;
+    my $self = shift;
+    return $self->{'_species'} // "$self";
 }
 
 sub group {     # a stub to please Registry code
