@@ -26,7 +26,7 @@ fi
 
 echo "Running test suite"
 if [ "$COVERALLS" = 'true' ]; then
-  PERL5OPT="-MDevel::Cover=+ignore,bioperl,+ignore,/usr/bin/psql,+ignore,$HOME/perl5,-db,$PWD/cover_db/" prove -rv t
+  PERL5OPT="-MDevel::Cover=+ignore,deps,+ignore,/usr/bin/psql,+ignore,/home/travis/perl5,-db,$PWD/cover_db/" prove -rv t
 else
   prove -r t
 fi
