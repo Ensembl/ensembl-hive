@@ -123,7 +123,7 @@ sub display_subgraph {
 
     my $prefix = "\t" x $depth;
     my  $text = '';
-        $text .= $prefix . "subgraph cluster_${cluster_name} {\n";
+        $text .= $prefix . "subgraph \"cluster_${cluster_name}\" {\n";
 
         # uncomment the following line to see the cluster names:
 #     $text .= $prefix . "\tlabel=\"$cluster_name\";\n";
