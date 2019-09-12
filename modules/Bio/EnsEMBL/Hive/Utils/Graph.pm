@@ -329,6 +329,7 @@ sub _add_pipeline_label {
     my $node_fontname       = $self->config_get('Node', 'Details', 'Font');
     my $pipeline_label      = $pipeline->display_name;
     my $pipelabel_node_name = 'pipelabel_'.$pipeline->hive_pipeline_name;
+       $pipelabel_node_name =~ s/\./_/g;
 
     $self->graph()->add_node( $pipelabel_node_name,
         shape     => 'plaintext',
