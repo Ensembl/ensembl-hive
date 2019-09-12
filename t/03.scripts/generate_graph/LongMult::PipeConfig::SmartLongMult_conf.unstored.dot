@@ -21,7 +21,7 @@ digraph test {
 	dfr_p3_mp -> analysis_part_multiply [color="blue", fontcolor="blue", fontname="Helvetica", label="\nINPUT_PLUS ", tailport="cond_0"];
 	dfr_p3_mp -> dfr_p2_mp [arrowhead="tee", arrowtail="crow", color="red", dir="both", style="dashed"];
 
-subgraph cluster_smart_long_mult {
+subgraph "cluster_smart_long_mult" {
 	label="smart_long_mult";
 	style="bold,filled";
 	colorscheme="pastel19";
@@ -30,7 +30,7 @@ subgraph cluster_smart_long_mult {
 	analysis_add_together;
 	analysis_redirect_trivial_jobs;
 	analysis_take_b_apart;
-	subgraph cluster_cl_dfr_p2_mp {
+	subgraph "cluster_cl_dfr_p2_mp" {
 		label="";
 		style="filled";
 		colorscheme="blues9";

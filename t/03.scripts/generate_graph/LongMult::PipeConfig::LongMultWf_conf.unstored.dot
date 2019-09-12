@@ -13,7 +13,7 @@ digraph test {
 	analysis_take_b_apart -> dfr_p1_mp [arrowhead="normal", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#2"];
 	dfr_p1_mp -> analysis_part_multiply [color="blue", fontcolor="blue", fontname="Helvetica", label="\nINPUT_PLUS ", tailport="cond_0"];
 
-subgraph cluster_long_mult_wf {
+subgraph "cluster_long_mult_wf" {
 	label="long_mult_wf";
 	style="bold,filled";
 	colorscheme="pastel19";

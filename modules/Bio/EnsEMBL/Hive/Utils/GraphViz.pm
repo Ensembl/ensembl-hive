@@ -112,7 +112,7 @@ sub display_subgraph {
 
     my $prefix = "\t" x $depth;
     my  $text = '';
-        $text .= $prefix . "subgraph cluster_${cluster_name} {\n";  #   NB: the "cluster_" prefix absolutely must be present.
+        $text .= $prefix . "subgraph \"cluster_${cluster_name}\" {\n";  #   NB: the "cluster_" prefix absolutely must be present.
         $text .= $prefix . qq{\tlabel="$cluster_label";\n};         #   In case some levels need the labels and some don't, need to override the parent level
 
     if($box_colour_pair && @$box_colour_pair) {
