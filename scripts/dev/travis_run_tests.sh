@@ -15,7 +15,7 @@
 # limitations under the License.
 
 
-export PERL5LIB=$PWD/bioperl-live:$PWD/modules:$PWD/deps
+export PERL5LIB=$PWD/bioperl-live:$PWD/modules
 export TEST_AUTHOR=$USER
 
 COVERALLS="false"
