@@ -93,7 +93,7 @@ sub new {
             if( scalar(@$dbas) == 1 ) {
                 $self = $dbas->[0];
             } elsif( @$dbas ) {
-                warn "The registry contains multiple entries for '$reg_alias', please prepend the reg_alias with the desired type";
+                warn "The registry contains multiple entries for '$reg_alias', please prepend the reg_alias with the desired type\n";
             }
         }
 

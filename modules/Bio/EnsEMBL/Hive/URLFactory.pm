@@ -136,7 +136,7 @@ sub fetch {
             );
         }
     } else {
-        warn "Could not parse URL '$url'";
+        warn "Could not parse URL '$url'\n";
     }
     return;
 }

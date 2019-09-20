@@ -96,7 +96,7 @@ sub load_from_json {
         
         return $perl_hash;
     } else {
-        warn "Can't read from '$filename'";
+        warn "Can't read from '$filename'. Configuration file not loaded\n";
 
         return undef;
     }
