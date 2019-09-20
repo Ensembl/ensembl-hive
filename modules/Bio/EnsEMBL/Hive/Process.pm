@@ -633,6 +633,7 @@ sub complete_early {
         $self->input_job->autoflow(0);
     }
     $self->input_job->incomplete(0);
+    $msg .= "\n" unless $msg =~ /\n$/;
     die $msg;
 }
 
