@@ -15,7 +15,7 @@ digraph test {
 	dfr_2_mp -> analysis_part_multiply [color="blue", fontcolor="blue", fontname="Helvetica", label="\nINPUT_PLUS ", tailport="cond_0"];
 	dfr_2_mp -> dfr_1_mp [arrowhead="tee", arrowtail="crow", color="red", dir="both", style="dashed"];
 
-subgraph cluster_long_mult {
+subgraph "cluster_long_mult" {
 	label="long_mult";
 	style="bold,filled";
 	colorscheme="pastel19";
@@ -23,7 +23,7 @@ subgraph cluster_long_mult {
 	color="";
 	analysis_add_together;
 	analysis_take_b_apart;
-	subgraph cluster_cl_dfr_1_mp {
+	subgraph "cluster_cl_dfr_1_mp" {
 		label="";
 		style="filled";
 		colorscheme="blues9";

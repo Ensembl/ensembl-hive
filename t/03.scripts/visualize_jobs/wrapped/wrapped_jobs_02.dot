@@ -6,14 +6,14 @@ digraph test {
 	semaphore_1__long_mult [fillcolor="grey", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="3"><font color="brown"><b><i>local: 1</i></b></font></td></tr></table>>, margin="0,0", shape="house", style="filled"];
 	job_3__long_mult -> semaphore_1__long_mult [arrowhead="tee", color="red", style="dashed"];
 
-subgraph cluster_long_mult {
+subgraph "cluster_long_mult" {
 	label="long_mult";
 	style="bold,filled";
 	colorscheme="pastel19";
 	fillcolor="3";
 	color="";
 	semaphore_1__long_mult;
-	subgraph cluster_take_b_apart {
+	subgraph "cluster_take_b_apart" {
 		label="take_b_apart";
 		style="rounded,filled";
 		colorscheme="X11";

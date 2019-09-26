@@ -3,20 +3,20 @@ digraph test {
 	job_1__long_mult_client [fillcolor="green", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>1</i></td></tr><tr><td>a_multiplier:</td><td> 9650156169</td></tr><tr><td>b_multiplier:</td><td> 327358788</td></tr></table>>, shape="box3d", style="filled"];
 	job_2__long_mult_client [fillcolor="green", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>2</i></td></tr><tr><td>a_multiplier:</td><td> 327358788</td></tr><tr><td>b_multiplier:</td><td> 9650156169</td></tr></table>>, shape="box3d", style="filled"];
 
-subgraph cluster_long_mult_client {
+subgraph "cluster_long_mult_client" {
 	label="long_mult_client";
 	style="bold,filled";
 	colorscheme="pastel19";
 	fillcolor="3";
 	color="";
-	subgraph cluster_long_mult_server {
+	subgraph "cluster_long_mult_server" {
 		label="long_mult_server";
 		style="bold,filled";
 		colorscheme="pastel19";
 		fillcolor="8";
 		color="";
 	}
-	subgraph cluster_take_b_apart {
+	subgraph "cluster_take_b_apart" {
 		label="take_b_apart";
 		style="rounded,filled";
 		colorscheme="X11";

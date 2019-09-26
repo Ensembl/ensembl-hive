@@ -40,13 +40,13 @@ digraph test {
 	semaphore_3__long_mult_server -> semaphore_4__long_mult_client [arrowhead="none", color="darkgreen", headport="n", style="dashed", tailport="s"];
 	semaphore_4__long_mult_client -> job_6__long_mult_client [arrowhead="none", color="darkgreen", headport="n", style="dashed", tailport="s"];
 
-subgraph cluster_long_mult_client {
+subgraph "cluster_long_mult_client" {
 	label="long_mult_client";
 	style="bold,filled";
 	colorscheme="pastel19";
 	fillcolor="3";
 	color="";
-	subgraph cluster_add_together {
+	subgraph "cluster_add_together" {
 		label="add_together";
 		style="rounded,filled";
 		colorscheme="X11";
@@ -55,13 +55,13 @@ subgraph cluster_long_mult_client {
 		job_6__long_mult_client;
 		semaphore_4__long_mult_client;
 	}
-	subgraph cluster_long_mult_server {
+	subgraph "cluster_long_mult_server" {
 		label="long_mult_server";
 		style="bold,filled";
 		colorscheme="pastel19";
 		fillcolor="8";
 		color="";
-		subgraph cluster_ehive_test_vj_1___add_together {
+		subgraph "cluster_ehive_test_vj_1___add_together" {
 			label="add_together";
 			style="rounded,filled";
 			colorscheme="X11";
@@ -70,7 +70,7 @@ subgraph cluster_long_mult_client {
 			job_1__long_mult_server;
 			semaphore_1__long_mult_server;
 		}
-		subgraph cluster_ehive_test_vj_1___part_multiply {
+		subgraph "cluster_ehive_test_vj_1___part_multiply" {
 			label="part_multiply";
 			style="rounded,filled";
 			colorscheme="X11";
@@ -84,7 +84,7 @@ subgraph cluster_long_mult_client {
 		semaphore_2__long_mult_server;
 		semaphore_3__long_mult_server;
 	}
-	subgraph cluster_part_multiply {
+	subgraph "cluster_part_multiply" {
 		label="part_multiply";
 		style="rounded,filled";
 		colorscheme="X11";
@@ -98,7 +98,7 @@ subgraph cluster_long_mult_client {
 	semaphore_1__long_mult_client;
 	semaphore_2__long_mult_client;
 	semaphore_3__long_mult_client;
-	subgraph cluster_take_b_apart {
+	subgraph "cluster_take_b_apart" {
 		label="take_b_apart";
 		style="rounded,filled";
 		colorscheme="X11";

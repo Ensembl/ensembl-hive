@@ -15,7 +15,6 @@
 # limitations under the License.
 
 
-export PERL5LIB=$PWD/bioperl-live:$PWD/modules:$PWD/deps:$HOME/deps/lib/perl5
 export TEST_AUTHOR=$USER
 
 COVERALLS="false"
@@ -27,7 +26,7 @@ fi
 
 echo "Running test suite"
 if [ "$COVERALLS" = 'true' ]; then
-  PERL5OPT="-MDevel::Cover=+ignore,bioperl,+ignore,/usr/bin/psql,+ignore,$HOME/perl5,-db,$PWD/cover_db/" prove -rv t
+  PERL5OPT="-MDevel::Cover=+ignore,deps,+ignore,/usr/bin/psql,+ignore,/home/travis/perl5,-db,$PWD/cover_db/" prove -rv t
 else
   prove -r t
 fi
@@ -35,7 +34,7 @@ rt=$?
 
 (cd wrappers/python3; python3 -m unittest -v eHive.Process)
 rtp=$?
-(cd wrappers/java; mvn -Dmaven.repo.local=$HOME/deps/maven test)
+(cd wrappers/java; mvn "-Dmaven.repo.local=$HOME/deps/maven" test)
 rtj=$?
 
 if [[ ($rt -eq 0) && ($rtp -eq 0) && ($rtj -eq 0) ]]; then

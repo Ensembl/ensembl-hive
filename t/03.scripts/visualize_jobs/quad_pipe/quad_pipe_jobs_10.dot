@@ -38,13 +38,13 @@ digraph test {
 	semaphore_2__bbb -> job_2__bbb [arrowhead="none", color="darkgreen", headport="n", style="dashed", tailport="s"];
 	semaphore_3__bbb -> semaphore_2__aaa [arrowhead="none", color="darkgreen", headport="n", style="dashed", tailport="s"];
 
-subgraph cluster_aaa {
+subgraph "cluster_aaa" {
 	label="aaa";
 	style="bold,filled";
 	colorscheme="pastel19";
 	fillcolor="3";
 	color="";
-	subgraph cluster_AAA_funnel {
+	subgraph "cluster_AAA_funnel" {
 		label="AAA_funnel";
 		style="rounded,filled";
 		colorscheme="X11";
@@ -55,13 +55,13 @@ subgraph cluster_aaa {
 		semaphore_1__aaa;
 		semaphore_2__aaa;
 	}
-	subgraph cluster_bbb {
+	subgraph "cluster_bbb" {
 		label="bbb";
 		style="bold,filled";
 		colorscheme="pastel19";
 		fillcolor="8";
 		color="";
-		subgraph cluster_ehive_test_vj_1___BBB_funnel {
+		subgraph "cluster_ehive_test_vj_1___BBB_funnel" {
 			label="BBB_funnel";
 			style="rounded,filled";
 			colorscheme="X11";
@@ -70,7 +70,7 @@ subgraph cluster_aaa {
 			job_2__bbb;
 			semaphore_2__bbb;
 		}
-		subgraph cluster_ehive_test_vj_1___call_CCC_or_DDD {
+		subgraph "cluster_ehive_test_vj_1___call_CCC_or_DDD" {
 			label="call_CCC_or_DDD";
 			style="rounded,filled";
 			colorscheme="X11";
@@ -79,7 +79,7 @@ subgraph cluster_aaa {
 			job_1__bbb;
 			job_3__bbb;
 		}
-		subgraph cluster_ehive_test_vj_1___perform_local_part {
+		subgraph "cluster_ehive_test_vj_1___perform_local_part" {
 			label="perform_local_part";
 			style="rounded,filled";
 			colorscheme="X11";
@@ -90,7 +90,7 @@ subgraph cluster_aaa {
 		semaphore_1__bbb;
 		semaphore_3__bbb;
 	}
-	subgraph cluster_call_BBB {
+	subgraph "cluster_call_BBB" {
 		label="call_BBB";
 		style="rounded,filled";
 		colorscheme="X11";
@@ -99,13 +99,13 @@ subgraph cluster_aaa {
 		job_1__aaa;
 		job_2__aaa;
 	}
-	subgraph cluster_ccc {
+	subgraph "cluster_ccc" {
 		label="ccc";
 		style="bold,filled";
 		colorscheme="pastel19";
 		fillcolor="5";
 		color="";
-		subgraph cluster_ehive_test_vj_2___perform_task_X {
+		subgraph "cluster_ehive_test_vj_2___perform_task_X" {
 			label="perform_task_X";
 			style="rounded,filled";
 			colorscheme="X11";
@@ -115,13 +115,13 @@ subgraph cluster_aaa {
 		}
 		semaphore_1__ccc;
 	}
-	subgraph cluster_ddd {
+	subgraph "cluster_ddd" {
 		label="ddd";
 		style="bold,filled";
 		colorscheme="pastel19";
 		fillcolor="6";
 		color="";
-		subgraph cluster_ehive_test_vj_3___perform_aftertask_of_Y {
+		subgraph "cluster_ehive_test_vj_3___perform_aftertask_of_Y" {
 			label="perform_aftertask_of_Y";
 			style="rounded,filled";
 			colorscheme="X11";
@@ -129,7 +129,7 @@ subgraph cluster_aaa {
 			color="";
 			job_2__ddd;
 		}
-		subgraph cluster_ehive_test_vj_3___perform_task_Y {
+		subgraph "cluster_ehive_test_vj_3___perform_task_Y" {
 			label="perform_task_Y";
 			style="rounded,filled";
 			colorscheme="X11";
