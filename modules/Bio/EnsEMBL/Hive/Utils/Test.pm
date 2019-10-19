@@ -104,6 +104,9 @@ sub standaloneJob {
 
     my $input_id = stringify($param_hash);
 
+    local $Data::Dumper::Terse = 1;
+    local $Data::Dumper::Sortkeys = 1;
+
     # When a list of events is given, it must match exactly what the
     # Runnable does (no missing / extra events, etc)
     my $_test_event = sub {
@@ -112,15 +115,16 @@ sub standaloneJob {
             my $expects = shift @$events_to_test;
             my $expected_type = shift @$expects;
             if ($triggered_type ne $expected_type) {
-                fail("Got a $triggered_type event but was expecting $expected_type\nEvent payload: " . stringify(\@got));
+                fail("Got a $triggered_type event but was expecting $expected_type");
+                diag "Got: " . Dumper([@_]);
             } elsif ($triggered_type eq 'WARNING') {
-                _compare_job_warnings(\@got, $expects);
+                _compare_job_warnings(\@got, $expects) or diag "Got: " . Dumper([@_]);
             } else {
-                _compare_job_dataflows(\@got, $expects);
+                _compare_job_dataflows(\@got, $expects) or diag "Got: " . Dumper([@_]);
             }
         } else {
             fail("event-stack is empty but the job emitted an event");
-            print Dumper([@_]);
+            diag "Got: " . Dumper([@_]);
         }
     };
 
@@ -150,7 +154,7 @@ sub standaloneJob {
 
         if ($expected_events) {
             ok(!scalar(@$events_to_test), 'no untriggered events');
-            diag("Did not receive: " . stringify($events_to_test)) if scalar(@$events_to_test);
+            diag("Did not receive: " . Dumper($events_to_test)) if scalar(@$events_to_test);
         }
     }
 }
