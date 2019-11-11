@@ -87,8 +87,10 @@ sub default_overflow_limit {
 =head2 job_status_cast
 
   Example     : $job_adaptor->job_status_cast();
-  Description : Returns a job-status expression that the SQL driver understands.
-                This is needed for PostgreSQL
+  Description : Changes the type of the expression to the type of the
+                job-status ENUM.
+                This is needed for CASE expressions in PostgreSQL which
+                otherwise default to returning a string.
   Returntype  : String
   Exceptions  : none
 
@@ -948,7 +950,7 @@ sub unblock_jobs_for_analysis_id {
 
         my $sql2 = qq{
           UPDATE job j
-             SET status=}.$self->job_status_cast("'READY'").qq{
+             SET status='READY'
            WHERE $analyses_filter AND j.status = 'SEMAPHORED'
         };
         $self->dbc->do($sql2);
@@ -971,7 +973,7 @@ sub unblock_jobs_for_analysis_id {
 
         my $sql2 = qq{
           UPDATE job
-             SET status=}.$self->job_status_cast("'READY'").qq{
+             SET status='READY'
            WHERE $analyses_filter AND status = 'SEMAPHORED'
         };
         $self->dbc->do($sql2);
@@ -1012,14 +1014,14 @@ sub discard_jobs_for_analysis_id {
 
     my $sql2 = qq{
         UPDATE job
-        SET status = }.$self->job_status_cast("'DONE'").qq{
+        SET status = 'DONE'
         WHERE controlled_semaphore_id = ?
               AND $analyses_filter $status_filter
     };
 
     my $sql3 = qq{
         UPDATE job
-        SET status = }.$self->job_status_cast("'DONE'").qq{
+        SET status = 'DONE'
         WHERE controlled_semaphore_id IS NULL
               AND $analyses_filter $status_filter
     };
