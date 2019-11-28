@@ -20,6 +20,7 @@ use strict;
 use warnings;
 
 use Test::More;
+use Test::Warn;
 use Data::Dumper;
 
 BEGIN {
@@ -75,7 +76,11 @@ BEGIN {
 {       # OLD style local table URL:
     my $url = ':////final_result';
 
-    my $url_hash = Bio::EnsEMBL::Hive::Utils::URL::parse( $url );
+    my $url_hash;
+    warning_like
+        {$url_hash = Bio::EnsEMBL::Hive::Utils::URL::parse( $url ) }
+        qr/The URL '.*' only works with the old parser/,
+        'Warned the user';
 
     ok($url_hash, "parser returned something for $url");
     isa_ok( $url_hash, 'HASH' );
@@ -86,7 +91,11 @@ BEGIN {
 {       # OLD style (local) accu URL:
     my $url = ':////accu?partial_product={digit}';
 
-    my $url_hash = Bio::EnsEMBL::Hive::Utils::URL::parse( $url );
+    my $url_hash;
+    warning_like
+        {$url_hash = Bio::EnsEMBL::Hive::Utils::URL::parse( $url ) }
+        qr/The URL '.*' only works with the old parser/,
+        'Warned the user';
 
     ok($url_hash, "parser returned something for $url");
     isa_ok( $url_hash, 'HASH' );
@@ -98,7 +107,14 @@ BEGIN {
 {       # OLD style foreign analysis URL:
     my $url = 'mysql://who:secret@where.co.uk:12345/other_pipeline/analysis?logic_name=foreign_analysis';
 
-    my $url_hash = Bio::EnsEMBL::Hive::Utils::URL::parse( $url );
+    my $url_hash;
+    warnings_like
+        {$url_hash = Bio::EnsEMBL::Hive::Utils::URL::parse( $url ) }
+        [
+            qr/NEW URL parser thinks you are using the OLD URL syntax for a remote Analysis, so skipping it/,
+            qr/The URL '.*' only works with the old parser/,
+        ],
+        'Warned the user';
 
     ok($url_hash, "parser returned something for $url");
     isa_ok( $url_hash, 'HASH' );
@@ -115,7 +131,14 @@ BEGIN {
 {       # OLD style foreign table URL (due to mysql/pgsql database/table naming rules, should stay in OLD format only)
     my $url = 'pgsql://user:password@hostname/databasename/foreign_table';
 
-    my $url_hash = Bio::EnsEMBL::Hive::Utils::URL::parse( $url );
+    my $url_hash;
+    warnings_like
+        {$url_hash = Bio::EnsEMBL::Hive::Utils::URL::parse( $url ) }
+        [
+            qr/NEW URL parser thinks you are using the OLD URL syntax for a remote NakedTable, so skipping it/,
+            qr/The URL '.*' only works with the old parser/,
+        ],
+        'Warned the user';
 
     ok($url_hash, "parser returned something for $url");
     isa_ok( $url_hash, 'HASH' );
@@ -132,7 +155,15 @@ BEGIN {
 {       # OLD style sqlite foreign table URL (due to the 'insertion_method' parameter defined, should stay in OLD format only)
     my $url = 'sqlite:///databasename/foreign_table?insertion_method=REPLACE';
 
-    my $url_hash = Bio::EnsEMBL::Hive::Utils::URL::parse( $url );
+    my $url_hash;
+    warnings_like
+        {$url_hash = Bio::EnsEMBL::Hive::Utils::URL::parse( $url ) }
+        [
+            qr/NEW URL parser thinks you are using the OLD URL syntax for a remote NakedTable, so skipping it/,
+            qr/The URL '.*' only works with the old parser/,
+        ],
+        'Warned the user';
+
 
     ok($url_hash, "parser returned something for $url");
     isa_ok( $url_hash, 'HASH' );
@@ -244,7 +275,13 @@ BEGIN {
 {       # NEW style foreign table URL with a two-part path:
     my $url = 'sqlite:///other_directory/other_pipeline?table_name=foreign_table';
 
-    my $url_hash = Bio::EnsEMBL::Hive::Utils::URL::parse( $url );
+    my $url_hash;
+    warning_like
+        {$url_hash = Bio::EnsEMBL::Hive::Utils::URL::parse( $url ) }
+        qr/OLD URL parser thinks you are using the NEW URL syntax for a remote NakedTable/,
+        'Warned the user';
+
+    ok($url_hash, "parser returned something for $url");
 
     ok($url_hash, "parser returned something for $url");
     isa_ok( $url_hash, 'HASH' );
@@ -260,7 +297,13 @@ BEGIN {
 {       # OLD style sqlite foreign table URL  ...or... NEW style bipartite sqlite path
     my $url = 'sqlite:///databasename/foreign_table';
 
-    my $url_hash = Bio::EnsEMBL::Hive::Utils::URL::parse( $url );
+    my $url_hash;
+    warning_like
+        {$url_hash = Bio::EnsEMBL::Hive::Utils::URL::parse( $url ) }
+        qr/The URL '.*' can be parsed ambiguously/,
+        'Warned the user';
+
+    ok($url_hash, "parser returned something for $url");
 
     ok($url_hash, "parser returned something for $url");
     isa_ok( $url_hash, 'HASH' );
