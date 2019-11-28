@@ -92,7 +92,7 @@ sub parse {
             }
 
             if($exception_from_OLD_format) {
-                warn "\nOLD URL parser thinks you are using the NEW URL syntax for a remote $query_params->{'object_type'}, so skipping it (it may be wrong!)\n";
+                warn "OLD URL parser thinks you are using the NEW URL syntax for a remote $query_params->{'object_type'}, so skipping it (it may be wrong!)\n";
             } else {
                 my $unambig_url     = hash_to_unambig_url( $url_parts_hash );
 
@@ -146,7 +146,7 @@ sub parse {
             }
 
             if($exception_from_NEW_format) {
-                warn "\nNEW URL parser thinks you are using the OLD URL syntax for a remote $query_params->{'object_type'}, so skipping it (it may be wrong!)\n";
+                warn "NEW URL parser thinks you are using the OLD URL syntax for a remote $query_params->{'object_type'}, so skipping it (it may be wrong!)\n";
             } else {
                 my $unambig_url     = hash_to_unambig_url( $url_parts_hash );
 
@@ -166,16 +166,16 @@ sub parse {
         if(stringify($old_parse) eq stringify($new_parse)) {
             return $new_parse;
         } else {
-            warn "\nThe URL '$url' can be parsed ambiguously:\n\t".stringify($old_parse)."\nvs\n\t".stringify($new_parse)."\n). Using the OLD parser at the moment.\nPlease change your URL to match the new format if you see weird behaviour\n\n";
+            warn "The URL '$url' can be parsed ambiguously:\n\t".stringify($old_parse)."\nvs\n\t".stringify($new_parse)."\n). Using the OLD parser at the moment.\nPlease change your URL to match the new format if you see weird behaviour\n\n";
             return $old_parse;
         }
     } elsif($new_parse) {
         return $new_parse;
     } elsif($old_parse) {
-        warn "\nThe URL '$url' only works with the old parser, please start using the new syntax as the old parser will soon be deprecated\n\n";
+        warn "The URL '$url' only works with the old parser, please start using the new syntax as the old parser will soon be deprecated\n\n";
         return $old_parse;
     } else {
-        warn "\nThe URL '$url' could not be parsed, please check it\n";
+        warn "The URL '$url' could not be parsed, please check it\n";
         return;
     }
 }
