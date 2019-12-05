@@ -38,7 +38,7 @@ foreach my $test_url (@$ehive_test_pipeline_urls) {
     my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $test_url);
 
     # To ensure we start with the database being absent
-    system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') });
+    system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE IF EXISTS') });
 
     run_sql_on_db($test_url, 'DROP DATABASE IF EXISTS', "Don't complain if asked to drop a database that doesn't exist");
     if ($dbc->driver eq 'sqlite') {
