@@ -96,14 +96,19 @@ foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
     my $completion_date1 = fetch_job_completion_date($job_adaptor, $job_id);
 
     # Try again
-    ok(system($ENV{'EHIVE_ROOT_DIR'}.'/scripts/runWorker.pl', '--job_id', $job_id), 'Cannot rerun a job that is already done without the --force option');
+    #  Guarantee there would be at least 1 second between the completion timestamps
+    #  You can't trust time on Travis, sleep(1) may sleep for less than 1 second, so sleeping for 2 seconds
+    sleep(2);
+    # Won't do anything because the job is already DONE, but runWorker still returns 0
+    runWorker($pipeline_url, ['--job_id' => $job_id]);
+    my $completion_date2 = fetch_job_completion_date($job_adaptor, $job_id);
+    is($completion_date2, $completion_date1, 'The job was not re-run (same completion date)');
     assert_jobs($job_adaptor, [["DONE",0,0],["SEMAPHORED",0,3],["DONE",2,0],["DONE",1,0],["READY",1,0],["READY",1,0],["READY",1,0]] );
 
     # And again
-    sleep(1); # Guarantee there is at least 1 second between both completions
     runWorker($pipeline_url, ['--job_id' => $job_id, '--force']);
-    my $completion_date2 = fetch_job_completion_date($job_adaptor, $job_id);
-    cmp_ok($completion_date2, 'gt', $completion_date1, 'The job was really re-run (newer completion date)');
+    my $completion_date3 = fetch_job_completion_date($job_adaptor, $job_id);
+    cmp_ok($completion_date3, 'gt', $completion_date1, 'The job was really re-run (newer completion date)');
     assert_jobs($job_adaptor, [["DONE",0,0],["SEMAPHORED",0,3],["DONE",2,0],["DONE",1,0],["READY",1,0],["READY",1,0],["READY",1,0]] );
 
     # Run another worker to get more failures
