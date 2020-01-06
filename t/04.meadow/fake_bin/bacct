@@ -69,7 +69,7 @@ Wed Dec  2 13:52:32: Submitted from host <farm3-head2>, CWD <$HOME/OrthologQM>,
 Wed Dec  2 13:52:34: [75] dispatched to <bc-31-2-11>, Effective RES_REQ <select
                      [(mem>100) && (type == any )] order[r15s:pg] rusage[mem=10
                      0.00] >;
-Wed Dec  2 13:53:29 2015: Completed <exit>; TERM_MEMLIMIT: job killed after reaching
+Wed Dec  2 13:53:29: Completed <exit>; TERM_MEMLIMIT: job killed after reaching
                       LSF memory usage limit.
 
  EXCEPTION STATUS:  underrun
