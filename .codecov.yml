@@ -3,10 +3,8 @@ coverage:
   status:
     project:
       default:
-        threshold: 1%
   notify:
     slack:
       default:
         url: secret:LW+i/4NzE9beqqJetobJEJP8GowY1eHWyaiIJM7BB5ZMET5oak4rsGK9zznYFaLQ0jncm46ES7b+aDshLPEMyYp+fvtM/QL0C1+n+nP1tQhzt+kQeFdj5eZA2VBm5qYQq7FuaS1p7PpWEY1EeuQkFWNWQMKNDkeO/ZSrqaiWRUQ=
-        threshold: 1%
 
