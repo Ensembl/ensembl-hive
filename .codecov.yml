@@ -3,6 +3,8 @@ coverage:
   status:
     project:
       default:
+        # Don't report failures on pull-requests
+        informational: true
   notify:
     slack:
       default:
