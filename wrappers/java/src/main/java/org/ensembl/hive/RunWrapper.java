@@ -23,8 +23,6 @@ import java.lang.reflect.Constructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jdk.internal.access.SharedSecrets;
-
 /**
  * Main class for running a hive worker in Java
  * 
@@ -78,11 +76,11 @@ public class RunWrapper {
 		Constructor<?> ctor = clazz.getConstructor();
 //		log.debug("Initializing runnable module " + clazz.getName() + " from " + args[1] + " and " + args[2]);
 
-        FileDescriptor inputDescriptor = new FileDescriptor();
-        SharedSecrets.getJavaIOFileDescriptorAccess().set(inputDescriptor, Integer.parseInt(args[1]));
-
-        FileDescriptor outputDescriptor = new FileDescriptor();
-        SharedSecrets.getJavaIOFileDescriptorAccess().set(outputDescriptor, Integer.parseInt(args[2]));
+		Constructor<FileDescriptor> fdctor = FileDescriptor.class.getDeclaredConstructor(Integer.TYPE);
+		fdctor.setAccessible(true);
+		FileDescriptor inputDescriptor = fdctor.newInstance(Integer.parseInt(args[1]));
+		FileDescriptor outputDescriptor = fdctor.newInstance(Integer.parseInt(args[2]));
+		fdctor.setAccessible(false);
 
 		BaseRunnable runnable = (BaseRunnable) (ctor.newInstance());
         runnable.setFileDescriptors(inputDescriptor, outputDescriptor);
