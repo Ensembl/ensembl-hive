@@ -73,7 +73,7 @@ elif [ "$action" == "run" ]; then
 		exit 1
 	fi
 
-	exec java -cp "$jar" --add-exports java.base/jdk.internal.access=ALL-UNNAMED org.ensembl.hive.RunWrapper "$module" "$fd_in" "$fd_out" "$debug"
+	exec java -cp "$jar" --add-opens java.base/java.io=ALL-UNNAMED org.ensembl.hive.RunWrapper "$module" "$fd_in" "$fd_out" "$debug"
 
 else
 	echo "Command-line error: No mode provided"

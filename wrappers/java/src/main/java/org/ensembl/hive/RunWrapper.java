@@ -23,8 +23,6 @@ import java.lang.reflect.Constructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jdk.internal.access.SharedSecrets;
-
 import org.ensembl.hive.Utils;
 
 /**
@@ -70,10 +68,11 @@ public class RunWrapper {
 
 		BaseRunnable runnable = Utils.findRunnable(args[0]);
 
-        FileDescriptor inputDescriptor = new FileDescriptor();
-        SharedSecrets.getJavaIOFileDescriptorAccess().set(inputDescriptor, Integer.parseInt(args[1]));
-        FileDescriptor outputDescriptor = new FileDescriptor();
-        SharedSecrets.getJavaIOFileDescriptorAccess().set(outputDescriptor, Integer.parseInt(args[2]));
+		Constructor<FileDescriptor> fdctor = FileDescriptor.class.getDeclaredConstructor(Integer.TYPE);
+		fdctor.setAccessible(true);
+		FileDescriptor inputDescriptor = fdctor.newInstance(Integer.parseInt(args[1]));
+		FileDescriptor outputDescriptor = fdctor.newInstance(Integer.parseInt(args[2]));
+		fdctor.setAccessible(false);
         runnable.setFileDescriptors(inputDescriptor, outputDescriptor);
 
 		runnable.processLifeCycle();
