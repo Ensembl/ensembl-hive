@@ -423,7 +423,7 @@ sub kill_all_workers {
         }
 
         print 'Killing worker ' . $worker->dbID() . ': '
-            . $worker->toString( 1 ) . "\n";
+            . $worker->toString( 1 ) . " -> $kill_status \n";
     }
 
     return;
