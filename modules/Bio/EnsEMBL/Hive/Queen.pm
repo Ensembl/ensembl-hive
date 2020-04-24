@@ -390,6 +390,7 @@ sub register_worker_death {
 sub kill_all_workers {
     my ( $self, $valley ) = @_;
 
+    my $this_meadow_user = whoami();
     my $all_workers_considered_alive = $self->fetch_all( "status!='DEAD'" );
     foreach my $worker ( @{ $all_workers_considered_alive } ) {
         my $kill_status;
@@ -403,7 +404,7 @@ sub kill_all_workers {
         elsif ( ! $meadow->can('kill_worker') ) {
             $kill_status = 'killing workers not supported by the meadow';
         }
-        else {
+        elsif ( $worker->meadow_user eq $this_meadow_user ) {  # if I'm actually allowed to kill the worker...
             # The actual termination of a worker might well be asynchronous
             # but at least we check for obvious problems, e.g. insufficient
             # permissions to execute a kill.
