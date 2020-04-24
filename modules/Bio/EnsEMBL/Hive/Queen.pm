@@ -416,6 +416,9 @@ sub kill_all_workers {
                 $kill_status = 'requested successfully';
                 $worker->cause_of_death( 'KILLED_BY_USER' );
                 $self->register_worker_death( $worker );
+                if ( $worker->status ne 'SUBMITTED' ) {             # There is no worker_temp_directory before specialization
+                    $meadow->cleanup_temp_directory( $worker );
+                }
             }
         }
 
