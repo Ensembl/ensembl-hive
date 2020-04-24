@@ -902,7 +902,9 @@ sub reset_jobs_for_analysis_id {
                    WHERE $analyses_filter $statuses_filter
         };
 
-        $self->dbc->do($sql3);
+        $self->dbc->protected_prepare_execute( [$sql3],
+            sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_hive_message( 'resetting jobs'.$after, 'INFO' ); }
+        );
 
         foreach my $analysis ( @$list_of_analyses ) {
             $self->db->get_AnalysisStatsAdaptor->update_status($analysis->dbID, 'LOADING');
@@ -936,7 +938,9 @@ sub unblock_jobs_for_analysis_id {
              SET s.local_jobs_counter=0, s.remote_jobs_counter=0, j.status = 'READY'
            WHERE $analyses_filter AND j.status = 'SEMAPHORED'
         };
-        $self->dbc->do($sql);
+        $self->dbc->protected_prepare_execute( [$sql],
+            sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_hive_message( 'unblocking jobs'.$after, 'INFO' ); }
+        );
 
     } elsif ($self->dbc->driver eq 'pgsql') {
 
@@ -1031,7 +1035,9 @@ sub discard_jobs_for_analysis_id {
     $self->dbc->run_in_transaction( sub {
 
             # let's reset work on the jobs that don't have a controlled_semaphore_id
-        $self->dbc->do($sql3);
+        $self->dbc->protected_prepare_execute( [$sql3],
+            sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_hive_message( 'discarding jobs'.$after, 'INFO' ); }
+        );
 
         my $semaphore_adaptor = $self->db->get_SemaphoreAdaptor;
 
