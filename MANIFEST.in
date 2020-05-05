@@ -1,0 +1,3 @@
+include LICENSE
+include wrappers/python3/README.md
+include wrappers/python3/VERSION
