@@ -421,6 +421,9 @@ sub kill_all_workers {
                 }
             }
         }
+        else {
+            $kill_status = 'could not kill, running under user ' . $worker->meadow_user;
+        }
 
         print 'Killing worker ' . $worker->dbID() . ': '
             . $worker->toString( 1 ) . " -> $kill_status \n";
