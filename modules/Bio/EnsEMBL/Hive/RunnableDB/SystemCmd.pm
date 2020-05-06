@@ -114,15 +114,17 @@ sub write_output {
         # system() could not start, or wait() failed
         die sprintf( "Could not start '%s': %s\n", $flat_cmd, $stderr);
 
-    } elsif (not ($return_value >> 8)) {
-        # The job has been killed. The best is to wait a bit that LSF kills
+    # Lower 8 bits indicate the process has been killed and did not complete.
+    } elsif ($return_value & 255) {
+        # It can happen because of a MEMLIMIT / RUNLIMIT, which we
+        # know are not atomic. The best is to wait a bit that LSF kills
         # the worker too
         sleep 30;
-        # If we reach this point, perhaps it was killed by a user
+        # If we reach this point, it was killed for another reason.
         die sprintf( "'%s' was killed with code=%d\nstderr is: %s\n", $flat_cmd, $return_value, $stderr);
 
     } else {
-        # "Normal" process exit with a non-zero code
+        # "Normal" process exit with a non-zero code (in the upper 8 bits)
         $return_value >>= 8;
 
         # We create a dataflow event depending on the exit code of the process.
