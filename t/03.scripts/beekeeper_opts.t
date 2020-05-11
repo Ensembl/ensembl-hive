@@ -33,7 +33,11 @@ my $pipeline_url = get_test_url_or_die();
 
     # Starting a first set of checks with a "GCPct" pipeline
 
-    init_pipeline('Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::LongWorker_conf', $pipeline_url);
+    {
+        local @INC = @INC;
+        push @INC, $ENV{'EHIVE_ROOT_DIR'}.'/t/03.scripts/';
+        init_pipeline('TestPipeConfig::LongWorker_conf', $pipeline_url);
+    }
 
     my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url );
 

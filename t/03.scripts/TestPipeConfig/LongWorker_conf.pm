@@ -2,11 +2,11 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::LongWorker_conf
+    TestPipeConfig::LongWorker_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::LongWorker_conf -password <your_password>
+    init_pipeline.pl TestPipeConfig::LongWorker_conf -password <your_password>
 
 =head1 DESCRIPTION
 
@@ -39,7 +39,7 @@
 =cut
 
 
-package Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::LongWorker_conf;
+package TestPipeConfig::LongWorker_conf;
 
 use strict;
 use warnings;
