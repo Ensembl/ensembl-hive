@@ -17,10 +17,10 @@ from pathlib import Path
 
 from setuptools import setup, find_packages
 
+from wrappers.python3 import eHive
+
 with open(Path(__file__).parent / 'LICENSE') as f:
     license_ct = f.read()
-with open(Path(__file__).parent / 'wrappers' / 'python3' / 'VERSION') as f:
-    version = f.read()
 
 setup(
     name='ensembl-hive',
@@ -32,7 +32,7 @@ setup(
     url='https://www.ensembl.org',
     download_url='https://github.com/Ensembl/ensembl-py',
     license=license_ct,
-    version=version,
+    version=eHive.__version__,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
