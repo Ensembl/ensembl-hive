@@ -32,12 +32,28 @@ $ENV{'EHIVE_ROOT_DIR'} //=
   File::Basename::dirname( File::Basename::dirname(
       File::Basename::dirname( Cwd::realpath($PROGRAM_NAME) )
   ) );
+my $local_module_path = $ENV{'EHIVE_ROOT_DIR'}.'/t/03.scripts/';
+
+# The name of the file that will be created in the temp directory
+my $test_filename = 'foo';
 
 my $pipeline_url = get_test_url_or_die();
 
-init_pipeline(
-    'Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::LongWorker_conf',
-    $pipeline_url );
+{
+    # The init_pipeline test runs in the same process, so @INC needs
+    # to be updated to see the test modules
+    local @INC = @INC;
+    push @INC, $local_module_path;
+    init_pipeline(
+        'TestPipeConfig::LongWorker_conf',
+        $pipeline_url,
+        [],
+        [
+            'analysis[longrunning].module=TestRunnable::DummyWriter',
+            "analysis[longrunning].parameters={'filename' => '$test_filename'}",
+        ],
+    );
+}
 
 my $hive_dba =
     Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url );
@@ -55,14 +71,28 @@ beekeeper( $pipeline_url, [ '-big_red_button' ], "beekeper.pl recognises option 
 # messy and given it is quicker to block *all* beekeepers than just
 # the active ones, a single-shot run doesn't make that much of a
 # difference.
-beekeeper( $pipeline_url, [ '-run' ] );
+{
+    # The beekeeper test runs in a separate process, so PERL5LIB needs
+    # to be updated in order to see TestRunnable::DummyWriter
+    local $ENV{'PERL5LIB'} = "$local_module_path:" . $ENV{'PERL5LIB'};
+    beekeeper( $pipeline_url, [ '-run' ] );
+}
 # Give the worker(s) some time to start
 sleep(10);
+
+# The file should have been created
+my $worker = $hive_dba->get_WorkerAdaptor->fetch_by_dbID(1);
+my $temp_directory_name = $worker->temp_directory_name;
+my $hello_path = "$temp_directory_name/$test_filename";
+ok(-s $hello_path, "$hello_path file has been populated");
 
 # Now trigger the shutdown for real
 beekeeper( $pipeline_url, [ '-big_red_button' ], 'Pipeline shutdown triggered without errors' );
 # Give the worker(s) some time to die
 sleep(10);
+
+# The directory should have been removed
+ok(!(-e $temp_directory_name), "$temp_directory_name has been removed");
 
 my $bk_nta = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'beekeeper' );
 my $unblocked_beekeeper_rows = $bk_nta->fetch_all( 'cause_of_death IS NULL AND is_blocked != 1' );
