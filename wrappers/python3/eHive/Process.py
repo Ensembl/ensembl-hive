@@ -14,8 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import eHive.Params
-
 import os
 import sys
 import json
@@ -23,6 +21,8 @@ import numbers
 import unittest
 import warnings
 import traceback
+
+from . import Params
 
 __version__ = "5.0"
 
@@ -136,7 +136,7 @@ class BaseRunnable(object):
         self.__print_debug("__life_cycle")
 
         # Params
-        self.__params = eHive.Params.ParamContainer(config['input_job']['parameters'], self.debug > 1)
+        self.__params = Params.ParamContainer(config['input_job']['parameters'], self.debug > 1)
 
         # Job attributes
         self.input_job = Job()
@@ -240,7 +240,7 @@ class BaseRunnable(object):
         self.input_job.transient_error = False
         v = self.__params.get_param(param_name)
         if v is None:
-            raise eHive.Params.NullParamException(param_name)
+            raise Params.NullParamException(param_name)
         self.input_job.transient_error = t
         return v
 
@@ -257,7 +257,7 @@ class BaseRunnable(object):
         try:
             return self.__params.get_param(param_name)
         except KeyError as e:
-            warnings.warn("parameter '{0}' cannot be initialized because {1} is missing !".format(param_name, e), eHive.Params.ParamWarning, 2)
+            warnings.warn("parameter '{0}' cannot be initialized because {1} is missing !".format(param_name, e), Params.ParamWarning, 2)
             return None
 
     def param_exists(self, param_name):
@@ -288,7 +288,7 @@ class RunnableTest(unittest.TestCase):
     def test_job_param(self):
         class FakeRunnableWithParams(BaseRunnable):
             def __init__(self, d):
-                self._BaseRunnable__params = eHive.Params.ParamContainer(d)
+                self._BaseRunnable__params = Params.ParamContainer(d)
                 self.input_job = Job()
                 self.input_job.transient_error = True
         j = FakeRunnableWithParams({
@@ -303,7 +303,7 @@ class RunnableTest(unittest.TestCase):
         self.assertIs( j.param_exists('b'), True, '"b" exists' )
         self.assertIs( j.param_exists('c'), None, '"c"\'s existence is unclear' )
         self.assertIs( j.param_exists('d'), False, '"d" doesn\'t exist' )
-        with self.assertRaises(eHive.Params.ParamInfiniteLoopException):
+        with self.assertRaises(Params.ParamInfiniteLoopException):
             j.param_exists('e')
 
         # param_is_defined
@@ -311,27 +311,27 @@ class RunnableTest(unittest.TestCase):
         self.assertIs( j.param_is_defined('b'), False, '"b" is not defined' )
         self.assertIs( j.param_is_defined('c'), None, '"c"\'s defined-ness is unclear' )
         self.assertIs( j.param_is_defined('d'), False, '"d" is not defined (it doesn\'t exist)' )
-        with self.assertRaises(eHive.Params.ParamInfiniteLoopException):
+        with self.assertRaises(Params.ParamInfiniteLoopException):
             j.param_is_defined('e')
 
         # param
         self.assertIs( j.param('a'), 3, '"a" is 3' )
         self.assertIs( j.param('b'), None, '"b" is None' )
-        with self.assertWarns(eHive.Params.ParamWarning):
+        with self.assertWarns(Params.ParamWarning):
             self.assertIs( j.param('c'), None, '"c"\'s value is unclear' )
-        with self.assertWarns(eHive.Params.ParamWarning):
+        with self.assertWarns(Params.ParamWarning):
             self.assertIs( j.param('d'), None, '"d" is not defined (it doesn\'t exist)' )
-        with self.assertRaises(eHive.Params.ParamInfiniteLoopException):
+        with self.assertRaises(Params.ParamInfiniteLoopException):
             j.param('e')
 
         # param_required
         self.assertIs( j.param_required('a'), 3, '"a" is 3' )
-        with self.assertRaises(eHive.Params.NullParamException):
+        with self.assertRaises(Params.NullParamException):
             j.param_required('b')
         with self.assertRaises(KeyError):
             j.param_required('c')
         with self.assertRaises(KeyError):
             j.param_required('d')
-        with self.assertRaises(eHive.Params.ParamInfiniteLoopException):
+        with self.assertRaises(Params.ParamInfiniteLoopException):
             j.param_required('e')
 
