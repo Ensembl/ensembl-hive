@@ -112,6 +112,13 @@ version of Python or Java will need to be installed on your system:
    Python 3 is required. It is known to work with Python 3.5.1 or later, earlier
    Python versions may work but have not been tested.
 
+   You can include the wrapper library in your virtualenv with command below:
+
+::
+
+    pip install -e git+https://github.com/Ensembl/ensembl-hive.git#egg=ensembl-hive
+
+
 -  *Java:*
 
    Requires OpenJDK version 12 or later, along with Apache Maven.
