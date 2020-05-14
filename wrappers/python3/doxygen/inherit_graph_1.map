@@ -1,10 +1,10 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node2" href="$classe_hive_1_1_params_1_1_param_exception.html" title="Base class for parameters&#45;related exceptions. " alt="" coords="146,71,353,97"/>
-<area shape="rect" id="node6" href="$classe_hive_1_1_process_1_1_complete_early_exception.html" title="Can be raised by a derived class of BaseRunnable to indicate an early successful termination. " alt="" coords="150,122,349,163"/>
-<area shape="rect" id="node7" href="$classe_hive_1_1_process_1_1_hive_j_s_o_n_message_exception.html" title="Raised when we could not parse the JSON message coming from GuestProcess. " alt="" coords="135,187,363,229"/>
-<area shape="rect" id="node8" href="$classe_hive_1_1_process_1_1_job_failed_exception.html" title="Can be raised by a derived class of BaseRunnable to indicate an early unsuccessful termination..." alt="" coords="135,253,363,280"/>
-<area shape="rect" id="node9" href="$classe_hive_1_1_process_1_1_lost_hive_connection_exception.html" title="Raised when the process has lost the communication pipe with the Perl side. " alt="" coords="134,305,365,346"/>
-<area shape="rect" id="node3" href="$classe_hive_1_1_params_1_1_param_infinite_loop_exception.html" title="Raised when parameters depend on each other, forming a loop. " alt="" coords="441,5,629,46"/>
-<area shape="rect" id="node4" href="$classe_hive_1_1_params_1_1_param_name_exception.html" title="Raised when the parameter name is not a string. " alt="" coords="413,71,656,97"/>
-<area shape="rect" id="node5" href="$classe_hive_1_1_params_1_1_param_substitution_exception.html" title="Raised when ParamContainer tried to substitute an unexpected structure (only dictionaries and lists a..." alt="" coords="425,122,644,163"/>
+<area shape="rect" id="node2" href="$classeHive_1_1Params_1_1ParamException.html" title="Base class for parameters&#45;related exceptions. " alt="" coords="146,71,351,98"/>
+<area shape="rect" id="node6" href="$classeHive_1_1Process_1_1CompleteEarlyException.html" title="Can be raised by a derived class of BaseRunnable to indicate an early successful termination. " alt="" coords="149,123,348,164"/>
+<area shape="rect" id="node7" href="$classeHive_1_1Process_1_1HiveJSONMessageException.html" title="Raised when we could not parse the JSON message coming from GuestProcess. " alt="" coords="135,188,363,229"/>
+<area shape="rect" id="node8" href="$classeHive_1_1Process_1_1JobFailedException.html" title="Can be raised by a derived class of BaseRunnable to indicate an early unsuccessful termination..." alt="" coords="135,254,362,281"/>
+<area shape="rect" id="node9" href="$classeHive_1_1Process_1_1LostHiveConnectionException.html" title="Raised when the process has lost the communication pipe with the Perl side. " alt="" coords="133,305,364,347"/>
+<area shape="rect" id="node3" href="$classeHive_1_1Params_1_1ParamInfiniteLoopException.html" title="Raised when parameters depend on each other, forming a loop. " alt="" coords="439,5,625,47"/>
+<area shape="rect" id="node4" href="$classeHive_1_1Params_1_1ParamNameException.html" title="Raised when the parameter name is not a string. " alt="" coords="412,71,652,98"/>
+<area shape="rect" id="node5" href="$classeHive_1_1Params_1_1ParamSubstitutionException.html" title="Raised when ParamContainer tried to substitute an unexpected structure (only dictionaries and lists a..." alt="" coords="424,123,640,164"/>
 </map>

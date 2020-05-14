@@ -1,0 +1,5 @@
+<map id="eHive.Params.ParamException" name="eHive.Params.ParamException">
+<area shape="rect" id="node3" href="$classeHive_1_1Params_1_1ParamInfiniteLoopException.html" title="Raised when parameters depend on each other, forming a loop. " alt="" coords="413,5,600,47"/>
+<area shape="rect" id="node4" href="$classeHive_1_1Params_1_1ParamNameException.html" title="Raised when the parameter name is not a string. " alt="" coords="387,71,627,98"/>
+<area shape="rect" id="node5" href="$classeHive_1_1Params_1_1ParamSubstitutionException.html" title="Raised when ParamContainer tried to substitute an unexpected structure (only dictionaries and lists a..." alt="" coords="399,123,615,164"/>
+</map>

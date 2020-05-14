@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['digitfactory',['DigitFactory',['../class_long_mult_1_1_digit_factory_1_1_digit_factory.html',1,'LongMult::DigitFactory']]]
+  ['digitfactory',['DigitFactory',['../classLongMult_1_1DigitFactory_1_1DigitFactory.html',1,'LongMult::DigitFactory']]]
 ];

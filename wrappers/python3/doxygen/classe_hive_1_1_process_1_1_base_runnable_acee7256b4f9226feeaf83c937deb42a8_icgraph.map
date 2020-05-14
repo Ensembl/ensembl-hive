@@ -1,9 +1,0 @@
-<map id="eHive.Process.BaseRunnable.__send_message_and_wait_for_OK" name="eHive.Process.BaseRunnable.__send_message_and_wait_for_OK">
-<area shape="rect" id="node2" href="$classe_hive_1_1_process_1_1_base_runnable.html#aa24e911fed2a086627fd7959288d31b8" title="Simple loop: wait for job parameters, do the job&#39;s life&#45;cycle. " alt="" coords="315,5,517,46"/>
-<area shape="rect" id="node3" href="$classe_hive_1_1_process_1_1_base_runnable.html#adb681425aa6f351938bb2ed801ca66ad" title="method is one of &quot;pre_cleanup&quot;, &quot;fetch_input&quot;, &quot;run&quot;, &quot;write_output&quot;, &quot;post_cleanup&quot;. " alt="" coords="315,70,517,111"/>
-<area shape="rect" id="node4" href="$classe_hive_1_1_process_1_1_base_runnable.html#af3c999502afdc346070e50c4fc42905b" title="Store a message in the log_message table with is_error indicating whether the warning is actually an ..." alt="" coords="291,136,541,163"/>
-<area shape="rect" id="node5" href="$class_long_mult_1_1_digit_factory_1_1_digit_factory.html#a019e049fb5a45e6be23f2878eaa2b4e2" title="LongMult.DigitFactory.Digit\lFactory.write_output" alt="" coords="610,34,793,75"/>
-<area shape="rect" id="node6" href="$class_test_runnable_1_1_test_runnable.html#a7fe88677b553ce139e9a47c305c6470a" title="TestRunnable.TestRunnable.fetch\l_input" alt="" coords="589,99,813,141"/>
-<area shape="rect" id="node7" href="$class_test_runnable_1_1_test_runnable.html#a4a992aab947c0bd8857e8c99471f2cec" title="TestRunnable.TestRunnable.run" alt="" coords="594,165,809,192"/>
-<area shape="rect" id="node8" href="$class_test_runnable_1_1_test_runnable.html#a44b70d4b32623732bccd2af7dbcf81cd" title="TestRunnable.TestRunnable.write\l_output" alt="" coords="589,217,813,258"/>
-</map>

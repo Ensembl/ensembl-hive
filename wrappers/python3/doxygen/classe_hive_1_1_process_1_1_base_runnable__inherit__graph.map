@@ -1,6 +1,0 @@
-<map id="eHive.Process.BaseRunnable" name="eHive.Process.BaseRunnable">
-<area shape="rect" id="node3" href="$class_long_mult_1_1_add_together_1_1_add_together.html" title="Runnable that adds up all the partial&#45;multiplications from PartMultiply. " alt="" coords="363,5,549,46"/>
-<area shape="rect" id="node4" href="$class_long_mult_1_1_digit_factory_1_1_digit_factory.html" title="Factory that creates 1 job per digit found in the decimal representation of &#39;b_multiplier&#39;. " alt="" coords="365,70,547,111"/>
-<area shape="rect" id="node5" href="$class_long_mult_1_1_part_multiply_1_1_part_multiply.html" title="Runnable to multiply a number by a digit. " alt="" coords="367,135,545,177"/>
-<area shape="rect" id="node6" href="$class_test_runnable_1_1_test_runnable.html" title="Simple Runnable to test as a standaloneJob. " alt="" coords="360,201,552,228"/>
-</map>
