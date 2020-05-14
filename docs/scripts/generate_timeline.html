@@ -4,123 +4,88 @@
 <head>
 <title>generate_timeline.pl</title>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<link rev="made" href="mailto:_mdnsresponder@scream.apple.com" />
+<link rev="made" href="mailto:root@localhost" />
 </head>
 
-<body style="background-color: white">
+<body>
 
 
-<!-- INDEX BEGIN -->
-<div name="index">
-<p><a name="__index__"></a></p>
-<!--
 
-<ul>
+<h1 id="NAME">NAME</h1>
 
-	<li><a href="#name">NAME</a></li>
-	<li><a href="#synopsis">SYNOPSIS</a></li>
-	<li><a href="#description">DESCRIPTION</a></li>
-	<li><a href="#usage_examples">USAGE EXAMPLES</a></li>
-	<li><a href="#options">OPTIONS</a></li>
-	<li><a href="#external_dependencies">EXTERNAL DEPENDENCIES</a></li>
-	<li><a href="#license">LICENSE</a></li>
-	<li><a href="#contact">CONTACT</a></li>
-</ul>
-
--->
-
-
-</div>
-<!-- INDEX END -->
-
-<p>
-</p>
-<hr />
-<h1><a name="name">NAME</a></h1>
 <p>generate_timeline.pl</p>
-<p>
-</p>
-<hr />
-<h1><a name="synopsis">SYNOPSIS</a></h1>
-<pre>
-    generate_timeline.pl {-url &lt;url&gt; | [-reg_conf &lt;reg_conf&gt;] -reg_alias &lt;reg_alias&gt; [-reg_type &lt;reg_type&gt;] }
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code>    generate_timeline.pl {-url &lt;url&gt; | [-reg_conf &lt;reg_conf&gt;] -reg_alias &lt;reg_alias&gt; [-reg_type &lt;reg_type&gt;] }
                          [-start_date &lt;start_date&gt;] [-end_date &lt;end_date&gt;]
                          [-top &lt;float&gt;]
                          [-mode [workers | memory | cores | pending_workers | pending_time]]
                          [-key [analysis | resource_class]]
-                         [-n_core &lt;int&gt;] [-mem &lt;int&gt;]</pre>
-<p>
-</p>
-<hr />
-<h1><a name="description">DESCRIPTION</a></h1>
+                         [-n_core &lt;int&gt;] [-mem &lt;int&gt;]</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
 <p>This script is used for offline examination of the allocation of workers.</p>
-<p>Based on the command-line parameters 'start_date' and 'end_date', or on the start time of the first
-worker and end time of the last worker (as recorded in pipeline DB), it pulls the relevant data out
-of the 'worker' table for accurate timing.
-By default, the output is in CSV format, to allow extra analysis to be carried.</p>
+
+<p>Based on the command-line parameters &#39;start_date&#39; and &#39;end_date&#39;, or on the start time of the first worker and end time of the last worker (as recorded in pipeline DB), it pulls the relevant data out of the &#39;worker&#39; table for accurate timing. By default, the output is in CSV format, to allow extra analysis to be carried.</p>
+
 <p>You can optionally ask the script to generate an image with Gnuplot.</p>
-<p>
-</p>
-<hr />
-<h1><a name="usage_examples">USAGE EXAMPLES</a></h1>
-<pre>
-        # Just run it the usual way: only the top 20 analysis will be reported in CSV format
-    generate_timeline.pl -url mysql://username:secret@hostname:port/database &gt; timeline.csv</pre>
-<pre>
+
+<h1 id="USAGE-EXAMPLES">USAGE EXAMPLES</h1>
+
+<pre><code>        # Just run it the usual way: only the top 20 analysis will be reported in CSV format
+    generate_timeline.pl -url mysql://username:secret@hostname:port/database &gt; timeline.csv
+
         # The same, but getting the analysis that fill 99.5% of the global activity in a PNG file
-    generate_timeline.pl -url mysql://username:secret@hostname:port/database -top .995 -output timeline_top995.png</pre>
-<pre>
+    generate_timeline.pl -url mysql://username:secret@hostname:port/database -top .995 -output timeline_top995.png
+
         # Assuming you are only interested in a precise interval (in a PNG file)
-    generate_timeline.pl -url mysql://username:secret@hostname:port/database -start_date 2013-06-15T10:34 -end_date 2013-06-15T16:58 -output timeline_June15.png</pre>
-<pre>
+    generate_timeline.pl -url mysql://username:secret@hostname:port/database -start_date 2013-06-15T10:34 -end_date 2013-06-15T16:58 -output timeline_June15.png
+
         # Get the required memory instead of the number of workers
-    generate_timeline.pl -url mysql://username:secret@hostname:port/database -mode memory -output timeline_memory.png</pre>
-<p>
-</p>
-<hr />
-<h1><a name="options">OPTIONS</a></h1>
-<pre>
-    -help                   : print this help
+    generate_timeline.pl -url mysql://username:secret@hostname:port/database -mode memory -output timeline_memory.png</code></pre>
+
+<h1 id="OPTIONS">OPTIONS</h1>
+
+<pre><code>    -help                   : print this help
     -url &lt;url string&gt;       : url defining where hive database is located
     -reg_cong, -reg_type, -reg_alias    : alternative connection details
     -nosqlvc                : Do not restrict the usage of this script to the current version of eHive
                               Be aware that generate_timeline.pl uses raw SQL queries that may break on different schema versions
-    -verbose                : Print some info about the data loaded from the database</pre>
-<pre>
-    -start_date &lt;date&gt;      : minimal start date of a worker (the format is ISO8601, e.g. '2012-01-25T13:46')
-    -end_date &lt;date&gt;        : maximal end date of a worker (the format is ISO8601, e.g. '2012-01-25T13:46')
+    -verbose                : Print some info about the data loaded from the database
+
+    -start_date &lt;date&gt;      : minimal start date of a worker (the format is ISO8601, e.g. &#39;2012-01-25T13:46&#39;)
+    -end_date &lt;date&gt;        : maximal end date of a worker (the format is ISO8601, e.g. &#39;2012-01-25T13:46&#39;)
     -top &lt;float&gt;            : maximum number (&gt; 1) or fraction (&lt; 1) of analysis to report (default: 20)
     -output &lt;string&gt;        : output file: its extension must match one of the Gnuplot terminals. Otherwise, the CSV output is produced on stdout
-    -mode &lt;string&gt;          : what should be displayed on the y-axis. Allowed values are 'workers' (default), 'memory', 'cores', 'pending_workers', or 'pending_time'
-    -key                    : 'analysis' (default) or 'resource_class': how to bin the workers</pre>
-<pre>
+    -mode &lt;string&gt;          : what should be displayed on the y-axis. Allowed values are &#39;workers&#39; (default), &#39;memory&#39;, &#39;cores&#39;, &#39;pending_workers&#39;, or &#39;pending_time&#39;
+    -key                    : &#39;analysis&#39; (default) or &#39;resource_class&#39;: how to bin the workers
+
     -n_core &lt;int&gt;           : the default number of cores allocated to a worker (default: 1)
-    -mem &lt;int&gt;              : the default memory allocated to a worker (default: 100Mb)</pre>
-<p>
-</p>
-<hr />
-<h1><a name="external_dependencies">EXTERNAL DEPENDENCIES</a></h1>
-<pre>
-    Chart::Gnuplot</pre>
-<p>
-</p>
-<hr />
-<h1><a name="license">LICENSE</a></h1>
-<p>Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-<p>Copyright [2016-2020] EMBL-European Bioinformatics Institute</p>
-<p>Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except in compliance with the License.
-You may obtain a copy of the License at</p>
-<pre>
-    <a href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></pre>
-<p>Unless required by applicable law or agreed to in writing, software distributed under the License
-is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and limitations under the License.</p>
-<p>
-</p>
-<hr />
-<h1><a name="contact">CONTACT</a></h1>
-<p>Please subscribe to the Hive mailing list:  <a href="http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users">http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users</a>  to discuss Hive-related questions or to be notified of our updates</p>
+    -mem &lt;int&gt;              : the default memory allocated to a worker (default: 100Mb)</code></pre>
+
+<h1 id="EXTERNAL-DEPENDENCIES">EXTERNAL DEPENDENCIES</h1>
+
+<pre><code>    Chart::Gnuplot</code></pre>
+
+<h1 id="LICENSE">LICENSE</h1>
+
+<p>Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute Copyright [2016-2020] EMBL-European Bioinformatics Institute</p>
+
+<p>Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except in compliance with the License. You may obtain a copy of the License at</p>
+
+<pre><code>    http://www.apache.org/licenses/LICENSE-2.0</code></pre>
+
+<p>Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</p>
+
+<h1 id="CONTACT">CONTACT</h1>
+
+<p>Please subscribe to the Hive mailing list: http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users to discuss Hive-related questions or to be notified of our updates</p>
+
 
 </body>
 
 </html>
+
+

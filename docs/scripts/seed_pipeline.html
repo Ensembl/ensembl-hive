@@ -4,87 +4,58 @@
 <head>
 <title>seed_pipeline.pl</title>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<link rev="made" href="mailto:_mdnsresponder@scream.apple.com" />
+<link rev="made" href="mailto:root@localhost" />
 </head>
 
-<body style="background-color: white">
+<body>
 
 
-<!-- INDEX BEGIN -->
-<div name="index">
-<p><a name="__index__"></a></p>
-<!--
 
-<ul>
+<h1 id="NAME">NAME</h1>
 
-	<li><a href="#name">NAME</a></li>
-	<li><a href="#synopsis">SYNOPSIS</a></li>
-	<li><a href="#description">DESCRIPTION</a></li>
-	<li><a href="#usage_examples">USAGE EXAMPLES</a></li>
-	<li><a href="#license">LICENSE</a></li>
-	<li><a href="#contact">CONTACT</a></li>
-</ul>
+<pre><code>    seed_pipeline.pl</code></pre>
 
--->
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code>    seed_pipeline.pl {-url &lt;url&gt; | -reg_conf &lt;reg_conf&gt; [-reg_type &lt;reg_type&gt;] -reg_alias &lt;reg_alias&gt;} [ {-analysis_id &lt;analysis_id&gt; | -logic_name &lt;logic_name&gt;} [ -input_id &lt;input_id&gt; ] ]</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<pre><code>    seed_pipeline.pl is a generic script that is used to create {initial or top-up} jobs for hive pipelines</code></pre>
+
+<h1 id="USAGE-EXAMPLES">USAGE EXAMPLES</h1>
+
+<pre><code>        # find out which analyses may need seeding (with an example input_id):
+
+    seed_pipeline.pl -url &quot;mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult&quot;
 
 
-</div>
-<!-- INDEX END -->
+        # seed one job into the &quot;start&quot; analysis:
 
-<p>
-</p>
-<hr />
-<h1><a name="name">NAME</a></h1>
-<pre>
-    seed_pipeline.pl</pre>
-<p>
-</p>
-<hr />
-<h1><a name="synopsis">SYNOPSIS</a></h1>
-<pre>
-    seed_pipeline.pl {-url &lt;url&gt; | -reg_conf &lt;reg_conf&gt; [-reg_type &lt;reg_type&gt;] -reg_alias &lt;reg_alias&gt;} [ {-analysis_id &lt;analysis_id&gt; | -logic_name &lt;logic_name&gt;} [ -input_id &lt;input_id&gt; ] ]</pre>
-<p>
-</p>
-<hr />
-<h1><a name="description">DESCRIPTION</a></h1>
-<pre>
-    seed_pipeline.pl is a generic script that is used to create {initial or top-up} jobs for hive pipelines</pre>
-<p>
-</p>
-<hr />
-<h1><a name="usage_examples">USAGE EXAMPLES</a></h1>
-<pre>
-        # find out which analyses may need seeding (with an example input_id):</pre>
-<pre>
-    seed_pipeline.pl -url &quot;mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult&quot;</pre>
-<pre>
-        # seed one job into the &quot;start&quot; analysis:</pre>
-<pre>
     seed_pipeline.pl -url &quot;mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult&quot; \
-                     -logic_name start -input_id '{&quot;a_multiplier&quot; =&gt; 2222222222, &quot;b_multiplier&quot; =&gt; 3434343434}'</pre>
-<p>
-</p>
-<hr />
-<h1><a name="license">LICENSE</a></h1>
-<pre>
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-    Copyright [2016-2020] EMBL-European Bioinformatics Institute</pre>
-<pre>
+                     -logic_name start -input_id &#39;{&quot;a_multiplier&quot; =&gt; 2222222222, &quot;b_multiplier&quot; =&gt; 3434343434}&#39;</code></pre>
+
+<h1 id="LICENSE">LICENSE</h1>
+
+<pre><code>    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [2016-2020] EMBL-European Bioinformatics Institute
+
     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at</pre>
-<pre>
-         <a href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></pre>
-<pre>
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
     Unless required by applicable law or agreed to in writing, software distributed under the License
     is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and limitations under the License.</pre>
-<p>
-</p>
-<hr />
-<h1><a name="contact">CONTACT</a></h1>
-<pre>
-    Please subscribe to the Hive mailing list:  <a href="http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users">http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users</a>  to discuss Hive-related questions or to be notified of our updates</pre>
+    See the License for the specific language governing permissions and limitations under the License.</code></pre>
+
+<h1 id="CONTACT">CONTACT</h1>
+
+<pre><code>    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates</code></pre>
+
 
 </body>
 
 </html>
+
+

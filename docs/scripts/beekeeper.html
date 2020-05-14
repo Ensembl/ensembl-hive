@@ -4,170 +4,124 @@
 <head>
 <title>beekeeper.pl</title>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<link rev="made" href="mailto:_mdnsresponder@scream.apple.com" />
+<link rev="made" href="mailto:root@localhost" />
 </head>
 
-<body style="background-color: white">
+<body>
 
 
-<!-- INDEX BEGIN -->
-<div name="index">
-<p><a name="__index__"></a></p>
-<!--
 
-<ul>
+<h1 id="NAME">NAME</h1>
 
-	<li><a href="#name">NAME</a></li>
-	<li><a href="#description">DESCRIPTION</a></li>
-	<li><a href="#usage_examples">USAGE EXAMPLES</a></li>
-	<li><a href="#options">OPTIONS</a></li>
-	<ul>
+<pre><code>    beekeeper.pl [options]</code></pre>
 
-		<li><a href="#connection_parameters">Connection parameters</a></li>
-		<li><a href="#configs_overriding">Configs overriding</a></li>
-		<li><a href="#looping_control">Looping control</a></li>
-		<li><a href="#current_meadow_control">Current Meadow control</a></li>
-		<li><a href="#worker_control">Worker control</a></li>
-		<li><a href="#other_commands_options">Other commands/options</a></li>
-	</ul>
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
 
-	<li><a href="#license">LICENSE</a></li>
-	<li><a href="#contact">CONTACT</a></li>
-</ul>
-
--->
-
-
-</div>
-<!-- INDEX END -->
-
-<p>
-</p>
-<hr />
-<h1><a name="name">NAME</a></h1>
-<pre>
-    beekeeper.pl [options]</pre>
-<p>
-</p>
-<hr />
-<h1><a name="description">DESCRIPTION</a></h1>
-<pre>
-    The Beekeeper is in charge of interfacing between the Queen and a compute resource or 'compute farm'.
+<pre><code>    The Beekeeper is in charge of interfacing between the Queen and a compute resource or &#39;compute farm&#39;.
     Its job is to initialize/sync the eHive database (via the Queen), query the Queen if it needs any workers
-    and to send the requested number of workers to open machines via the runWorker.pl script.</pre>
-<pre>
+    and to send the requested number of workers to open machines via the runWorker.pl script.
+
     It is also responsible for interfacing with the Queen to identify workers which died
-    unexpectedly so that she can free the dead workers and reclaim unfinished jobs.</pre>
-<p>
-</p>
-<hr />
-<h1><a name="usage_examples">USAGE EXAMPLES</a></h1>
-<pre>
-        # Usually run after the pipeline has been created to calculate the internal statistics necessary for eHive functioning
-    beekeeper.pl -url mysql://username:secret@hostname:port/ehive_dbname -sync</pre>
-<pre>
+    unexpectedly so that she can free the dead workers and reclaim unfinished jobs.</code></pre>
+
+<h1 id="USAGE-EXAMPLES">USAGE EXAMPLES</h1>
+
+<pre><code>        # Usually run after the pipeline has been created to calculate the internal statistics necessary for eHive functioning
+    beekeeper.pl -url mysql://username:secret@hostname:port/ehive_dbname -sync
+
         # Do not run any additional Workers, just check for the current status of the pipeline:
-    beekeeper.pl -url mysql://username:secret@hostname:port/ehive_dbname</pre>
-<pre>
+    beekeeper.pl -url mysql://username:secret@hostname:port/ehive_dbname
+
         # Run the pipeline in automatic mode (-loop), run all the workers locally (-meadow_type LOCAL) and allow for 3 parallel workers (-total_running_workers_max 3)
-    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -meadow_type LOCAL -total_running_workers_max 3 -loop</pre>
-<pre>
+    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -meadow_type LOCAL -total_running_workers_max 3 -loop
+
         # Run in automatic mode, but only restrict to running blast-related analyses with the exception of analyses 4..6
-    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -analyses_pattern 'blast%-4..6' -loop</pre>
-<pre>
+    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -analyses_pattern &#39;blast%-4..6&#39; -loop
+
         # Restrict the normal execution to one iteration only - can be used for testing a newly set up pipeline
-    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -run</pre>
-<pre>
-        # Reset failed 'buggy_analysis' jobs to 'READY' state, so that they can be run again
-    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -analyses_pattern buggy_analysis -reset_failed_jobs</pre>
-<pre>
+    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -run
+
+        # Reset failed &#39;buggy_analysis&#39; jobs to &#39;READY&#39; state, so that they can be run again
+    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -analyses_pattern buggy_analysis -reset_failed_jobs
+
         # Do a cleanup: find and bury dead workers, reclaim their jobs
-    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -dead</pre>
-<p>
-</p>
-<hr />
-<h1><a name="options">OPTIONS</a></h1>
-<p>
-</p>
-<h2><a name="connection_parameters">Connection parameters</a></h2>
-<pre>
-    -reg_conf &lt;path&gt;       : path to a Registry configuration file
-    -reg_type &lt;string&gt;     : type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
+    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -dead</code></pre>
+
+<h1 id="OPTIONS">OPTIONS</h1>
+
+<h2 id="Connection-parameters">Connection parameters</h2>
+
+<pre><code>    -reg_conf &lt;path&gt;       : path to a Registry configuration file
+    -reg_type &lt;string&gt;     : type of the registry entry (&#39;hive&#39;, &#39;core&#39;, &#39;compara&#39;, etc - defaults to &#39;hive&#39;)
     -reg_alias &lt;string&gt;    : species/alias name for the Hive DBAdaptor
-    -url &lt;url string&gt;      : url defining where hive database is located</pre>
-<p>
-</p>
-<h2><a name="configs_overriding">Configs overriding</a></h2>
-<pre>
-    -config_file &lt;string&gt;  : json file (with absolute path) to override the default configurations (could be multiple)</pre>
-<p>
-</p>
-<h2><a name="looping_control">Looping control</a></h2>
-<pre>
-    -loop                  : run autonomously, loops and sleeps
+    -url &lt;url string&gt;      : url defining where hive database is located</code></pre>
+
+<h2 id="Configs-overriding">Configs overriding</h2>
+
+<pre><code>    -config_file &lt;string&gt;  : json file (with absolute path) to override the default configurations (could be multiple)</code></pre>
+
+<h2 id="Looping-control">Looping control</h2>
+
+<pre><code>    -loop                  : run autonomously, loops and sleeps
     -max_loops &lt;num&gt;       : perform max this # of loops in autonomous mode
     -keep_alive            : do not stop when there are no more jobs to do - carry on looping
     -job_id &lt;job_id&gt;       : run 1 iteration for this job_id
     -run                   : run 1 iteration of automation loop
-    -sleep &lt;num&gt;           : when looping, sleep &lt;num&gt; minutes (default 1 min)</pre>
-<p>
-</p>
-<h2><a name="current_meadow_control">Current Meadow control</a></h2>
-<pre>
-    -meadow_type &lt;string&gt;               : the desired Meadow class name, such as 'LSF' or 'LOCAL'
+    -sleep &lt;num&gt;           : when looping, sleep &lt;num&gt; minutes (default 1 min)</code></pre>
+
+<h2 id="Current-Meadow-control">Current Meadow control</h2>
+
+<pre><code>    -meadow_type &lt;string&gt;               : the desired Meadow class name, such as &#39;LSF&#39; or &#39;LOCAL&#39;
     -total_running_workers_max &lt;num&gt;    : max # workers to be running in parallel
     -submit_workers_max &lt;num&gt;           : max # workers to create per loop iteration
     -submission_options &lt;string&gt;        : passes &lt;string&gt; to the Meadow submission command as &lt;options&gt; (formerly lsf_options)
-    -submit_log_dir &lt;dir&gt;               : record submission output+error streams into files under the given directory (to see why some workers fail after submission)</pre>
-<p>
-</p>
-<h2><a name="worker_control">Worker control</a></h2>
-<pre>
-    -analyses_pattern &lt;string&gt;  : restrict the sync operation, printing of stats or looping of the beekeeper to the specified subset of analyses
+    -submit_log_dir &lt;dir&gt;               : record submission output+error streams into files under the given directory (to see why some workers fail after submission)</code></pre>
+
+<h2 id="Worker-control">Worker control</h2>
+
+<pre><code>    -analyses_pattern &lt;string&gt;  : restrict the sync operation, printing of stats or looping of the beekeeper to the specified subset of analyses
     -can_respecialize &lt;0|1&gt;     : allow workers to re-specialize into another analysis (within resource_class) after their previous analysis was exhausted
-    -life_span &lt;num&gt;            : life_span limit for each worker
+    -life_span &lt;num&gt;            : number of minutes each worker is allowed to run
     -job_limit &lt;num&gt;            : #jobs to run before worker can die naturally
     -retry_throwing_jobs 0|1    : if a job dies *knowingly*, should we retry it by default?
     -hive_log_dir &lt;path&gt;        : directory where stdout/stderr of the hive is redirected
-    -debug &lt;debug_level&gt;        : set debug level of the workers</pre>
-<p>
-</p>
-<h2><a name="other_commands_options">Other commands/options</a></h2>
-<pre>
-    -help                  : print this help
+    -debug &lt;debug_level&gt;        : set debug level of the workers</code></pre>
+
+<h2 id="Other-commands-options">Other commands/options</h2>
+
+<pre><code>    -help                  : print this help
     -versions              : report both Hive code version and Hive database schema version
     -dead                  : detect all unaccounted dead workers and reset their jobs for resubmission
     -alldead               : tell the database all workers are dead (no checks are performed in this mode, so be very careful!)
     -balance_semaphores    : set all semaphore_counts to the numbers of unDONE fan jobs (emergency use only)
-    -no_analysis_stats     : don't show status of each analysis
+    -no_analysis_stats     : don&#39;t show status of each analysis
     -worker_stats          : show status of each running worker
     -failed_jobs           : show all failed jobs
     -reset_job_id &lt;num&gt;    : reset a job back to READY so it can be rerun
-    -reset_failed_jobs     : reset FAILED jobs of -analyses_filter'ed ones back to READY so they can be rerun
-    -reset_all_jobs        : reset ALL jobs of -analyses_filter'ed ones back to READY so they can be rerun</pre>
-<p>
-</p>
-<hr />
-<h1><a name="license">LICENSE</a></h1>
-<pre>
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-    Copyright [2016-2020] EMBL-European Bioinformatics Institute</pre>
-<pre>
+    -reset_failed_jobs     : reset FAILED jobs of analyses matching -analyses_pattern back to READY so they can be rerun
+    -reset_all_jobs        : reset ALL jobs of analyses matching -analyses_pattern back to READY so they can be rerun</code></pre>
+
+<h1 id="LICENSE">LICENSE</h1>
+
+<pre><code>    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [2016-2020] EMBL-European Bioinformatics Institute
+
     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at</pre>
-<pre>
-         <a href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></pre>
-<pre>
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
     Unless required by applicable law or agreed to in writing, software distributed under the License
     is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and limitations under the License.</pre>
-<p>
-</p>
-<hr />
-<h1><a name="contact">CONTACT</a></h1>
-<pre>
-    Please subscribe to the Hive mailing list:  <a href="http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users">http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users</a>  to discuss Hive-related questions or to be notified of our updates</pre>
+    See the License for the specific language governing permissions and limitations under the License.</code></pre>
+
+<h1 id="CONTACT">CONTACT</h1>
+
+<pre><code>    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates</code></pre>
+
 
 </body>
 
 </html>
+
+
