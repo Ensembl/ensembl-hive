@@ -7,123 +7,110 @@
 <link rev="made" href="mailto:root@localhost" />
 </head>
 
-<body style="background-color: white">
+<body>
 
 
-<!-- INDEX BEGIN -->
-<div name="index">
-<p><a name="__index__"></a></p>
-<!--
 
-<ul>
+<h1 id="NAME">NAME</h1>
 
-	<li><a href="#name">NAME</a></li>
-	<li><a href="#description">DESCRIPTION</a></li>
-	<li><a href="#usage_examples">USAGE EXAMPLES</a></li>
-	<li><a href="#script_specific_options">SCRIPT-SPECIFIC OPTIONS</a></li>
-	<li><a href="#license">LICENSE</a></li>
-	<li><a href="#contact">CONTACT</a></li>
-</ul>
+<pre><code>    standaloneJob.pl</code></pre>
 
--->
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
 
-
-</div>
-<!-- INDEX END -->
-
-<p>
-</p>
-<hr />
-<h1><a name="name">NAME</a></h1>
-<pre>
-    standaloneJob.pl</pre>
-<p>
-</p>
-<hr />
-<h1><a name="description">DESCRIPTION</a></h1>
-<pre>
-    standaloneJob.pl is an eHive component script that
+<pre><code>    standaloneJob.pl is an eHive component script that
         1. takes in a RunnableDB module,
-        2. creates a standalone job outside an eHive database by initializing parameters from command line arguments (ARRAY- and HASH- arguments can be passed+parsed too!)
-        3. and runs that job outside the database.
+        2. creates a standalone job outside an eHive database by initializing parameters from command line arguments
+        3. and runs that job outside of any eHive database. WARNING: the RunnableDB code may still access databases
+           provided as arguments and even harm them !
         4. can optionally dataflow into tables fully defined by URLs
-    Naturally, only certain RunnableDB modules can be run using this script, and some database-related functionality will be lost.</pre>
-<p>
-</p>
-<hr />
-<h1><a name="usage_examples">USAGE EXAMPLES</a></h1>
-<pre>
-        # Run a job with default parameters, specify module by its package name:
-    standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::FailureTest</pre>
-<pre>
+    Naturally, only certain RunnableDB modules can be run using this script, and some database-related functionality will be lost.
+
+    There are several ways of initializing the job parameters:
+        1. Module::Name -input_id. The simplest one: just provide a stringified hash
+        2. Module::Name -param1 value1 -param2 value2 (...). Enumerate all the arguments on the command-line. ARRAY- and HASH-
+           arguments can be passed+parsed too!
+        3. -url $ehive_url job_id XXX. The reference to an existing job from which the parameters will be pulled. It is
+           a convenient way of gathering all the parameters (the job&#39;s input_id, the job&#39;s accu, the analysis parameters
+           and the pipeline-wide parameters).  Further parameters can be added with -param1 value1 -param2 value2 (...)
+           and they take priority over the existing job&#39;s parameters. The RunnableDB is also found in the database.
+           NOTE: the standaloneJob will *not* interact any further with this eHive database. There won&#39;t be any updates
+                 to the job, worker, log_message etc tables.</code></pre>
+
+<h1 id="USAGE-EXAMPLES">USAGE EXAMPLES</h1>
+
+<pre><code>        # Run a job with default parameters, specify module by its package name:
+    standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::FailureTest
+
         # Run the same job with default parameters, but specify module by its relative filename:
-    standaloneJob.pl RunnableDB/FailureTest.pm</pre>
-<pre>
+    standaloneJob.pl RunnableDB/FailureTest.pm
+
         # Run a job and re-define some of the default parameters:
     standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::FailureTest -time_RUN=2 -time_WRITE_OUTPUT=3 -state=WRITE_OUTPUT -value=2
-    standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::SystemCmd -cmd 'ls -l'
-    standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::SystemCmd -input_id &quot;{ 'cmd' =&gt; 'ls -l' }&quot;</pre>
-<pre>
-        # Run a job and re-define its 'db_conn' parameter to allow it to perform some database-related operations:
-    standaloneJob.pl RunnableDB/SqlCmd.pm -db_conn mysql://ensadmin:xxxxxxx@127.0.0.1:2912/lg4_compara_families_63 -sql 'INSERT INTO meta (meta_key,meta_value) VALUES (&quot;hello&quot;, &quot;world2&quot;)'</pre>
-<pre>
+    standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::SystemCmd -cmd &#39;ls -l&#39;
+    standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::SystemCmd -input_id &quot;{ &#39;cmd&#39; =&gt; &#39;ls -l&#39; }&quot;
+
+        # Run a job and re-define its &#39;db_conn&#39; parameter to allow it to perform some database-related operations:
+    standaloneJob.pl RunnableDB/SqlCmd.pm -db_conn mysql://ensadmin:xxxxxxx@127.0.0.1:2912/lg4_compara_families_63 -sql &#39;INSERT INTO meta (meta_key,meta_value) VALUES (&quot;hello&quot;, &quot;world2&quot;)&#39;
+
+        # Run a job initialized from the parameters of an existing job topped-up with extra ones.
+        # In this particular example the RunnableDB needs a &quot;compara_db&quot; parameter which defaults to the eHive database.
+        # Since there is no eHive database here we need to define -compara_db on the command-line
+    standaloneJob.pl -url mysql://ensro@compara1.internal.sanger.ac.uk:3306/mm14_pecan_24way_86b -job_id 16781 -compara_db mysql://ensro@compara1.internal.sanger.ac.uk:3306/mm14_pecan_24way_86b
+
         # Run a job with given parameters, but skip the write_output() step:
-    standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::FailureTest -no_write -time_RUN=2 -time_WRITE_OUTPUT=3 -state=WRITE_OUTPUT -value=2</pre>
-<pre>
+    standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::FailureTest -no_write -time_RUN=2 -time_WRITE_OUTPUT=3 -state=WRITE_OUTPUT -value=2
+
         # Run a job and re-direct its dataflow into tables:
-    standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::JobFactory -inputfile foo.txt -delimiter '\t' -column_names &quot;[ 'name', 'age' ]&quot; \
-                        -flow_into &quot;{ 2 =&gt; ['mysql://ensadmin:xxxxxxx@127.0.0.1:2914/lg4_triggers/foo', 'mysql://ensadmin:xxxxxxx@127.0.0.1:2914/lg4_triggers/bar'] }&quot;</pre>
-<pre>
+    standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::JobFactory -inputfile foo.txt -delimiter &#39;\t&#39; -column_names &quot;[ &#39;name&#39;, &#39;age&#39; ]&quot; \
+                        -flow_into &quot;{ 2 =&gt; [&#39;mysql://ensadmin:xxxxxxx@127.0.0.1:2914/lg4_triggers/foo&#39;, &#39;mysql://ensadmin:xxxxxxx@127.0.0.1:2914/lg4_triggers/bar&#39;] }&quot;
+
         # Run a Compara job that needs a connection to Compara database:
-    standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory -compara_db 'mysql://ensadmin:xxxxxxx@127.0.0.1:2911/sf5_ensembl_compara_master' \
-                        -adaptor_name MethodLinkSpeciesSetAdaptor -adaptor_method fetch_all_by_method_link_type -method_param_list &quot;[ 'ENSEMBL_ORTHOLOGUES' ]&quot; \
-                        -column_names2getters &quot;{ 'name' =&gt; 'name', 'mlss_id' =&gt; 'dbID' }&quot; -flow_into &quot;{ 2 =&gt; 'mysql://ensadmin:xxxxxxx@127.0.0.1:2914/lg4_triggers/baz' }&quot;</pre>
-<pre>
+    standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory -compara_db &#39;mysql://ensadmin:xxxxxxx@127.0.0.1:2911/sf5_ensembl_compara_master&#39; \
+                        -adaptor_name MethodLinkSpeciesSetAdaptor -adaptor_method fetch_all_by_method_link_type -method_param_list &quot;[ &#39;ENSEMBL_ORTHOLOGUES&#39; ]&quot; \
+                        -column_names2getters &quot;{ &#39;name&#39; =&gt; &#39;name&#39;, &#39;mlss_id&#39; =&gt; &#39;dbID&#39; }&quot; -flow_into &quot;{ 2 =&gt; &#39;mysql://ensadmin:xxxxxxx@127.0.0.1:2914/lg4_triggers/baz&#39; }&quot;
+
         # Create a new job in a database using automatic dataflow from a database-less Dummy job:
     standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::Dummy -a_multiplier 1234567 -b_multiplier 9876543 \
-                        -flow_into &quot;{ 1 =&gt; 'mysql://ensadmin:xxxxxxx@127.0.0.1/lg4_long_mult/analysis?logic_name=start' }&quot;</pre>
-<pre>
+                        -flow_into &quot;{ 1 =&gt; &#39;mysql://ensadmin:xxxxxxx@127.0.0.1/lg4_long_mult/analysis?logic_name=start&#39; }&quot;
+
         # Produce a semaphore group of jobs from a database-less DigitFactory job:
-    standaloneJob.pl Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::DigitFactory -input_id &quot;{ 'a_multiplier' =&gt; '2222222222', 'b_multiplier' =&gt; '3434343434'}&quot; \
-        -flow_into &quot;{ '2-&gt;A' =&gt; 'mysql://ensadmin:${ENSADMIN_PSW}@127.0.0.1/lg4_long_mult/analysis?logic_name=part_multiply', 'A-&gt;1' =&gt; 'mysql://ensadmin:${ENSADMIN_PSW}@127.0.0.1/lg4_long_mult/analysis?logic_name=add_together' }&quot;</pre>
-<p>
-</p>
-<hr />
-<h1><a name="script_specific_options">SCRIPT-SPECIFIC OPTIONS</a></h1>
-<pre>
-    -help               : print this help
+    standaloneJob.pl Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::DigitFactory -input_id &quot;{ &#39;a_multiplier&#39; =&gt; &#39;2222222222&#39;, &#39;b_multiplier&#39; =&gt; &#39;3434343434&#39;}&quot; \
+        -flow_into &quot;{ &#39;2-&gt;A&#39; =&gt; &#39;mysql://ensadmin:${ENSADMIN_PSW}@127.0.0.1/lg4_long_mult/analysis?logic_name=part_multiply&#39;, &#39;A-&gt;1&#39; =&gt; &#39;mysql://ensadmin:${ENSADMIN_PSW}@127.0.0.1/lg4_long_mult/analysis?logic_name=add_together&#39; }&quot; </code></pre>
+
+<h1 id="SCRIPT-SPECIFIC-OPTIONS">SCRIPT-SPECIFIC OPTIONS</h1>
+
+<pre><code>    -help               : print this help
     -debug &lt;level&gt;      : turn on debug messages at &lt;level&gt;
     -no_write           : skip the execution of write_output() step this time
     -no_cleanup         : do not cleanup temporary files
     -reg_conf &lt;path&gt;    : load registry entries from the given file (these entries may be needed by the RunnableDB itself)
     -input_id &quot;&lt;hash&gt;&quot;  : specify the whole input_id parameter in one stringified hash
-    -flow_out &quot;&lt;hash&gt;&quot;  : defines the dataflow re-direction rules in a format similar to PipeConfig's - see the last example
-    -language           : language in which the runnable is written</pre>
-<pre>
-    NB: all other options will be passed to the runnable (leading dashes removed) and will constitute the parameters for the job.</pre>
-<p>
-</p>
-<hr />
-<h1><a name="license">LICENSE</a></h1>
-<pre>
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-    Copyright [2016-2020] EMBL-European Bioinformatics Institute</pre>
-<pre>
+    -flow_out &quot;&lt;hash&gt;&quot;  : defines the dataflow re-direction rules in a format similar to PipeConfig&#39;s - see the last example
+    -language           : language in which the runnable is written
+
+    NB: all other options will be passed to the runnable (leading dashes removed) and will constitute the parameters for the job.</code></pre>
+
+<h1 id="LICENSE">LICENSE</h1>
+
+<pre><code>    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [2016-2020] EMBL-European Bioinformatics Institute
+
     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at</pre>
-<pre>
-         <a href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></pre>
-<pre>
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
     Unless required by applicable law or agreed to in writing, software distributed under the License
     is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and limitations under the License.</pre>
-<p>
-</p>
-<hr />
-<h1><a name="contact">CONTACT</a></h1>
-<pre>
-    Please subscribe to the Hive mailing list:  <a href="http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users">http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users</a>  to discuss Hive-related questions or to be notified of our updates</pre>
+    See the License for the specific language governing permissions and limitations under the License.</code></pre>
+
+<h1 id="CONTACT">CONTACT</h1>
+
+<pre><code>    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates</code></pre>
+
 
 </body>
 
 </html>
+
+

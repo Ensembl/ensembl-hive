@@ -7,96 +7,64 @@
 <link rev="made" href="mailto:root@localhost" />
 </head>
 
-<body style="background-color: white">
+<body>
 
 
-<!-- INDEX BEGIN -->
-<div name="index">
-<p><a name="__index__"></a></p>
-<!--
 
-<ul>
+<h1 id="NAME">NAME</h1>
 
-	<li><a href="#name">NAME</a></li>
-	<li><a href="#synopsis">SYNOPSIS</a></li>
-	<li><a href="#description">DESCRIPTION</a></li>
-	<li><a href="#usage_examples">USAGE EXAMPLES</a></li>
-	<li><a href="#options">OPTIONS</a></li>
-	<li><a href="#license">LICENSE</a></li>
-	<li><a href="#contact">CONTACT</a></li>
-</ul>
+<pre><code>    init_pipeline.pl</code></pre>
 
--->
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
 
+<pre><code>    init_pipeline.pl &lt;config_module_or_filename&gt; [&lt;options_for_this_particular_pipeline&gt;]</code></pre>
 
-</div>
-<!-- INDEX END -->
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
 
-<p>
-</p>
-<hr />
-<h1><a name="name">NAME</a></h1>
-<pre>
-    init_pipeline.pl</pre>
-<p>
-</p>
-<hr />
-<h1><a name="synopsis">SYNOPSIS</a></h1>
-<pre>
-    init_pipeline.pl &lt;config_module_or_filename&gt; [&lt;options_for_this_particular_pipeline&gt;]</pre>
-<p>
-</p>
-<hr />
-<h1><a name="description">DESCRIPTION</a></h1>
-<pre>
-    init_pipeline.pl is a generic script that is used to create+setup=initialize eHive pipelines from PipeConfig configuration modules.</pre>
-<p>
-</p>
-<hr />
-<h1><a name="usage_examples">USAGE EXAMPLES</a></h1>
-<pre>
-        # get this help message:
-    init_pipeline.pl</pre>
-<pre>
+<pre><code>    init_pipeline.pl is a generic script that is used to create+setup=initialize eHive pipelines from PipeConfig configuration modules.</code></pre>
+
+<h1 id="USAGE-EXAMPLES">USAGE EXAMPLES</h1>
+
+<pre><code>        # get this help message:
+    init_pipeline.pl
+
         # initialize a generic eHive pipeline:
-    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf -password &lt;yourpassword&gt;</pre>
-<pre>
+    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf -password &lt;yourpassword&gt;
+
         # initialize the long multiplicaton pipeline by supplying not only mandatory but also optional data:
         #   (assuming your current directory is ensembl-hive/modules/Bio/EnsEMBL/Hive/PipeConfig) :
-    init_pipeline.pl LongMult_conf -password &lt;yourpassword&gt; -first_mult 375857335 -second_mult 1111333355556666</pre>
-<p>
-</p>
-<hr />
-<h1><a name="options">OPTIONS</a></h1>
-<pre>
-    -hive_force_init &lt;0|1&gt; :  If set to 1, forces the (re)creation of the hive database even if a previous version of it is present in the server.
+    init_pipeline.pl LongMult_conf -password &lt;yourpassword&gt; -first_mult 375857335 -second_mult 1111333355556666 </code></pre>
+
+<h1 id="OPTIONS">OPTIONS</h1>
+
+<pre><code>    -hive_force_init &lt;0|1&gt; :  If set to 1, forces the (re)creation of the hive database even if a previous version of it is present in the server.
+    -hive_no_init &lt;0|1&gt;    :  If set to 1, does not run the pipeline_create_commands section of the pipeline. Useful to &quot;top-up&quot; an existing database.
     -tweak &lt;string&gt;        :  Apply tweaks to the pipeline. See tweak_pipeline.pl for details of tweaking syntax
     -DELETE                :  Delete pipeline parameter (shortcut for tweak DELETE)
     -SHOW                  :  Show  pipeline parameter  (shortcut for tweak SHOW)
-    -h | --help            :  Show this help message</pre>
-<p>
-</p>
-<hr />
-<h1><a name="license">LICENSE</a></h1>
-<pre>
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-    Copyright [2016-2020] EMBL-European Bioinformatics Institute</pre>
-<pre>
+    -h | --help            :  Show this help message</code></pre>
+
+<h1 id="LICENSE">LICENSE</h1>
+
+<pre><code>    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [2016-2020] EMBL-European Bioinformatics Institute
+
     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at</pre>
-<pre>
-         <a href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></pre>
-<pre>
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
     Unless required by applicable law or agreed to in writing, software distributed under the License
     is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and limitations under the License.</pre>
-<p>
-</p>
-<hr />
-<h1><a name="contact">CONTACT</a></h1>
-<pre>
-    Please subscribe to the Hive mailing list:  <a href="http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users">http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users</a>  to discuss Hive-related questions or to be notified of our updates</pre>
+    See the License for the specific language governing permissions and limitations under the License.</code></pre>
+
+<h1 id="CONTACT">CONTACT</h1>
+
+<pre><code>    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates</code></pre>
+
 
 </body>
 
 </html>
+
+
