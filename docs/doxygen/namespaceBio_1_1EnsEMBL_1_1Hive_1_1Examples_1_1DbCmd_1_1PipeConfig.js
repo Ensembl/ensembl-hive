@@ -1,0 +1,4 @@
+var namespaceBio_1_1EnsEMBL_1_1Hive_1_1Examples_1_1DbCmd_1_1PipeConfig =
+[
+    [ "TableDumperZipper_conf", "classBio_1_1EnsEMBL_1_1Hive_1_1Examples_1_1DbCmd_1_1PipeConfig_1_1TableDumperZipper__conf.html", "classBio_1_1EnsEMBL_1_1Hive_1_1Examples_1_1DbCmd_1_1PipeConfig_1_1TableDumperZipper__conf" ]
+];

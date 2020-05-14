@@ -1,0 +1,4 @@
+<map id="Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer" name="Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer">
+<area shape="rect" id="node2" href="$classBio_1_1EnsEMBL_1_1Hive_1_1RunnableDB_1_1SystemCmd.html" title="Bio::EnsEMBL::Hive\l::RunnableDB::SystemCmd" alt="" coords="15,95,200,136"/>
+<area shape="rect" id="node3" href="$classBio_1_1EnsEMBL_1_1Hive_1_1Process.html" title="Bio::EnsEMBL::Hive\l::Process" alt="" coords="36,5,179,47"/>
+</map>

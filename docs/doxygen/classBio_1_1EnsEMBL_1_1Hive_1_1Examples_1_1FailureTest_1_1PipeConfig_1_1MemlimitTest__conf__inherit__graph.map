@@ -1,0 +1,4 @@
+<map id="Bio::EnsEMBL::Hive::Examples::FailureTest::PipeConfig::MemlimitTest_conf" name="Bio::EnsEMBL::Hive::Examples::FailureTest::PipeConfig::MemlimitTest_conf">
+<area shape="rect" id="node2" href="$classBio_1_1EnsEMBL_1_1Hive_1_1PipeConfig_1_1HiveGeneric__conf.html" title="Bio::EnsEMBL::Hive\l::PipeConfig::HiveGeneric_conf" alt="" coords="9,95,215,136"/>
+<area shape="rect" id="node3" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DependentOptions.html" title="Bio::EnsEMBL::Hive\l::DependentOptions" alt="" coords="41,5,183,47"/>
+</map>

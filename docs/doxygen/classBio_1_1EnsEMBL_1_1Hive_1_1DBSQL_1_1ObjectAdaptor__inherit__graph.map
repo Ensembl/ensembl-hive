@@ -1,0 +1,13 @@
+<map id="Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor" name="Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor">
+<area shape="rect" id="node3" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DBSQL_1_1AnalysisAdaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::AnalysisAdaptor" alt="" coords="451,5,629,47"/>
+<area shape="rect" id="node4" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DBSQL_1_1AnalysisCtrlRuleAdaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::AnalysisCtrlRuleAdaptor" alt="" coords="427,71,653,112"/>
+<area shape="rect" id="node5" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DBSQL_1_1AnalysisJobAdaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::AnalysisJobAdaptor" alt="" coords="441,136,639,177"/>
+<area shape="rect" id="node6" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DBSQL_1_1AnalysisStatsAdaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::AnalysisStatsAdaptor" alt="" coords="435,201,645,243"/>
+<area shape="rect" id="node7" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DBSQL_1_1DataflowRuleAdaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::DataflowRuleAdaptor" alt="" coords="437,267,643,308"/>
+<area shape="rect" id="node8" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DBSQL_1_1DataflowTargetAdaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::DataflowTargetAdaptor" alt="" coords="431,332,649,373"/>
+<area shape="rect" id="node9" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DBSQL_1_1ResourceClassAdaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::ResourceClassAdaptor" alt="" coords="431,397,649,439"/>
+<area shape="rect" id="node10" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DBSQL_1_1ResourceDescriptionAdaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::ResourceDescription\lAdaptor" alt="" coords="437,462,643,518"/>
+<area shape="rect" id="node11" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DBSQL_1_1RoleAdaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::RoleAdaptor" alt="" coords="463,541,617,583"/>
+<area shape="rect" id="node12" href="$classBio_1_1EnsEMBL_1_1Hive_1_1Queen.html" title="Bio::EnsEMBL::Hive\l::Queen" alt="" coords="469,607,611,648"/>
+<area shape="rect" id="node2" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DBSQL_1_1BaseAdaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::BaseAdaptor" alt="" coords="5,300,164,341"/>
+</map>

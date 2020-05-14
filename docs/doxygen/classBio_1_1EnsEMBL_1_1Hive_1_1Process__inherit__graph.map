@@ -1,0 +1,20 @@
+<map id="Bio::EnsEMBL::Hive::Process" name="Bio::EnsEMBL::Hive::Process">
+<area shape="rect" id="node2" href="$classBio_1_1EnsEMBL_1_1Hive_1_1Examples_1_1FailureTest_1_1RunnableDB_1_1FailureTest.html" title="Bio::EnsEMBL::Hive\l::Examples::FailureTest\l::RunnableDB::FailureTest" alt="" coords="213,5,390,61"/>
+<area shape="rect" id="node3" href="$classBio_1_1EnsEMBL_1_1Hive_1_1Examples_1_1GC_1_1RunnableDB_1_1CalcOverallPercentage.html" title="Bio::EnsEMBL::Hive\l::Examples::GC::RunnableDB\l::CalcOverallPercentage" alt="" coords="202,85,401,141"/>
+<area shape="rect" id="node4" href="$classBio_1_1EnsEMBL_1_1Hive_1_1Examples_1_1GC_1_1RunnableDB_1_1CountATGC.html" title="Bio::EnsEMBL::Hive\l::Examples::GC::RunnableDB\l::CountATGC" alt="" coords="202,165,401,221"/>
+<area shape="rect" id="node5" href="$classBio_1_1EnsEMBL_1_1Hive_1_1Examples_1_1LongMult_1_1RunnableDB_1_1AddTogether.html" title="Bio::EnsEMBL::Hive\l::Examples::LongMult\l::RunnableDB::AddTogether" alt="" coords="208,245,395,301"/>
+<area shape="rect" id="node6" href="$classBio_1_1EnsEMBL_1_1Hive_1_1Examples_1_1LongMult_1_1RunnableDB_1_1DigitFactory.html" title="Bio::EnsEMBL::Hive\l::Examples::LongMult\l::RunnableDB::DigitFactory" alt="" coords="210,325,393,381"/>
+<area shape="rect" id="node7" href="$classBio_1_1EnsEMBL_1_1Hive_1_1Examples_1_1LongMult_1_1RunnableDB_1_1PartMultiply.html" title="Bio::EnsEMBL::Hive\l::Examples::LongMult\l::RunnableDB::PartMultiply" alt="" coords="211,405,392,461"/>
+<area shape="rect" id="node8" href="$classBio_1_1EnsEMBL_1_1Hive_1_1GuestProcess.html" title="Bio::EnsEMBL::Hive\l::GuestProcess" alt="" coords="230,485,373,526"/>
+<area shape="rect" id="node9" href="$classBio_1_1EnsEMBL_1_1Hive_1_1RunnableDB_1_1Dummy.html" title="Bio::EnsEMBL::Hive\l::RunnableDB::Dummy" alt="" coords="222,550,381,591"/>
+<area shape="rect" id="node10" href="$classBio_1_1EnsEMBL_1_1Hive_1_1RunnableDB_1_1FastaFactory.html" title="Bio::EnsEMBL::Hive\l::RunnableDB::FastaFactory" alt="" coords="207,615,396,657"/>
+<area shape="rect" id="node11" href="$classBio_1_1EnsEMBL_1_1Hive_1_1RunnableDB_1_1JobFactory.html" title="Bio::EnsEMBL::Hive\l::RunnableDB::JobFactory" alt="" coords="213,681,390,722"/>
+<area shape="rect" id="node12" href="$classBio_1_1EnsEMBL_1_1Hive_1_1RunnableDB_1_1NotifyByEmail.html" title="Bio::EnsEMBL::Hive\l::RunnableDB::NotifyByEmail" alt="" coords="203,746,399,787"/>
+<area shape="rect" id="node13" href="$classBio_1_1EnsEMBL_1_1Hive_1_1RunnableDB_1_1SlackNotification.html" title="Bio::EnsEMBL::Hive\l::RunnableDB::SlackNotification" alt="" coords="196,811,407,853"/>
+<area shape="rect" id="node14" href="$classBio_1_1EnsEMBL_1_1Hive_1_1RunnableDB_1_1SqlCmd.html" title="Bio::EnsEMBL::Hive\l::RunnableDB::SqlCmd" alt="" coords="222,877,381,918"/>
+<area shape="rect" id="node15" href="$classBio_1_1EnsEMBL_1_1Hive_1_1RunnableDB_1_1SqlHealthcheck.html" title="Bio::EnsEMBL::Hive\l::RunnableDB::SqlHealthcheck" alt="" coords="199,942,403,983"/>
+<area shape="rect" id="node16" href="$classBio_1_1EnsEMBL_1_1Hive_1_1RunnableDB_1_1SystemCmd.html" title="Bio::EnsEMBL::Hive\l::RunnableDB::SystemCmd" alt="" coords="209,1007,394,1049"/>
+<area shape="rect" id="node17" href="$classBio_1_1EnsEMBL_1_1Hive_1_1RunnableDB_1_1DatabaseDumper.html" title="Bio::EnsEMBL::Hive\l::RunnableDB::DatabaseDumper" alt="" coords="455,942,669,983"/>
+<area shape="rect" id="node18" href="$classBio_1_1EnsEMBL_1_1Hive_1_1RunnableDB_1_1DbCmd.html" title="Bio::EnsEMBL::Hive\l::RunnableDB::DbCmd" alt="" coords="483,1007,641,1049"/>
+<area shape="rect" id="node19" href="$classBio_1_1EnsEMBL_1_1Hive_1_1RunnableDB_1_1MySQLTransfer.html" title="Bio::EnsEMBL::Hive\l::RunnableDB::MySQLTransfer" alt="" coords="460,1073,664,1114"/>
+</map>

@@ -1,0 +1,14 @@
+<map id="Bio::EnsEMBL::Hive::Cacheable" name="Bio::EnsEMBL::Hive::Cacheable">
+<area shape="rect" id="node2" href="$classBio_1_1EnsEMBL_1_1Hive_1_1Accumulator.html" title="Bio::EnsEMBL::Hive\l::Accumulator" alt="" coords="211,5,354,47"/>
+<area shape="rect" id="node3" href="$classBio_1_1EnsEMBL_1_1Hive_1_1Analysis.html" title="Bio::EnsEMBL::Hive\l::Analysis" alt="" coords="211,71,354,112"/>
+<area shape="rect" id="node4" href="$classBio_1_1EnsEMBL_1_1Hive_1_1AnalysisCtrlRule.html" title="Bio::EnsEMBL::Hive\l::AnalysisCtrlRule" alt="" coords="211,136,354,177"/>
+<area shape="rect" id="node5" href="$classBio_1_1EnsEMBL_1_1Hive_1_1AnalysisJob.html" title="Bio::EnsEMBL::Hive\l::AnalysisJob" alt="" coords="211,201,354,243"/>
+<area shape="rect" id="node6" href="$classBio_1_1EnsEMBL_1_1Hive_1_1AnalysisStats.html" title="Bio::EnsEMBL::Hive\l::AnalysisStats" alt="" coords="211,267,354,308"/>
+<area shape="rect" id="node7" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DataflowRule.html" title="Bio::EnsEMBL::Hive\l::DataflowRule" alt="" coords="211,332,354,373"/>
+<area shape="rect" id="node8" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DataflowTarget.html" title="Bio::EnsEMBL::Hive\l::DataflowTarget" alt="" coords="211,397,354,439"/>
+<area shape="rect" id="node9" href="$classBio_1_1EnsEMBL_1_1Hive_1_1MetaParameters.html" title="Bio::EnsEMBL::Hive\l::MetaParameters" alt="" coords="211,463,354,504"/>
+<area shape="rect" id="node10" href="$classBio_1_1EnsEMBL_1_1Hive_1_1NakedTable.html" title="Bio::EnsEMBL::Hive\l::NakedTable" alt="" coords="211,528,354,569"/>
+<area shape="rect" id="node11" href="$classBio_1_1EnsEMBL_1_1Hive_1_1PipelineWideParameters.html" title="Bio::EnsEMBL::Hive\l::PipelineWideParameters" alt="" coords="196,593,369,635"/>
+<area shape="rect" id="node12" href="$classBio_1_1EnsEMBL_1_1Hive_1_1ResourceClass.html" title="Bio::EnsEMBL::Hive\l::ResourceClass" alt="" coords="211,659,354,700"/>
+<area shape="rect" id="node13" href="$classBio_1_1EnsEMBL_1_1Hive_1_1ResourceDescription.html" title="Bio::EnsEMBL::Hive\l::ResourceDescription" alt="" coords="207,724,359,765"/>
+</map>
