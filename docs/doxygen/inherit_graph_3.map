@@ -1,4 +1,4 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node3" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html" title="Bio::EnsEMBL::Hive\l::DBSQL::CoreDBConnection" alt="" coords="175,5,396,49"/>
-<area shape="rect" id="node5" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection.html" title="Bio::EnsEMBL::Hive\l::DBSQL::DBConnection" alt="" coords="445,5,635,49"/>
+<area shape="rect" id="node2" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DBSQL_1_1CoreDBConnection.html" title="Bio::EnsEMBL::Hive\l::DBSQL::CoreDBConnection" alt="" coords="160,5,356,47"/>
+<area shape="rect" id="node3" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DBSQL_1_1DBConnection.html" title="Bio::EnsEMBL::Hive\l::DBSQL::DBConnection" alt="" coords="404,5,572,47"/>
 </map>

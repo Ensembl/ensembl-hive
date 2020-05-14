@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['graph',['Graph',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_graph.html',1,'Bio::EnsEMBL::Hive::Utils']]],
-  ['graphviz',['GraphViz',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_graph_viz.html',1,'Bio::EnsEMBL::Hive::Utils']]]
+  ['graph',['Graph',['../classBio_1_1EnsEMBL_1_1Hive_1_1Utils_1_1Graph.html',1,'Bio::EnsEMBL::Hive::Utils']]],
+  ['graphviz',['GraphViz',['../classBio_1_1EnsEMBL_1_1Hive_1_1Utils_1_1GraphViz.html',1,'Bio::EnsEMBL::Hive::Utils']]]
 ];

@@ -1,0 +1,8 @@
+<map id="Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor" name="Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor">
+<area shape="rect" id="node3" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DBSQL_1_1AccumulatorAdaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::AccumulatorAdaptor" alt="" coords="471,5,673,47"/>
+<area shape="rect" id="node4" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DBSQL_1_1AnalysisDataAdaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::AnalysisDataAdaptor" alt="" coords="469,71,675,112"/>
+<area shape="rect" id="node5" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DBSQL_1_1LogMessageAdaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::LogMessageAdaptor" alt="" coords="471,136,673,177"/>
+<area shape="rect" id="node6" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DBSQL_1_1MetaAdaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::MetaAdaptor" alt="" coords="493,201,651,243"/>
+<area shape="rect" id="node7" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DBSQL_1_1PipelineWideParametersAdaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::PipelineWideParameters\lAdaptor" alt="" coords="459,266,685,322"/>
+<area shape="rect" id="node2" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DBSQL_1_1BaseAdaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::BaseAdaptor" alt="" coords="5,136,164,177"/>
+</map>

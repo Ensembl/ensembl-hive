@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['objectadaptor',['ObjectAdaptor',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_object_adaptor.html',1,'Bio::EnsEMBL::Hive::DBSQL']]]
+  ['objectadaptor',['ObjectAdaptor',['../classBio_1_1EnsEMBL_1_1Hive_1_1DBSQL_1_1ObjectAdaptor.html',1,'Bio::EnsEMBL::Hive::DBSQL']]]
 ];

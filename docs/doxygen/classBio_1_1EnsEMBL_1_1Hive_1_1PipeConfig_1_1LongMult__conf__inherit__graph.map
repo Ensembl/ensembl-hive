@@ -1,0 +1,4 @@
+<map id="Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf" name="Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf">
+<area shape="rect" id="node2" href="$classBio_1_1EnsEMBL_1_1Hive_1_1PipeConfig_1_1HiveGeneric__conf.html" title="Bio::EnsEMBL::Hive\l::PipeConfig::HiveGeneric_conf" alt="" coords="5,95,212,136"/>
+<area shape="rect" id="node3" href="$classBio_1_1EnsEMBL_1_1Hive_1_1DependentOptions.html" title="Bio::EnsEMBL::Hive\l::DependentOptions" alt="" coords="37,5,180,47"/>
+</map>

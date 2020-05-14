@@ -1,9 +1,9 @@
 var searchData=
 [
-  ['cacheable',['Cacheable',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html',1,'Bio::EnsEMBL::Hive']]],
-  ['collection',['Collection',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_collection.html',1,'Bio::EnsEMBL::Hive::Utils']]],
-  ['compressfiles_5fconf',['CompressFiles_conf',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_compress_files__conf.html',1,'Bio::EnsEMBL::Hive::PipeConfig']]],
-  ['config',['Config',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_config.html',1,'Bio::EnsEMBL::Hive::Utils']]],
-  ['configurable',['Configurable',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_configurable.html',1,'Bio::EnsEMBL::Hive']]],
-  ['coredbconnection',['CoreDBConnection',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html',1,'Bio::EnsEMBL::Hive::DBSQL']]]
+  ['cacheable',['Cacheable',['../classBio_1_1EnsEMBL_1_1Hive_1_1Cacheable.html',1,'Bio::EnsEMBL::Hive']]],
+  ['collection',['Collection',['../classBio_1_1EnsEMBL_1_1Hive_1_1Utils_1_1Collection.html',1,'Bio::EnsEMBL::Hive::Utils']]],
+  ['compressfiles_5fconf',['CompressFiles_conf',['../classBio_1_1EnsEMBL_1_1Hive_1_1PipeConfig_1_1CompressFiles__conf.html',1,'Bio::EnsEMBL::Hive::PipeConfig']]],
+  ['config',['Config',['../classBio_1_1EnsEMBL_1_1Hive_1_1Utils_1_1Config.html',1,'Bio::EnsEMBL::Hive::Utils']]],
+  ['configurable',['Configurable',['../classBio_1_1EnsEMBL_1_1Hive_1_1Configurable.html',1,'Bio::EnsEMBL::Hive']]],
+  ['coredbconnection',['CoreDBConnection',['../classBio_1_1EnsEMBL_1_1Hive_1_1DBSQL_1_1CoreDBConnection.html',1,'Bio::EnsEMBL::Hive::DBSQL']]]
 ];
