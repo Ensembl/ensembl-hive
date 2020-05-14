@@ -1,27 +1,31 @@
 var hierarchy =
 [
     [ "Exception", null, [
-      [ "eHive.Params.ParamException", "classe_hive_1_1_params_1_1_param_exception.html", [
-        [ "eHive.Params.ParamInfiniteLoopException", "classe_hive_1_1_params_1_1_param_infinite_loop_exception.html", null ],
-        [ "eHive.Params.ParamNameException", "classe_hive_1_1_params_1_1_param_name_exception.html", null ],
-        [ "eHive.Params.ParamSubstitutionException", "classe_hive_1_1_params_1_1_param_substitution_exception.html", null ]
+      [ "eHive.Params.ParamException", "classeHive_1_1Params_1_1ParamException.html", [
+        [ "eHive.Params.NullParamException", "classeHive_1_1Params_1_1NullParamException.html", null ],
+        [ "eHive.Params.ParamInfiniteLoopException", "classeHive_1_1Params_1_1ParamInfiniteLoopException.html", null ],
+        [ "eHive.Params.ParamNameException", "classeHive_1_1Params_1_1ParamNameException.html", null ],
+        [ "eHive.Params.ParamSubstitutionException", "classeHive_1_1Params_1_1ParamSubstitutionException.html", null ]
       ] ],
-      [ "eHive.Process.CompleteEarlyException", "classe_hive_1_1_process_1_1_complete_early_exception.html", null ],
-      [ "eHive.Process.HiveJSONMessageException", "classe_hive_1_1_process_1_1_hive_j_s_o_n_message_exception.html", null ],
-      [ "eHive.Process.JobFailedException", "classe_hive_1_1_process_1_1_job_failed_exception.html", null ],
-      [ "eHive.Process.LostHiveConnectionException", "classe_hive_1_1_process_1_1_lost_hive_connection_exception.html", null ]
+      [ "eHive.Process.CompleteEarlyException", "classeHive_1_1Process_1_1CompleteEarlyException.html", null ],
+      [ "eHive.Process.HiveJSONMessageException", "classeHive_1_1Process_1_1HiveJSONMessageException.html", null ],
+      [ "eHive.Process.JobFailedException", "classeHive_1_1Process_1_1JobFailedException.html", null ],
+      [ "eHive.Process.LostHiveConnectionException", "classeHive_1_1Process_1_1LostHiveConnectionException.html", null ]
     ] ],
     [ "object", null, [
-      [ "eHive.Params.ParamContainer", "classe_hive_1_1_params_1_1_param_container.html", null ],
-      [ "eHive.Process.BaseRunnable", "classe_hive_1_1_process_1_1_base_runnable.html", [
-        [ "eHive.examples.LongMult.AddTogether.AddTogether", "classe_hive_1_1examples_1_1_long_mult_1_1_add_together_1_1_add_together.html", null ],
-        [ "eHive.examples.LongMult.DigitFactory.DigitFactory", "classe_hive_1_1examples_1_1_long_mult_1_1_digit_factory_1_1_digit_factory.html", null ],
-        [ "eHive.examples.LongMult.PartMultiply.PartMultiply", "classe_hive_1_1examples_1_1_long_mult_1_1_part_multiply_1_1_part_multiply.html", null ],
-        [ "eHive.examples.TestRunnable.TestRunnable", "classe_hive_1_1examples_1_1_test_runnable_1_1_test_runnable.html", null ]
+      [ "eHive.Params.ParamContainer", "classeHive_1_1Params_1_1ParamContainer.html", null ],
+      [ "eHive.Process.BaseRunnable", "classeHive_1_1Process_1_1BaseRunnable.html", [
+        [ "eHive.examples.LongMult.AddTogether.AddTogether", "classeHive_1_1examples_1_1LongMult_1_1AddTogether_1_1AddTogether.html", null ],
+        [ "eHive.examples.LongMult.DigitFactory.DigitFactory", "classeHive_1_1examples_1_1LongMult_1_1DigitFactory_1_1DigitFactory.html", null ],
+        [ "eHive.examples.LongMult.PartMultiply.PartMultiply", "classeHive_1_1examples_1_1LongMult_1_1PartMultiply_1_1PartMultiply.html", null ],
+        [ "eHive.examples.TestRunnable.TestRunnable", "classeHive_1_1examples_1_1TestRunnable_1_1TestRunnable.html", null ]
       ] ],
-      [ "eHive.Process.Job", "classe_hive_1_1_process_1_1_job.html", null ]
+      [ "eHive.Process.Job", "classeHive_1_1Process_1_1Job.html", null ]
+    ] ],
+    [ "TestCase", null, [
+      [ "eHive.Process.RunnableTest", "classeHive_1_1Process_1_1RunnableTest.html", null ]
     ] ],
     [ "Warning", null, [
-      [ "eHive.Params.ParamWarning", "classe_hive_1_1_params_1_1_param_warning.html", null ]
+      [ "eHive.Params.ParamWarning", "classeHive_1_1Params_1_1ParamWarning.html", null ]
     ] ]
 ];

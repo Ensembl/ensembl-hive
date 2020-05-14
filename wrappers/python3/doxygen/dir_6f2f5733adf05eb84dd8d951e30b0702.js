@@ -1,9 +1,9 @@
 var dir_6f2f5733adf05eb84dd8d951e30b0702 =
 [
-    [ "__init__.py", "examples_2_long_mult_2____init_____8py.html", null ],
-    [ "AddTogether.py", "_add_together_8py.html", "_add_together_8py" ],
-    [ "DigitFactory.py", "_digit_factory_8py.html", [
-      [ "DigitFactory", "classe_hive_1_1examples_1_1_long_mult_1_1_digit_factory_1_1_digit_factory.html", "classe_hive_1_1examples_1_1_long_mult_1_1_digit_factory_1_1_digit_factory" ]
+    [ "__init__.py", "examples_2LongMult_2____init_____8py.html", null ],
+    [ "AddTogether.py", "AddTogether_8py.html", "AddTogether_8py" ],
+    [ "DigitFactory.py", "DigitFactory_8py.html", [
+      [ "DigitFactory", "classeHive_1_1examples_1_1LongMult_1_1DigitFactory_1_1DigitFactory.html", "classeHive_1_1examples_1_1LongMult_1_1DigitFactory_1_1DigitFactory" ]
     ] ],
-    [ "PartMultiply.py", "_part_multiply_8py.html", "_part_multiply_8py" ]
+    [ "PartMultiply.py", "PartMultiply_8py.html", "PartMultiply_8py" ]
 ];

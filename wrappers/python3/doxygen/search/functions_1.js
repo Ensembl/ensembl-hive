@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['add_5ftogether',['add_together',['../namespacee_hive_1_1examples_1_1_long_mult_1_1_add_together.html#a05ffb5a38fd6952d350bbccde689eec9',1,'eHive::examples::LongMult::AddTogether']]]
+  ['add_5ftogether',['add_together',['../namespaceeHive_1_1examples_1_1LongMult_1_1AddTogether.html#ad6849b7f229340568e6e1bb315894a63',1,'eHive::examples::LongMult::AddTogether']]]
 ];

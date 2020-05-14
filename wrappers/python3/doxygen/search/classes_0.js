@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['addtogether',['AddTogether',['../classe_hive_1_1examples_1_1_long_mult_1_1_add_together_1_1_add_together.html',1,'eHive::examples::LongMult::AddTogether']]]
+  ['addtogether',['AddTogether',['../classeHive_1_1examples_1_1LongMult_1_1AddTogether_1_1AddTogether.html',1,'eHive::examples::LongMult::AddTogether']]]
 ];

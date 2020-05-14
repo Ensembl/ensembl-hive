@@ -1,0 +1,4 @@
+<map id="eHive.examples.LongMult.PartMultiply.PartMultiply.write_output" name="eHive.examples.LongMult.PartMultiply.PartMultiply.write_output">
+<area shape="rect" id="node2" href="$classeHive_1_1Process_1_1BaseRunnable.html#a69ff24d26cfba17948c81f96966d2319" title="Dataflows the output_id(s) on a given branch (default 1). " alt="" coords="249,5,500,32"/>
+<area shape="rect" id="node3" href="$classeHive_1_1Process_1_1BaseRunnable.html#a11adb84bc2b95f138346911b3acda14a" title="When called as a setter: sets the value of the parameter &quot;param_name&quot;. " alt="" coords="256,56,493,83"/>
+</map>
