@@ -37,6 +37,11 @@ download and install first:
 #. GraphViz visualization package (includes ``dot`` executable and
    libraries used by the Perl dependencies).
 
+   .. warning::
+      Sine version 2.40, Graphviz renders eHive pipeline diagrams
+      in a vertically elongated fashion. For a better experience, use
+      an earlier version (i.e. up to 2.38).
+
    #. Check in your terminal that you have ``dot`` installed.
    #. If not, install using a package manager, or visit `graphviz.org <http://graphviz.org/>`__ to download
       it.
