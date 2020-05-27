@@ -21,9 +21,12 @@ download and install first:
    At the moment, the following database options are available:
 
    -  MySQL 5.1 `or higher <https://dev.mysql.com/downloads/>`__.
-      **Warning:** eHive is not compatible with MySQL 5.6.20 but is
-      with versions 5.6.16 and 5.6.23. We suggest avoiding the
-      5.6.[17-22] interval
+
+      .. warning::
+          eHive is not compatible with MySQL 5.6.20 but is
+          with versions 5.6.16 and 5.6.23. We suggest avoiding the
+          5.6.[17-22] interval
+
    -  SQLite 3.6 `or higher <http://www.sqlite.org/download.html>`__
    -  PostgreSQL 9.2 `or higher <https://www.postgresql.org/download/>`__
 
@@ -31,23 +34,23 @@ download and install first:
    run pipelines on, so make sure the SQLite database is on a shared
    filesystem or the MySQL/PostgreSQL database is on a shared network.
 
-#. GraphViz visualization package (includes "dot" executable and
+#. GraphViz visualization package (includes ``dot`` executable and
    libraries used by the Perl dependencies).
 
-   #. Check in your terminal that you have "dot" installed.
+   #. Check in your terminal that you have ``dot`` installed.
    #. If not, install using a package manager, or visit `graphviz.org <http://graphviz.org/>`__ to download
       it.
 
-#. GnuPlot visualization package (includes "gnuplot" executable and
+#. GnuPlot visualization package (includes ``gnuplot`` executable and
    libraries used by the Perl dependencies).
 
-   #. Check in your terminal that you have "gnuplot" installed.
+   #. Check in your terminal that you have ``gnuplot`` installed.
    #. If not, install using a package manager, or visit `gnuplot.info <http://www.gnuplot.info/>`__ to
       download it.
 
-#. cpanm -- a handy utility to recursively install Perl dependencies.
+#. ``cpanm`` -- a handy utility to recursively install Perl dependencies.
 
-   #. Check in your terminal that you have "cpanm" installed.
+   #. Check in your terminal that you have ``cpanm`` installed.
    #. If not, visit `cpanmin.us <https://cpanmin.us>`__ to download it
       (just read and follow the instructions in the header of the
       script).
@@ -97,7 +100,7 @@ Use cpanm to recursively install the Perl dependencies declared in ensembl-hive/
         cd ensembl-hive
         cpanm --installdeps --with-recommends .
 
-If installation of either DBD::mysql or DBD::Pg fails, check that the
+If installation of either ``DBD::mysql`` or ``DBD::Pg`` fails, check that the
 corresponding database system (MySQL or PostgreSQL) was installed
 correctly.
 
@@ -166,6 +169,6 @@ your ``$PERL5LIB`` variable.
 
                setenv PERL5LIB  ${PERL5LIB}:/path/to/ensembl-hive/modules
 
-The above commands can be added to your ~/.bashrc or ~/.bash_profile, or
-~/.cshrc or ~/.tcshrc configuration file to be loaded at startup.
+The above commands can be added to your ``~/.bashrc`` or ``~/.bash_profile``, or
+``~/.cshrc`` or ``~/.tcshrc`` configuration file to be loaded at startup.
 
