@@ -112,12 +112,20 @@ version of Python or Java will need to be installed on your system:
    Python 3 is required. It is known to work with Python 3.5.1 or later, earlier
    Python versions may work but have not been tested.
 
-   You can include the wrapper library in your virtualenv with command below:
+   Like in Perl, no further configuration is needed for custom Python
+   Runnables to be able to see eHive's modules at runtime.
+   If you are developing the code, you may still want to make eHive's
+   modules visible:
 
-::
+   ::
+       pip install -e /path/to/ensembl-hive/
 
-    pip install -e git+https://github.com/Ensembl/ensembl-hive.git#egg=ensembl-hive
+   In a separate project where you don't have an ensembl-hive checkout,
+   you can ask ``pip`` to download it from GitHub:
 
+   ::
+
+      pip install -e git+https://github.com/Ensembl/ensembl-hive.git#egg=ensembl-hive
 
 -  *Java:*
 
