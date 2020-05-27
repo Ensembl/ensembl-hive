@@ -36,6 +36,7 @@ setup(
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: Apache Software License",
         "Natural Language :: English",
+        "Operating System :: POSIX :: Linux",
         "Programming Language :: Python :: 3.5",
         "Topic :: Scientific/Engineering :: Bio-Informatics",
         "Topic :: Software Development :: Libraries :: Python Modules",
