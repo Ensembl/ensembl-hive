@@ -27,7 +27,7 @@ setup(
     author='Ensembl',
     author_email='dev@ensembl.org',
     url='https://www.ensembl.org',
-    download_url='https://github.com/Ensembl/ensembl-py',
+    download_url='https://github.com/Ensembl/ensembl-hive',
     license='Apache License, Version 2.0',
     version=eHive.__version__,
     classifiers=[
