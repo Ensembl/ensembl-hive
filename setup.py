@@ -19,9 +19,6 @@ from setuptools import setup, find_packages
 
 from wrappers.python3 import eHive
 
-with open(Path(__file__).parent / 'LICENSE') as f:
-    license_ct = f.read()
-
 setup(
     name='ensembl-hive',
     package_dir={"": "wrappers/python3/"},
@@ -31,7 +28,7 @@ setup(
     author_email='dev@ensembl.org',
     url='https://www.ensembl.org',
     download_url='https://github.com/Ensembl/ensembl-py',
-    license=license_ct,
+    license='Apache License, Version 2.0',
     version=eHive.__version__,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
