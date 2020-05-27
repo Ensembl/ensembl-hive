@@ -34,7 +34,7 @@ download and install first:
    run pipelines on, so make sure the SQLite database is on a shared
    filesystem or the MySQL/PostgreSQL database is on a shared network.
 
-#. GraphViz visualization package (includes ``dot`` executable and
+#. Graphviz visualization package (includes ``dot`` executable and
    libraries used by the Perl dependencies).
 
    .. warning::
