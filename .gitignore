@@ -1,3 +1,2 @@
-.idea/**
-.eggs/**
 dist/
+build/
