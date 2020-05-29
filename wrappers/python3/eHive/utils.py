@@ -18,6 +18,7 @@
 This module provide utility methods.
 """
 
+import os
 import sys
 
 from .process import BaseRunnable
@@ -25,6 +26,9 @@ from .process import BaseRunnable
 
 def find_module(module_name):
     """Find and instantiate a Runnable, given its name"""
+
+    if os.path.exists(module_name):
+        module_name = os.path.normpath(module_name.rstrip(".py")).replace(os.path.sep, '.')
 
     module = None
     def import_error(msg):
