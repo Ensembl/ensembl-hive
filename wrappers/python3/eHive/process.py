@@ -22,7 +22,6 @@ the later for more information about the JSON protocol used to communicate.
 import os
 import sys
 import json
-import numbers
 import unittest
 import warnings
 import traceback

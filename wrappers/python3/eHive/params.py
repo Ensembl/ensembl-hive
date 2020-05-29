@@ -22,7 +22,6 @@ All the specific warnings and exceptions inherit from ParamWarning
 and ParamException.
 """
 
-import sys
 import numbers
 import collections
 
