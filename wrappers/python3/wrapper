@@ -77,7 +77,7 @@ def do_run():
         fd_in = int(sys.argv[3])
         fd_out = int(sys.argv[4])
     except:
-        usage('Cannot read the file descriptors as integers', 'run')
+        usage('Cannot read the file descriptors as integers')
     runnable(fd_in, fd_out)
 
 
