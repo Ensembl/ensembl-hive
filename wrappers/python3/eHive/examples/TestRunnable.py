@@ -64,7 +64,7 @@ class TestRunnable(eHive.BaseRunnable):
 class TestRunnableTestCase(unittest.TestCase):
 
     def test_TestRunnable(self):
-        eHive.testRunnable(
+        eHive.testRunnable(self,
             TestRunnable,
             {},
             [
@@ -74,7 +74,7 @@ class TestRunnableTestCase(unittest.TestCase):
                 eHive.DataflowEvent({'gamma': 115}, branch_name_or_code=2),
             ],
         )
-        eHive.testRunnable(
+        eHive.testRunnable(self,
             TestRunnable,
             {
                 'alpha': 237,
@@ -85,7 +85,7 @@ class TestRunnableTestCase(unittest.TestCase):
                 eHive.FailureEvent(OverflowError, (315,)),
             ],
         )
-        eHive.testRunnable(
+        eHive.testRunnable(self,
             TestRunnable,
             {
                 'beta': -37,
