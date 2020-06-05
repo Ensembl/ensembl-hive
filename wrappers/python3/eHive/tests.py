@@ -35,13 +35,13 @@ CompleteEarlyEvent = collections.namedtuple('CompleteEarlyEvent', ['message'])
 FailureEvent = collections.namedtuple('FailureEvent', ['exception', 'args'])
 
 
-def testRunnable(runnable, inputParameters, refEvents, config=None):
+def testRunnable(testcase, runnable, inputParameters, refEvents, config=None):
     """Method to test a Runnable"""
-    _RunnableTester(runnable, inputParameters, refEvents, config or {})
+    _RunnableTester(testcase, runnable, inputParameters, refEvents, config or {})
 
 class _RunnableTester:
 
-    def __init__(self, runnable, inputParameters, refEvents, config):
+    def __init__(self, testcase, runnable, inputParameters, refEvents, config):
         if isinstance(runnable, str):
             runnable = find_module(runnable)
         # Build the Runnable
@@ -51,6 +51,7 @@ class _RunnableTester:
         self.runnable.warning = self.warning
         self.runnable.dataflow = self.dataflow
         self.runnable.worker_temp_directory = self.worker_temp_directory
+        self.testcase = testcase
 
         # Initialise the tester's attributes
         self.refEvents = refEvents
@@ -100,15 +101,13 @@ class _RunnableTester:
         if self.__created_worker_temp_directory:
             shutil.rmtree(self.__created_worker_temp_directory)
 
-        if self.refEvents:
-            msg = 'The job has now ended and {} events have not been emitted: {}'.format(len(self.refEvents), self.refEvents)
-            raise AssertionError(msg)
+        self.testcase.assertFalse(self.refEvents, msg='The job has now ended and {} events have not been emitted'.format(len(self.refEvents)))
 
         # Job attributes that the Runnable could have set
         for attr in ['autoflow', 'lethal_for_worker', 'transient_error']:
             tattr = "test_" + attr
             if tattr in config:
-                assert getattr(job, attr) == config[tattr], '{} is {} but was expecting {}'.format(attr, getattr(job, attr), config[tattr])
+                self.testcase.assertEqual(getattr(job, attr), config[tattr], msg='Final value of {}'.format(attr))
 
     def __run_method_if_exists(self, runnable, method):
         """method is one of "pre_cleanup", "fetch_input", "run", "write_output", "post_cleanup".
@@ -149,13 +148,6 @@ class _RunnableTester:
         return self.__created_worker_temp_directory
 
     def _compare_next_event(self, event):
-        if self.refEvents:
-            refEvent = self.refEvents.pop(0)
-            if type(event) == type(refEvent):
-                print(event, refEvent)
-                assert tuple(event) == tuple(refEvent), 'Correct event parameters: {} vs {}'.format(event, refEvent)
-            else:
-                raise AssertionError('Got a {} but was expected a {}'.format(type(event).__name__, type(refEvent).__name__))
-        else:
-            raise AssertionError('No more events are expected but {} was raised'.format(event))
+        self.testcase.assertTrue(self.refEvents, msg='No more events are expected but {} was raised'.format(event))
+        self.testcase.assertEqual(event, self.refEvents.pop(0))
 
