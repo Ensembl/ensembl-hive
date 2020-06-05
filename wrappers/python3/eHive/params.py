@@ -67,15 +67,13 @@ class ParamContainer:
 
     def set_param(self, param_name, value):
         """Setter. Returns the new value"""
-        if not self.validate_parameter_name(param_name):
-            raise ParamNameException(param_name)
+        self.validate_parameter_name(param_name)
         self.param_hash[param_name] = value
         return value
 
     def get_param(self, param_name):
         """Getter. Performs the parameter substitution"""
-        if not self.validate_parameter_name(param_name):
-            raise ParamNameException(param_name)
+        self.validate_parameter_name(param_name)
         self.substitution_in_progress = collections.OrderedDict()
         try:
             return self.internal_get_param(param_name)
@@ -85,8 +83,7 @@ class ParamContainer:
 
     def has_param(self, param_name):
         """Returns a boolean. It checks both substituted and unsubstituted parameters"""
-        if not self.validate_parameter_name(param_name):
-            raise ParamNameException(param_name)
+        self.validate_parameter_name(param_name)
         return (param_name in self.param_hash) or (param_name in self.unsubstituted_param_hash)
 
 
@@ -94,7 +91,8 @@ class ParamContainer:
     ##################
     def validate_parameter_name(self, param_name):
         """Tells whether "param_name" is a non-empty string"""
-        return isinstance(param_name, str) and (param_name != '')
+        if not isinstance(param_name, str) or (param_name == ''):
+            raise ParamNameException(param_name)
 
     def debug_print(self, *args, **kwargs):
         """Print debug information if the debug flag is turned on (cf constructor)"""
