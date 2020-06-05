@@ -18,6 +18,7 @@
 
 import os
 import subprocess
+import unittest
 
 import eHive
 
@@ -34,6 +35,7 @@ class TestRunnable(eHive.BaseRunnable):
 
     def fetch_input(self):
         self.warning("Fetch the world !")
+        # raise KeyError(4)
         print("alpha is", self.param_required('alpha'))
         print("beta is", self.param_required('beta'))
         self.temp_dir = self.worker_temp_directory()
@@ -55,3 +57,18 @@ class TestRunnable(eHive.BaseRunnable):
         self.dataflow( {'gamma': self.param('gamma')}, 2 )
         print("Greetings in place:", os.path.exists(self.greeting_path))
 
+
+class TestRunnableTestCase(unittest.TestCase):
+
+    def test_TestRunnable(self):
+        eHive.testRunnable(
+            TestRunnable,
+            {},
+            [
+                eHive.WarningEvent('Fetch the world !', is_error=False),
+                # eHive.FailureEvent(KeyError, (4,)),
+                eHive.WarningEvent('Run the world !', is_error=False),
+                eHive.WarningEvent('Write to the world !', is_error=False),
+                eHive.DataflowEvent({'gamma': 115}, branch_name_or_code=2),
+            ],
+        )
