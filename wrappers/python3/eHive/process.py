@@ -14,6 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+This module mainly implements python's counterpart of GuestProcess. Read
+the later for more information about the JSON protocol used to communicate.
+"""
+
 import os
 import sys
 import json
@@ -26,10 +31,6 @@ from . import params
 
 __version__ = "5.0"
 
-__doc__ = """
-This module mainly implements python's counterpart of GuestProcess. Read
-the later for more information about the JSON protocol used to communicate.
-"""
 
 class Job:
     """Dummy class to hold job-related information"""

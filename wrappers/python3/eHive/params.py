@@ -14,17 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
-import numbers
-import collections
-
-__doc__ = """
+"""
 This module is an implementation of eHive's Param module.
 It defines ParamContainer which is an attribute of BaseRunnable
 and not its base class as in eHive's class hierarchy.
 All the specific warnings and exceptions inherit from ParamWarning
 and ParamException.
 """
+
+import sys
+import numbers
+import collections
 
 
 class ParamWarning(Warning):
