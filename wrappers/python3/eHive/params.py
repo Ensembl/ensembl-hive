@@ -53,7 +53,7 @@ class NullParamException(ParamException):
         return "{0} is None".format(self.args[0])
 
 
-class ParamContainer(object):
+class ParamContainer:
     """Equivalent of eHive's Param module"""
 
     def __init__(self, unsubstituted_params, debug=False):
