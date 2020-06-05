@@ -10,6 +10,6 @@ of the same name. The class must inherit from eHive.BaseRunnable (see
 eHive.examples.LongMult.DigitFactory for an example) and implement the
 usual `fetch_input()`, `run()`, and / or `write_output()` methods.
 
-Runnables can use the eHive API (like `param()`). See eHive.process.BaseRunnable
+Runnables can use the eHive API (like `param()`). See eHive.BaseRunnable
 for the list of available methods.
 
