@@ -33,5 +33,8 @@ for the list of available methods.
 from .process import BaseRunnable, CompleteEarlyException, JobFailedException, __version__
 from .params import ParamException, ParamNameException, ParamSubstitutionException, ParamInfiniteLoopException, ParamWarning
 
-__all__ = ['BaseRunnable', 'CompleteEarlyException', 'JobFailedException', 'ParamException', 'ParamNameException', 'ParamSubstitutionException', 'ParamInfiniteLoopException', 'ParamWarning', '__version__']
-
+__all__ = [
+    'BaseRunnable', 'CompleteEarlyException', 'JobFailedException',
+    'ParamException', 'ParamNameException', 'ParamSubstitutionException', 'ParamInfiniteLoopException', 'ParamWarning',
+    '__version__',
+]
