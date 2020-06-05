@@ -28,7 +28,7 @@ and ParamException.
 
 
 class ParamWarning(Warning):
-    """Used by Process.BaseRunnable"""
+    """Used by process.BaseRunnable"""
     pass
 
 
