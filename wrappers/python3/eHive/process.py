@@ -31,7 +31,7 @@ This module mainly implements python's counterpart of GuestProcess. Read
 the later for more information about the JSON protocol used to communicate.
 """
 
-class Job(object):
+class Job:
     """Dummy class to hold job-related information"""
     pass
 
@@ -49,7 +49,7 @@ class LostHiveConnectionException(Exception):
     pass
 
 
-class BaseRunnable(object):
+class BaseRunnable:
     """This is the counterpart of GuestProcess. Note that most of the methods
     are private to be hidden in the derived classes.
 
