@@ -79,7 +79,7 @@ class ParamContainer:
             return self.internal_get_param(param_name)
         except (KeyError, SyntaxError, ParamException) as e:
             # To hide the part of the stack that is in ParamContainer
-            raise type(e)(*e.args) from None
+            raise e.with_traceback(None)
 
     def has_param(self, param_name):
         """Returns a boolean. It checks both substituted and unsubstituted parameters"""
