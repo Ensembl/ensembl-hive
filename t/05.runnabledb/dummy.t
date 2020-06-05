@@ -31,6 +31,11 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::Dummy', {
 });
 my $d = time() - $t;
 
+# Correct for Travis' built-in time machine
+if ($ENV{'TRAVIS'}) {
+    $wait -= 1;
+}
+
 cmp_ok($d, '>=', $wait, 'The "take_time" parameter made the runnable sleep');
 
 done_testing();
