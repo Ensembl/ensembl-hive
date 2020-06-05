@@ -59,15 +59,15 @@ def find_module(module_name):
     # get the class in the module
     if not hasattr(module, class_name):
         # it could be a typo ... Let's print the available modules by decreasing distance to the required name
-        import difflib
         possible_modules = [_ for _ in dir(module) if isinstance(getattr(module, _), type) and issubclass(getattr(module, _), BaseRunnable)]
-        possible_modules = sorted(possible_modules, key=lambda _: difflib.SequenceMatcher(a=class_name, b=_, autojunk=False).ratio(), reverse=True)
-        s = "No class named '{0}' in the module '{1}'.\n"
         if possible_modules:
+            import difflib
+            possible_modules.sort(key=lambda s: difflib.SequenceMatcher(a=class_name, b=s, autojunk=False).ratio(), reverse=True)
+            s = "No class named '{0}' in the module '{1}'.\n"
             s += "Warning: {1} contains {2} Runnable classes ({3}). Should one of them be renamed ?"
+            import_error(s.format(class_name, module_name, len(possible_modules), ', '.join('"%s"' % _ for _ in possible_modules)))
         else:
-            s += "Warning: {1} doesn't contain any Runnable classes"
-        import_error(s.format(class_name, module_name, len(possible_modules), ', '.join('"%s"' % _ for _ in possible_modules)))
+            import_error("Warning: {} doesn't contain any Runnable classes".format(module_name))
 
     # Check that the class is a runnable
     c = getattr(module, class_name)
