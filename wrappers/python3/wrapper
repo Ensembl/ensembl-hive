@@ -21,74 +21,16 @@ import sys
 
 import eHive
 
-
-## Check that the required module is available, is a eHive runnable, etc
-def find_module(module_name):
-
-    module = None
-    def import_error(msg):
-        if msg[-1] != "\n":
-            msg += "\n"
-        if (module is not None) and hasattr(module, '__file__'):
-            msg += module.__name__ + " is in " + module.__file__ + "\n"
-        msg += "sys.path is " + str(sys.path)
-        print("ImportError: " + msg, file=sys.stderr)
-        sys.exit(1)
-
-    # Import the whole module chain
-    try:
-        module = __import__(module_name)
-    except ImportError as e:
-        import_error("Cannot import '{0}' : {1}".format(module_name, e))
-
-    # Traverse the namespaces down to the module
-    # e.g. If module_name is "eHive.examples.LongMult.AddTogether", module represents "LongMult" at this stage
-    for submodule in module_name.split('.')[1:]:
-        if hasattr(module, submodule):
-            module = getattr(module, submodule)
-        else:
-            import_error("Cannot find '{0}' in '{1}'".format(submodule, module))
-    # e.g. module now represents "AddTogether"
-
-    if not hasattr(module, '__file__'):
-       import_error('"{0}" is a namespace, not a module'.format(module.__name__))
-
-    # NB: We assume that the runnable has the same name as the file itself
-    class_name = module_name.split('.')[-1]
-
-    # get the class in the module
-    if not hasattr(module, class_name):
-        # it could be a typo ... Let's print the available modules by decreasing distance to the required name
-        import difflib
-        possible_modules = [_ for _ in dir(module) if isinstance(getattr(module, _), type) and issubclass(getattr(module, _), eHive.BaseRunnable)]
-        possible_modules = sorted(possible_modules, key = lambda _ : difflib.SequenceMatcher(a=class_name, b=_, autojunk=False).ratio(), reverse=True)
-        s = "No class named '{0}' in the module '{1}'.\n"
-        if len(possible_modules):
-            s += "Warning: {1} contains {2} Runnable classes ({3}). Should one of them be renamed ?"
-        else:
-            s += "Warning: {1} doesn't contain any Runnable classes"
-        import_error(s.format(class_name, module_name, len(possible_modules), ', '.join('"%s"' % _ for _ in possible_modules)))
-
-    # Check that the class is a runnable
-    c = getattr(module, class_name)
-    if not isinstance(c, type):
-        import_error("{0} (found in {1}) is not a class but a {2}".format(class_name, module.__file__, type(c)))
-    if not issubclass(c, eHive.BaseRunnable):
-        import_error("{0} (found in {1}) is not a sub-class of eHive.BaseRunnable".format(class_name, module.__file__))
-
-    return c
-
-
 ## One method per mode
 
 def do_version():
     print(eHive.__version__)
 
 def do_check_exists():
-    find_module(sys.argv[2])
+    eHive.find_module(sys.argv[2])
 
 def do_run():
-    runnable = find_module(sys.argv[2])
+    runnable = eHive.find_module(sys.argv[2])
     try:
         fd_in = int(sys.argv[3])
         fd_out = int(sys.argv[4])
