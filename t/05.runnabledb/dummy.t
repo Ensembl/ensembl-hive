@@ -24,24 +24,13 @@ use Time::HiRes qw(time);
 
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 
-my $min_overhead;
-
-for (1..10) {
-    my $t = time();
-    standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::Dummy', {
-        'take_time' => 0,
-    });
-    my $d = time() - $t;
-    $min_overhead = $d if (not defined $min_overhead) || ($d < $min_overhead);
-}
-
 my $wait = 10;
 my $t = time();
 standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::Dummy', {
     'take_time' => $wait,
 });
 my $d = time() - $t;
-# We allow the runnable to be 5 times faster than the fastest attempt so far
-cmp_ok($d, '>=', $wait+$min_overhead/5, 'The "take_time" parameter made the runnable sleep a bit');
+
+cmp_ok($d, '>=', $wait, 'The "take_time" parameter made the runnable sleep');
 
 done_testing();
