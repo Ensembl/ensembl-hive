@@ -284,7 +284,7 @@ class BaseRunnable:
         except KeyError:
             return False
 
-class RunnableTest(unittest.TestCase):
+class BaseRunnableTestCase(unittest.TestCase):
     def test_job_param(self):
         class FakeRunnableWithParams(BaseRunnable):
             def __init__(self, d):
