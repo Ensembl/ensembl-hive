@@ -86,6 +86,14 @@ class ParamContainer:
         self.validate_parameter_name(param_name)
         return (param_name in self.param_hash) or (param_name in self.unsubstituted_param_hash)
 
+    def substitute_string(self, string):
+        """Apply the parameter substitution to the string"""
+        self.substitution_in_progress = collections.OrderedDict()
+        try:
+            return self.param_substitute(string)
+        except (KeyError, SyntaxError, ParamException) as e:
+            # To hide the part of the stack that is in ParamContainer
+            raise e.with_traceback(None)
 
     # Private methods
     ##################
