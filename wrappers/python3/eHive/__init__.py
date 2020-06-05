@@ -32,11 +32,13 @@ for the list of available methods.
 # We take all the interesting classes from both modules, i.e. BaseRunnable and all the exceptions
 from .process import BaseRunnable, CompleteEarlyException, JobFailedException, __version__
 from .params import ParamException, ParamNameException, ParamSubstitutionException, ParamInfiniteLoopException, ParamWarning
+from .tests import testRunnable, DataflowEvent, WarningEvent, CompleteEarlyEvent, FailureEvent
 from .utils import find_module
 
 __all__ = [
     'BaseRunnable', 'CompleteEarlyException', 'JobFailedException',
     'ParamException', 'ParamNameException', 'ParamSubstitutionException', 'ParamInfiniteLoopException', 'ParamWarning',
+    'testRunnable', 'DataflowEvent', 'WarningEvent', 'CompleteEarlyEvent', 'FailureEvent',
     'find_module',
     '__version__',
 ]
