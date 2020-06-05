@@ -32,7 +32,7 @@ else
 fi
 rt=$?
 
-(cd wrappers/python3; python3 -m unittest -v eHive.process)
+(cd wrappers/python3; python3 -m unittest -v eHive.process eHive.params)
 rtp=$?
 (cd wrappers/java; mvn "-Dmaven.repo.local=$HOME/deps/maven" test)
 rtj=$?

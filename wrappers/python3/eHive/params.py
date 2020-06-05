@@ -24,6 +24,7 @@ and ParamException.
 
 import collections
 import numbers
+import unittest
 
 
 class ParamWarning(Warning):
@@ -232,108 +233,162 @@ class ParamContainer:
         return val
 
 
+class ParamContainerTestExceptions(unittest.TestCase):
 
-def __main():
-    seed_params = [
-        ('alpha' , 2),
-        ('beta' , 5),
-        ('delta' , '#expr( #alpha#*#beta# )expr#'),
+    def test_infinite_loops(self):
+        with self.assertRaises(ParamInfiniteLoopException):
+            ParamContainer({'a': '#b#', 'b': '#a#'}).get_param('a')
 
-        ('gamma' , [10,20,33,15]),
-        ('gamma_prime' , '#expr( #gamma# )expr#'),
-        ('gamma_second' , '#expr( list(#gamma#) )expr#'),
+    def test_missing_param(self):
+        with self.assertRaises(KeyError):
+            ParamContainer({'a': 3}).get_param('b')
 
-        ('age' , { 'Alice' : 17, 'Bob' : 20, 'Chloe' : 21}),
-        ('age_prime' , '#expr( #age# )expr#'),
-        ('age_second' , '#expr( dict(#age#) )expr#'),
-
-        ('csv' , '[123,456,789]'),
-        ('csv_prime' , '#expr( #csv# )expr#'),
-        ('listref' , '#expr( eval(#csv#) )expr#'),
-
-        ('null' , None),
-        ('ref_null' , '#null#'),
-        ('ref2_null' , '#expr( #null# )expr#'),
-        ('ref3_null' , '#alpha##null##beta#'),
-    ]
-
-    p = ParamContainer(collections.OrderedDict(seed_params), False)
-
-    def print_title(title):
-        print();
-        print("*" + title + "*")
-
-    def print_substitution(title, param_string):
-        print(title)
-        print("\t>", param_string)
-        x = p.param_substitute(param_string)
-        print_param_value(x)
-
-    def print_param_value(x):
-        print("\t=", x, type(x), "id=0x{0:012x}".format(id(x)))
-
-    print_title("Exceptions")
-    try:
-        p.get_param('ppppppp')
-    except KeyError as e:
-        print("KeyError raised")
-    else:
-        print("KeyError NOT raised")
-    print()
-
-    try:
-        p.get_param(0) # should raise ParamNameException
-    except ParamNameException as e:
-        print("ParamNameException raised")
-    else:
-        print("ParamNameException NOT raised")
-    print()
-
-    try:
-        ParamContainer({'a': '#b#', 'b': '#a#'}, True).get_param('a')
-    except ParamInfiniteLoopException as e:
-        print("ParamInfiniteLoopException raised")
-    else:
-        print("ParamInfiniteLoopException NOT raised")
-    print()
-
-    print_title('All the parameters')
-    for (key,value) in seed_params:
-        print("\t>", key, "is seeded as:", value, type(value))
-        x = p.get_param(key)
-        print_param_value(x)
-        print()
-
-    print_title("Numbers")
-    print_substitution( "Scalar substitutions", "#alpha# and another: #beta# and again one: #alpha# and the other: #beta# . Their product: #delta#" )
-
-    print_title("Lists")
-    print_substitution( "default stringification of gamma", "#gamma#" )
-    print_substitution( "expr-stringification of gamma", "#expr( #gamma#  )expr#" )
-    print_substitution( "complex join of gamma", "#expr( '~'.join([str(_) for _ in sorted(#gamma#)])  )expr#" )
-    print_substitution( "complex join of gamma_prime", "#expr( '~'.join([str(_) for _ in sorted(#gamma_prime#)])  )expr#" )
-
-    print_title("Global methods")
-    print_substitution( "sum(gamma)", "#expr( sum(#gamma#) )expr#" )
-    print_substitution( "min(gamma)", "#expr( min(#gamma#) )expr#" )
-    print_substitution( "max(gamma)", "#expr( max(#gamma#) )expr#" )
-
-    print_title("Dictionaries")
-    print_substitution( "default stringification of age", "#age#" )
-    print_substitution( "expr-stringification of age", "#expr( #age# )expr#" )
-    print_substitution( "complex fold of age", '#expr( "\t".join(["{0} is {1} years old".format(p,a) for (p,a) in #age#.items()]) )expr#' )
-    print_substitution( "complex fold of age_prime", '#expr( "\t".join(["{0} is {1} years old".format(p,a) for (p,a) in #age_prime#.items()]) )expr#' )
-
-    print_title("With indexes")
-    print_substitution( "adding indexed values", '#expr( #age#["Alice"]+max(#gamma#)+#listref#[0] )expr#' )
-
-    print_title("Modifications of gamma")
-    p.get_param('gamma').append("val0")
-    print("\tgamma", p.get_param('gamma'))
-    print("\tgamma_prime", p.get_param('gamma_prime'))
-    print("\tgamma_second", p.get_param('gamma_second'))
+    def test_param_must_be_string(self):
+        with self.assertRaises(ParamNameException):
+            ParamContainer({'a': 3}).get_param(0)
 
 
-if __name__ == '__main__':
-    __main()
+class ParamContainerTestSubstitutions(unittest.TestCase):
+
+    # Type to clarify seed_params
+    TestParamEntry = collections.namedtuple('TestParamEntry', ['name', 'seed_value', 'eval_value'])
+
+    # Test data
+    seed_params_list = (
+        TestParamEntry('alpha', 2, 2),
+        TestParamEntry('beta', 5, 5),
+        TestParamEntry('delta', '#expr( #alpha#*#beta# )expr#', 10),
+
+        TestParamEntry('gamma', [10, 20, 33, 15], [10, 20, 33, 15]),
+        TestParamEntry('gamma_prime', '#expr( #gamma# )expr#', [10, 20, 33, 15]),
+        TestParamEntry('gamma_second', '#expr( list(#gamma#) )expr#', [10, 20, 33, 15]),
+
+        TestParamEntry('age', {'Alice': 17, 'Bob': 20, 'Chloe': 21}, {'Alice': 17, 'Bob': 20, 'Chloe': 21}),
+        TestParamEntry('age_prime', '#expr( #age# )expr#', {'Alice': 17, 'Bob': 20, 'Chloe': 21}),
+        TestParamEntry('age_second', '#expr( dict(#age#) )expr#', {'Alice': 17, 'Bob': 20, 'Chloe': 21}),
+
+        TestParamEntry('csv', '[123,456,789]', '[123,456,789]'),
+        TestParamEntry('csv_prime', '#expr( #csv# )expr#', '[123,456,789]'),
+        TestParamEntry('listref', '#expr( eval(#csv#) )expr#', [123, 456, 789]),
+
+        TestParamEntry('null', None, None),
+        TestParamEntry('ref_null', '#null#', None),
+        TestParamEntry('ref2_null', '#expr( #null# )expr#', None),
+        TestParamEntry('ref3_null', '#alpha##null##beta#', '2None5'),
+    )
+    seed_params_dict = {p.name: p.seed_value for p in seed_params_list}
+
+    def setUp(self):
+        self.params = ParamContainer(self.seed_params_dict)
+
+    def assertSubstitution(self, param_string, expected_value, msg):
+        """Helper method to execute the substitution and check the result"""
+        value = self.params.substitute_string(param_string)
+        self.assertEqual(value, expected_value, msg)
+
+    def test_values(self):
+        for p in self.seed_params_list:
+            self.assertEqual(self.params.get_param(p.name), p.eval_value, p.name + " can be retrieved")
+
+    def test_numbers(self):
+        self.assertSubstitution(
+            '#alpha# and another: #beta# and again one: #alpha# and the other: #beta# . Their product: #delta#',
+            '2 and another: 5 and again one: 2 and the other: 5 . Their product: 10',
+            'Scalar substitutions'
+        )
+
+    def test_lists(self):
+        self.assertSubstitution(
+            '#gamma#',
+            [10, 20, 33, 15],
+            'gamma not stringified'
+        )
+        self.assertSubstitution(
+            '#expr( #gamma#  )expr#',
+            [10, 20, 33, 15],
+            'expr-gamma not stringified'
+        )
+        self.assertSubstitution(
+            '#expr( "~".join([str(_) for _ in sorted(#gamma#)])  )expr#',
+            '10~15~20~33',
+            'gamma stringification'
+        )
+        self.assertSubstitution(
+            '#expr( "~".join([str(_) for _ in sorted(#gamma_prime#)])  )expr#',
+            '10~15~20~33',
+            'gamma_prime stringification'
+        )
+
+    def test_dictionaries(self):
+        self.assertSubstitution(
+            '#age#',
+            {'Alice': 17, 'Bob': 20, 'Chloe': 21},
+            'age not stringified'
+        )
+        self.assertSubstitution(
+            '#expr( #age# )expr#',
+            {'Alice': 17, 'Bob': 20, 'Chloe': 21},
+            'age not stringified'
+        )
+        self.assertSubstitution(
+            '#expr( " and ".join(["{0} is {1} years old".format(p,a) for (p,a) in sorted(#age#.items())]) )expr#',
+            'Alice is 17 years old and Bob is 20 years old and Chloe is 21 years old',
+            'complex fold of age'
+        )
+        self.assertSubstitution(
+            '#expr( " and ".join(["{0} is {1} years old".format(p,a) for (p,a) in sorted(#age_prime#.items())]) )expr#',
+            'Alice is 17 years old and Bob is 20 years old and Chloe is 21 years old',
+            'complex fold of age_prime'
+        )
+
+    def test_maths_methods(self):
+        self.assertSubstitution(
+            '#expr( sum(#gamma#) )expr#',
+            78,
+            'sum(gamma)'
+        )
+        self.assertSubstitution(
+            '#expr( min(#gamma#) )expr#',
+            10,
+            'min(gamma)'
+        )
+        self.assertSubstitution(
+            '#expr( max(#gamma#) )expr#',
+            33,
+            'max(gamma)'
+        )
+
+    def test_indexes(self):
+        self.assertSubstitution(
+            '#expr( #age#["Alice"]+max(#gamma#)+#listref#[0] )expr#',
+            173,
+            'adding indexed and keyed values'
+        )
+
+    def test_param_modification(self):
+        # Force the substitution of these parameters
+        self.params.get_param('gamma')
+        self.params.get_param('gamma_prime')
+        self.params.get_param('gamma_second')
+        # Modify gamma
+        self.params.get_param('gamma').append("val0")
+        # Only gamma and gamma_prime should be modified
+        # because they are the same reference.
+        # gamma_second is a copy made before the edition
+        # so should still have the initial value.
+        self.assertEqual(
+            self.params.get_param('gamma'),
+            [10, 20, 33, 15, 'val0'],
+            'gamma'
+        )
+        self.assertEqual(
+            self.params.get_param('gamma_prime'),
+            [10, 20, 33, 15, 'val0'],
+            'gamma_prime'
+        )
+        self.assertEqual(
+            self.params.get_param('gamma_second'),
+            [10, 20, 33, 15],
+            'gamma_second'
+        )
 
