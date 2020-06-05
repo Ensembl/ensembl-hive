@@ -35,7 +35,6 @@ class TestRunnable(eHive.BaseRunnable):
 
     def fetch_input(self):
         self.warning("Fetch the world !")
-        # raise KeyError(4)
         print("alpha is", self.param_required('alpha'))
         print("beta is", self.param_required('beta'))
         self.temp_dir = self.worker_temp_directory()
@@ -47,6 +46,10 @@ class TestRunnable(eHive.BaseRunnable):
         self.warning("Run the world !")
         s = self.param('alpha') + self.param('beta')
         print("set gamma to", s)
+        if s == 0:
+            raise eHive.CompleteEarlyException('Nothing to do')
+        if s > 255:
+            raise OverflowError(s)
         self.param('gamma', s)
         self.greeting_path = os.path.join(self.temp_dir, "hello")
         subprocess.check_call(["touch", self.greeting_path])
@@ -66,9 +69,30 @@ class TestRunnableTestCase(unittest.TestCase):
             {},
             [
                 eHive.WarningEvent('Fetch the world !', is_error=False),
-                # eHive.FailureEvent(KeyError, (4,)),
                 eHive.WarningEvent('Run the world !', is_error=False),
                 eHive.WarningEvent('Write to the world !', is_error=False),
                 eHive.DataflowEvent({'gamma': 115}, branch_name_or_code=2),
+            ],
+        )
+        eHive.testRunnable(
+            TestRunnable,
+            {
+                'alpha': 237,
+            },
+            [
+                eHive.WarningEvent('Fetch the world !', is_error=False),
+                eHive.WarningEvent('Run the world !', is_error=False),
+                eHive.FailureEvent(OverflowError, (315,)),
+            ],
+        )
+        eHive.testRunnable(
+            TestRunnable,
+            {
+                'beta': -37,
+            },
+            [
+                eHive.WarningEvent('Fetch the world !', is_error=False),
+                eHive.WarningEvent('Run the world !', is_error=False),
+                eHive.CompleteEarlyEvent('Nothing to do'),
             ],
         )
