@@ -52,7 +52,6 @@ def testRunnable(testcase, runnableClass, inputParameters, refEvents, config=Non
 
             self.__config = config or {}
             self.__refEvents = refEvents.copy()
-            self.__created_worker_temp_directory = None
 
             # Build the parameter hash
             paramsDict = {}
@@ -80,6 +79,8 @@ def testRunnable(testcase, runnableClass, inputParameters, refEvents, config=Non
             if self.__config.get('execute_writes', 1):
                 steps.append('write_output')
                 steps.append('post_healthcheck')
+
+            self.__created_worker_temp_directory = None
 
             try:
                 for s in steps:
