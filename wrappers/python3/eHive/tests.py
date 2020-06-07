@@ -21,7 +21,6 @@ All testing functions, e.g. how to test a Runnable
 import collections
 import tempfile
 import shutil
-import sys
 import traceback
 
 from .params import ParamContainer
@@ -104,8 +103,7 @@ def testRunnable(testcase, runnableClass, inputParameters, refEvents, config=Non
                 getattr(self, method)()
 
         def __handle_exception(self, e):
-            (_, _, tb) = sys.exc_info()
-            if any(f for f in traceback.extract_tb(tb) if f[2] == '__compare_next_event'):
+            if any(f for f in traceback.extract_tb(e.__traceback__) if f[2] == '__compare_next_event'):
                 raise e
             else:
                 # Job exception: check whether it is expected
