@@ -169,18 +169,18 @@ class BaseRunnable:
         except LostHiveConnectionException as e:
             # Mothing we can do, let's just exit
             raise
-        except:
+        except Exception as e:
             died_somewhere = True
-            self.warning( self.__traceback(2), True)
+            self.warning( self.__traceback(e, 2), True)
 
         try:
             self.__run_method_if_exists('post_cleanup')
         except LostHiveConnectionException as e:
             # Mothing we can do, let's just exit
             raise
-        except:
+        except Exception as e:
             died_somewhere = True
-            self.warning( self.__traceback(2), True)
+            self.warning( self.__traceback(e, 2), True)
 
         job_end_structure = {'complete' : not died_somewhere, 'job': {}, 'params': {'substituted': self.__params.param_hash, 'unsubstituted': self.__params.unsubstituted_param_hash}}
         for x in [ 'autoflow', 'lethal_for_worker', 'transient_error' ]:
@@ -194,11 +194,10 @@ class BaseRunnable:
             self.__send_message_and_wait_for_OK('JOB_STATUS_UPDATE', method)
             getattr(self, method)()
 
-    def __traceback(self, skipped_traces):
+    def __traceback(self, exception, skipped_traces):
         """Remove "skipped_traces" lines from the stack trace (the eHive part)"""
-        (etype, value, tb) = sys.exc_info()
-        s1 = traceback.format_exception_only(etype, value)
-        l = traceback.extract_tb(tb)[skipped_traces:]
+        s1 = traceback.format_exception_only(type(exception), exception)
+        l = traceback.extract_tb(exception.__traceback__)[skipped_traces:]
         s2 = traceback.format_list(l)
         return "".join(s1+s2)
 
