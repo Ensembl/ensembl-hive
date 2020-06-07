@@ -35,119 +35,124 @@ CompleteEarlyEvent = collections.namedtuple('CompleteEarlyEvent', ['message'])
 FailureEvent = collections.namedtuple('FailureEvent', ['exception', 'args'])
 
 
-def testRunnable(testcase, runnable, inputParameters, refEvents, config=None):
+def testRunnable(testcase, runnableClass, inputParameters, refEvents, config=None):
     """Method to test a Runnable"""
-    _RunnableTester(testcase, runnable, inputParameters, refEvents, config or {})
 
-class _RunnableTester:
+    # Find the actual class (type)
+    if isinstance(runnableClass, str):
+        runnableClass = find_module(runnableClass)
 
-    def __init__(self, testcase, runnable, inputParameters, refEvents, config):
-        if isinstance(runnable, str):
-            runnable = find_module(runnable)
-        # Build the Runnable
-        # NOTE: not __init__ because we can't provide file descriptors, etc
-        self.runnable = runnable.__new__(runnable)
-        # Override API methods
-        self.runnable.warning = self.warning
-        self.runnable.dataflow = self.dataflow
-        self.runnable.worker_temp_directory = self.worker_temp_directory
-        self.testcase = testcase
+    class RunnableTester(runnableClass):
 
-        # Initialise the tester's attributes
-        self.refEvents = refEvents
-        self.__created_worker_temp_directory = None
+        def runTests(self):
+            self.__configure()
+            self.__job_life_cycle()
+            self.__final_tests()
 
-        # Build the parameter hash
-        paramsDict = {}
-        paramsDict.update(self.runnable.param_defaults())
-        paramsDict.update(inputParameters)
-        params = ParamContainer(paramsDict)
-        self.runnable._BaseRunnable__params = params
+        def __configure(self):
 
-        # Build the Job object
-        is_retry = config.get('is_retry', 0)
-        job = Job()
-        job.dbID = None
-        job.input_id = str(inputParameters)  # FIXME: this should be a Perl stringification, not a Python one
-        job.retry_count = is_retry
-        job.autoflow = True
-        job.lethal_for_worker = False
-        job.transient_error = True
-        self.runnable.input_job = job
+            self.__config = config or {}
+            self.__refEvents = refEvents.copy()
+            self.__created_worker_temp_directory = None
 
-        # Which methods should be run
-        steps = ['fetch_input', 'run']
-        if is_retry:
-            steps.insert(0, 'pre_cleanup')
-        if config.get('execute_writes', 1):
-            steps.append('write_output')
-            steps.append('post_healthcheck')
+            # Build the parameter hash
+            paramsDict = {}
+            paramsDict.update(runnable.param_defaults())
+            paramsDict.update(inputParameters)
+            params = ParamContainer(paramsDict)
+            self._BaseRunnable__params = params
 
-        # The actual life-cycle
-        try:
-            for s in steps:
-                self.__run_method_if_exists(self.runnable, s)
-        except CompleteEarlyException as e:
-            event = CompleteEarlyEvent(e.args[0] if e.args else None)
-            self._compare_next_event(event)
-        except Exception as e:
-            self._handle_exception(e)
+            # Build the Job object
+            job = Job()
+            job.dbID = None
+            job.input_id = str(inputParameters)  # FIXME: this should be a Perl stringification, not a Python one
+            job.retry_count = self.__config.get('is_retry', 0)
+            job.autoflow = True
+            job.lethal_for_worker = False
+            job.transient_error = True
+            self.input_job = job
 
-        try:
-            self.__run_method_if_exists(self.runnable, 'post_cleanup')
-        except Exception as e:
-            self._handle_exception(e)
+        def __job_life_cycle(self):
 
-        if self.__created_worker_temp_directory:
-            shutil.rmtree(self.__created_worker_temp_directory)
+            # Which methods should be run
+            steps = ['fetch_input', 'run']
+            if self.input_job.retry_count:
+                steps.insert(0, 'pre_cleanup')
+            if self.__config.get('execute_writes', 1):
+                steps.append('write_output')
+                steps.append('post_healthcheck')
 
-        self.testcase.assertFalse(self.refEvents, msg='The job has now ended and {} events have not been emitted'.format(len(self.refEvents)))
+            try:
+                for s in steps:
+                    self.__run_method_if_exists(s)
+            except CompleteEarlyException as e:
+                event = CompleteEarlyEvent(e.args[0] if e.args else None)
+                self.__compare_next_event(event)
+            except Exception as e:
+                self.__handle_exception(e)
 
-        # Job attributes that the Runnable could have set
-        for attr in ['autoflow', 'lethal_for_worker', 'transient_error']:
-            tattr = "test_" + attr
-            if tattr in config:
-                self.testcase.assertEqual(getattr(job, attr), config[tattr], msg='Final value of {}'.format(attr))
+            try:
+                self.__run_method_if_exists('post_cleanup')
+            except Exception as e:
+                self.__handle_exception(e)
 
-    def __run_method_if_exists(self, runnable, method):
-        """method is one of "pre_cleanup", "fetch_input", "run", "write_output", "post_cleanup".
-        We only the call the method if it exists to save a trip to the database."""
-        if hasattr(runnable, method):
-            getattr(runnable, method)()
+            self.__cleanup_worker_temp_directory()
 
-    def _handle_exception(self, e):
-        (_, _, tb) = sys.exc_info()
-        if any(f for f in traceback.extract_tb(tb) if f[2] == '_compare_next_event'):
-            raise e
-        else:
-            # Job exception: check whether it is expected
-            event = FailureEvent(type(e), e.args)
-            self._compare_next_event(event)
+        def __run_method_if_exists(self, method):
+            """method is one of "pre_cleanup", "fetch_input", "run", "write_output", "post_cleanup"."""
+            if hasattr(self, method):
+                getattr(self, method)()
 
+        def __handle_exception(self, e):
+            (_, _, tb) = sys.exc_info()
+            if any(f for f in traceback.extract_tb(tb) if f[2] == '__compare_next_event'):
+                raise e
+            else:
+                # Job exception: check whether it is expected
+                event = FailureEvent(type(e), e.args)
+                self.__compare_next_event(event)
 
-    # Public BaseRunnable interface
-    ################################
+        def __final_tests(self):
+            testcase.assertFalse(self.__refEvents, msg='The job has now ended and {} events have not been emitted'.format(len(self.__refEvents)))
 
-    def warning(self, message, is_error = False):
-        """Test that the warning event generated is expected"""
-        event = WarningEvent(message, is_error)
-        self._compare_next_event(event)
+            # Job attributes that the Runnable could have set
+            for attr in ['autoflow', 'lethal_for_worker', 'transient_error']:
+                tattr = "test_" + attr
+                if tattr in self.__config:
+                    testcase.assertEqual(getattr(self.input_job, attr), self.__config[tattr], msg='Final value of {}'.format(attr))
 
-    def dataflow(self, output_ids, branch_name_or_code = 1):
-        """Test that the dataflow event generated is expected"""
-        if branch_name_or_code == 1:
-            self.input_job.autoflow = False
-        event = DataflowEvent(output_ids, branch_name_or_code)
-        self._compare_next_event(event)
-        return []
+        # Public BaseRunnable interface
+        ################################
 
-    def worker_temp_directory(self):
-        """Provide a temporary directory for the duration of the test"""
-        if self.__created_worker_temp_directory is None:
-            self.__created_worker_temp_directory = tempfile.mkdtemp()
-        return self.__created_worker_temp_directory
+        def worker_temp_directory(self):
+            """Provide a temporary directory for the duration of the test"""
+            if self.__created_worker_temp_directory is None:
+                self.__created_worker_temp_directory = tempfile.mkdtemp()
+            return self.__created_worker_temp_directory
 
-    def _compare_next_event(self, event):
-        self.testcase.assertTrue(self.refEvents, msg='No more events are expected but {} was raised'.format(event))
-        self.testcase.assertEqual(event, self.refEvents.pop(0))
+        def __cleanup_worker_temp_directory(self):
+            """Provide a temporary directory for the duration of the test"""
+            if self.__created_worker_temp_directory:
+                shutil.rmtree(self.__created_worker_temp_directory)
 
+        def warning(self, message, is_error=False):
+            """Test that the warning event generated is expected"""
+            event = WarningEvent(message, is_error)
+            self.__compare_next_event(event)
+
+        def dataflow(self, output_ids, branch_name_or_code=1):
+            """Test that the dataflow event generated is expected"""
+            if branch_name_or_code == 1:
+                self.input_job.autoflow = False
+            event = DataflowEvent(output_ids, branch_name_or_code)
+            self.__compare_next_event(event)
+            return [1]
+
+        def __compare_next_event(self, event):
+            testcase.assertTrue(self.__refEvents, msg='No more events are expected but {} was raised'.format(event))
+            testcase.assertEqual(event, self.__refEvents.pop(0))
+
+    # Build the Runnable
+    # NOTE: not __init__ because we can't provide file descriptors, etc
+    runnable = RunnableTester.__new__(RunnableTester)
+    runnable.runTests()
