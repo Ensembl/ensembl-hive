@@ -26,13 +26,18 @@ use warnings;
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::GuestProcess;
 use Bio::EnsEMBL::Hive::HivePipeline;
+use Bio::EnsEMBL::Hive::Meadow::LOCAL;
 use Bio::EnsEMBL::Hive::Queen;
 use Bio::EnsEMBL::Hive::Utils ('load_file_or_module', 'destringify');
 use Bio::EnsEMBL::Hive::Utils::PCL;
+use Bio::EnsEMBL::Hive::Valley;
 
 
 sub standaloneJob {
     my ($module_or_file, $input_id, $flags, $flow_into, $language) = @_;
+
+    # Tell the Valley not to bother about the other meadows.
+    $Bio::EnsEMBL::Hive::Valley::_loaded_meadow_drivers = ['Bio::EnsEMBL::Hive::Meadow::LOCAL'],
 
     my $worker = Bio::EnsEMBL::Hive::Queen->create_new_worker(
 
