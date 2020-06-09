@@ -38,6 +38,7 @@ use Exporter 'import';
 our @EXPORT = qw(WHEN ELSE INPUT_PLUS);
 
 use Bio::EnsEMBL::Hive::Utils ('stringify');
+use Bio::EnsEMBL::Hive::Utils::URL;
 
 
 our $cond_group_marker   = 'CONDitionGRoup';
@@ -70,8 +71,17 @@ sub parse_wait_for {
         # create control rules:
     foreach my $condition_url (@$wait_for) {
         if($condition_url =~ m{^\w+$}) {
+            # Just a warning because analyses can be added later
             my $condition_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $condition_url)
                 or warn "WARNING: Could not find a local analysis '$condition_url' to create a control rule (in '".($ctrled_analysis->logic_name)."')\n";
+        } else {
+            # URLs that can't be parsed won't magically become parsable, so this is an error
+            my $url_hash = Bio::EnsEMBL::Hive::Utils::URL::parse($condition_url)
+                or die "ERROR: Could not parse the URL '$condition_url' to create a control rule (in '".($ctrled_analysis->logic_name)."')\n";
+            # Now check that the target is actually an analysis
+            if ((not exists $url_hash->{'query_params'}) or ($url_hash->{'query_params'}->{'object_type'} ne 'Analysis')) {
+                die "ERROR: The URL '$condition_url' does not refer to an Analysis (to create a control rule in '".($ctrled_analysis->logic_name)."')\n";
+            }
         }
         my ($c_rule) = $pipeline->add_new_or_update( 'AnalysisCtrlRule', $verbose,  # NB: add_new_or_update returns a list
                 'condition_analysis_url'    => $condition_url,
@@ -164,8 +174,13 @@ sub parse_flow_into {
                     my $input_id_template_list = $heirs->{$heir_url};
 
                     if($heir_url =~ m{^\w+$}) {
+                        # Just a warning because analyses can be added later
                         my $heir_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $heir_url)
                             or warn "WARNING: Could not find a local analysis named '$heir_url' (dataflow from analysis '".($from_analysis->logic_name)."')\n";
+                    } else {
+                        # URLs that can't be parsed won't magically become parsable, so this is an error
+                        my $url_hash = Bio::EnsEMBL::Hive::Utils::URL::parse($heir_url)
+                            or die "ERROR: Could not parse the URL '$heir_url' (dataflow from analysis '".($from_analysis->logic_name)."'";
                     }
 
                     $input_id_template_list = [ $input_id_template_list ] unless(ref($input_id_template_list) eq 'ARRAY');  # allow for more than one template per analysis
