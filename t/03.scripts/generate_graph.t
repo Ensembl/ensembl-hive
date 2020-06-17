@@ -39,10 +39,14 @@ GetOptions(
 
 my $server_url  = get_test_url_or_die(-tag => 'server', -no_user_prefix => 1);
 
-# Most of the test scripts test init_pipeline() from Utils::Test but we
-# also need to test the main scripts/init_pipeline.pl !
-my @init_pipeline_args = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/init_pipeline.pl', 'Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultServer_conf', -pipeline_url => $server_url, -hive_force_init => 1, -tweak => 'pipeline.param[take_time]=0');
-test_command(\@init_pipeline_args);
+init_pipeline(
+    'Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultServer_conf',
+    $server_url,
+    [],
+    [
+        'pipeline.param[take_time]=0',
+    ],
+);
 
 
 my $client_url  = get_test_url_or_die(-tag => 'client', -no_user_prefix => 1);
@@ -58,12 +62,6 @@ push @confs_to_test, 'GC::PipeConfig::GCPct_conf' unless $@;    # SKIP it in cas
 # A temporary file to store the output of generate_graph.pl
 my ($fh, $tmp_filename) = tempfile(UNLINK => 1);
 close($fh);
-
-sub test_command {
-    my $cmd_array = shift;
-    ok(!system(@$cmd_array), 'Can run '.join(' ', @$cmd_array));
-}
-
 
 foreach my $conf (@confs_to_test) {
   subtest $conf, sub {

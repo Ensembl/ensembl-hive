@@ -21,7 +21,7 @@ use warnings;
 
 use Test::More;
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline beekeeper get_test_url_or_die safe_drop_database);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline get_test_url_or_die safe_drop_database);
 use Bio::EnsEMBL::Hive::Utils qw(destringify);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
@@ -29,11 +29,10 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 
 my $pipeline_url  = get_test_url_or_die();
 
-# Utils::Test::init_pipeline runs things internally instead of invoking init_pipeline.pl
-# Here we need to run the script to trigger the password sanitization
-my @cmd = ('env', 'PERL5LIB='.$ENV{'EHIVE_ROOT_DIR'}.'/t/10.pipeconfig/::'.$ENV{PERL5LIB}, $ENV{'EHIVE_ROOT_DIR'}.'/scripts/init_pipeline.pl', 'TestPipeConfig::PipelineURL_conf', -pipeline_url => $pipeline_url);
-my $rc = system(@cmd);
-is($rc, 0, 'init_pipeline.pl successfully ran');
+{
+    local $ENV{'PERL5LIB'} = $ENV{'EHIVE_ROOT_DIR'}.'/t/10.pipeconfig/::'.$ENV{PERL5LIB};
+    init_pipeline('TestPipeConfig::PipelineURL_conf', $pipeline_url);
+}
 
 my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url );
 

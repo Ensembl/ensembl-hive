@@ -44,10 +44,9 @@ my $test_filename = 'foo';
 my $pipeline_url = get_test_url_or_die();
 
 {
-    # The init_pipeline test runs in the same process, so @INC needs
-    # to be updated to see the test modules
-    local @INC = @INC;
-    push @INC, $local_module_path;
+    # PERL5LIB needs to be updated in order to see
+    # TestPipeConfig::LongWorker_conf and TestRunnable::DummyWriter
+    local $ENV{'PERL5LIB'} = "$local_module_path:" . $ENV{'PERL5LIB'};
     init_pipeline(
         'TestPipeConfig::LongWorker_conf',
         $pipeline_url,

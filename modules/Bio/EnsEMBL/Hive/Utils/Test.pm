@@ -199,20 +199,11 @@ sub init_pipeline {
         $url = (splice(@$options, $url_flag_index, 2))[1];
     }
 
-    local @ARGV = @$options;
-    unshift @ARGV, (-pipeline_url => $url, -hive_force_init => 1);
+    my @args = ($file_or_module, -pipeline_url => $url, -hive_force_init => 1);
+    push @args, @$options;
+    push @args, map {-tweak => $_} @$tweaks if $tweaks;
 
-    lives_ok(sub {
-        my $orig_unambig_url = Bio::EnsEMBL::Hive::Utils::URL::parse($url)->{'unambig_url'};
-        ok($orig_unambig_url, 'Given URL could be parsed');
-        my $returned_url = Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module, $tweaks);
-        ok($returned_url, 'pipeline initialized on '.$returned_url);
-
-        my $returned_unambig_url = Bio::EnsEMBL::Hive::Utils::URL::parse($returned_url)->{'unambig_url'};
-            # Both $url and $returned_url MAY contain the password (if applicable for the driver) but can be missing the port number assuming a default
-            # Both $orig_unambig_url and $returned_unambig_url SHOULD contain the port number (if applicable for the driver) but WILL NOT contain a password
-        is($returned_unambig_url, $orig_unambig_url, 'pipeline initialized on '.$url);
-    }, sprintf('init_pipeline("%s", %s)', $file_or_module, stringify($options)));
+    return _test_ehive_script('init_pipeline', undef, \@args);
 }
 
 

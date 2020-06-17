@@ -34,8 +34,8 @@ my $pipeline_url = get_test_url_or_die();
     # Starting a first set of checks with a "GCPct" pipeline
 
     {
-        local @INC = @INC;
-        push @INC, $ENV{'EHIVE_ROOT_DIR'}.'/t/03.scripts/';
+        # PERL5LIB needs to be updated in order to see TestPipeConfig::LongWorker_conf
+        local $ENV{'PERL5LIB'} = $ENV{'EHIVE_ROOT_DIR'}.'/t/03.scripts/' . ':' . $ENV{'PERL5LIB'};
         init_pipeline('TestPipeConfig::LongWorker_conf', $pipeline_url);
     }
 

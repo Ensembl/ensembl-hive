@@ -30,8 +30,7 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 my $pipeline_url  = get_test_url_or_die();
 
 {
-    local @INC = @INC;
-    push @INC, $ENV{'EHIVE_ROOT_DIR'}.'/t/10.pipeconfig/';
+    local $ENV{'PERL5LIB'} = $ENV{'EHIVE_ROOT_DIR'}.'/t/10.pipeconfig/::'.$ENV{PERL5LIB};
     init_pipeline('TestPipeConfig::AnyFailureBranch_conf', $pipeline_url, [], ['pipeline.param[take_time]=100']);
 }
 my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url );
