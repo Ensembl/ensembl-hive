@@ -25,6 +25,7 @@ use warnings;
 no warnings qw( redefine );
 
 use Exporter;
+use Capture::Tiny 'tee_stderr';
 use Carp qw{croak};
 use File::Spec;
 use File::Temp qw{tempfile};
@@ -168,6 +169,8 @@ sub standaloneJob {
   Arg[4]      : (optional) Arrayref $tweaks. Tweaks to be applied to the database (as with the -tweak command-line option)
   Arg[5]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
                 key that is understood is "expect_failure" to reverse the expectation of the test.
+                It is primarily used as a boolean, but can be a regular expression to test the standard
+                error of the script.
   Example     : init_pipeline(
                     'Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultServer_conf',
                     $server_url,
@@ -218,6 +221,8 @@ sub init_pipeline {
   Arg[4]      : String $test_name (optional). The name of the test
   Arg[5]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
                 key that is understood is "expect_failure" to reverse the expectation of the test.
+                It is primarily used as a boolean, but can be a regular expression to test the standard
+                error of the script.
   Description : Generic method that can run any eHive script and check its return status
   Returntype  : None
   Exceptions  : TAP-style
@@ -232,10 +237,16 @@ sub _test_ehive_script {
     $flags ||= {};
     my @ext_args = ( defined($url) ? (-url => $url) : (), @$args );
 
-    my $rc = system($ENV{'EHIVE_ROOT_DIR'}.'/scripts/'.$script_name.'.pl', @ext_args);
+    my $rc;
+    my $stderr = tee_stderr {
+        $rc = system($ENV{'EHIVE_ROOT_DIR'}.'/scripts/'.$script_name.'.pl', @ext_args);
+    };
     if ($flags->{expect_failure}) {
         $test_name ||= $script_name.' fails'.(@ext_args ? ' with the command-line options: '.join(' ', @ext_args) : '');
         ok($rc, $test_name);
+        if (re::is_regexp($flags->{expect_failure})) {
+            like($stderr, $flags->{expect_failure}, 'error message as expected');
+        }
     } else {
         $test_name ||= 'Can run '.$script_name.(@ext_args ? ' with the command-line options: '.join(' ', @ext_args) : '');
         is($rc, 0, $test_name);
@@ -250,6 +261,8 @@ sub _test_ehive_script {
   Arg[3]      : String $test_name (optional). The name of the test
   Arg[4]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
                 key that is understood is "expect_failure" to reverse the expectation of the test.
+                It is primarily used as a boolean, but can be a regular expression to test the standard
+                error of the script.
   Example     : runWorker($url, [ -can_respecialize => 1 ]);
   Description : Run a worker on the given pipeline in the current process.
                 The worker options have been divided in three groups: the ones affecting its specialization,
@@ -284,6 +297,8 @@ sub runWorker {
   Arg[3]      : String $test_name (optional). The name of the test
   Arg[4]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
                 key that is understood is "expect_failure" to reverse the expectation of the test.
+                It is primarily used as a boolean, but can be a regular expression to test the standard
+                error of the script.
   Example     : $seed_pipeline($url, [$arg1, $arg2], 'Run seed_pipeline with two arguments');
   Description : Very generic function to run seed_pipeline on the given database with the given arguments
   Returntype  : None
@@ -306,6 +321,8 @@ sub seed_pipeline {
   Arg[3]      : String $test_name (optional). The name of the test
   Arg[4]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
                 key that is understood is "expect_failure" to reverse the expectation of the test.
+                It is primarily used as a boolean, but can be a regular expression to test the standard
+                error of the script.
   Example     : beekeeper($url, [$arg1, $arg2], 'Run beekeeper with two arguments');
   Description : Very generic function to run beekeeper on the given database with the given arguments
   Returntype  : None
@@ -326,6 +343,8 @@ sub beekeeper {
   Arg[3]      : String $test_name (optional). The name of the test
   Arg[4]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
                 key that is understood is "expect_failure" to reverse the expectation of the test.
+                It is primarily used as a boolean, but can be a regular expression to test the standard
+                error of the script.
   Example     : tweak_pipeline($url, [$arg1, $arg2], 'Run tweak_pipeline with two arguments');
   Description : Very generic function to run tweak_pipeline on the given database with the given arguments
   Returntype  : None
@@ -347,6 +366,8 @@ sub tweak_pipeline {
   Arg[3]      : String $test_name (optional). The name of the test
   Arg[4]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
                 key that is understood is "expect_failure" to reverse the expectation of the test.
+                It is primarily used as a boolean, but can be a regular expression to test the standard
+                error of the script.
   Example     : generate_graph($url, [-output => 'lm_analyses.png'], 'Generate a PNG A-diagram');
   Description : Very generic function to run generate_graph.pl on the given database with the given arguments
   Returntype  : None
@@ -368,6 +389,8 @@ sub generate_graph {
   Arg[3]      : String $test_name (optional). The name of the test
   Arg[4]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
                 key that is understood is "expect_failure" to reverse the expectation of the test.
+                It is primarily used as a boolean, but can be a regular expression to test the standard
+                error of the script.
   Example     : visualize_jobs($url, [-output => 'lm_jobs.png', -accu_values], 'Generate a PNG J-diagram with accu values');
   Description : Very generic function to run visualize_jobs.pl on the given database with the given arguments
   Returntype  : None
@@ -388,6 +411,8 @@ sub visualize_jobs {
   Arg[3]      : String $test_name (optional). The name of the test
   Arg[4]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
                 key that is understood is "expect_failure" to reverse the expectation of the test.
+                It is primarily used as a boolean, but can be a regular expression to test the standard
+                error of the script.
   Example     : peekJob($url, [-job_id => 1], 'Check params for job 1');
   Description : Very generic function to run peekJob.pl on the given database with the given arguments
   Returntype  : None
@@ -409,6 +434,8 @@ sub peekJob {
   Arg[3]      : String $test_name (optional). The name of the test
   Arg[4]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
                 key that is understood is "expect_failure" to reverse the expectation of the test.
+                It is primarily used as a boolean, but can be a regular expression to test the standard
+                error of the script.
   Example     : db_cmd($url, [-sql => 'DROP DATABASE'], 'Drop the database');
   Description : Very generic function to run db_cmd.pl on the given database with the given arguments
   Returntype  : None
@@ -430,6 +457,8 @@ sub db_cmd {
   Arg[3]      : String $test_name (optional). The name of the test
   Arg[4]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
                 key that is understood is "expect_failure" to reverse the expectation of the test.
+                It is primarily used as a boolean, but can be a regular expression to test the standard
+                error of the script.
   Example     : run_sql_on_db($url, 'INSERT INTO sweets (name, quantity) VALUES (3, 'Snickers')');
   Description : Execute an SQL command on the given database and test its execution. This expects the
                 command-line client to return a non-zero code in case of a failure.

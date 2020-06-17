@@ -69,7 +69,7 @@ my $pipeline_url = get_test_url_or_die();
     beekeeper($hive_dba->dbc->url,
         ['-run', -job_id => 98765],
         'beekeeper complained that the job cannot be found',
-        {'expect_failure' => 1},
+        {'expect_failure' => qr/Could not fetch Job with dbID=98765/},
     );
 
     $beekeeper_rows = $beekeeper_nta->fetch_all();
@@ -88,7 +88,7 @@ my $pipeline_url = get_test_url_or_die();
         $hive_dba->dbc->url,
         ['-loop', -analyses_pattern => 'this_matches_no_analysis'],
         'beekeeper complained that no analysis could be matched',
-        {'expect_failure' => 1},
+        {'expect_failure' => qr/the -analyses_pattern 'this_matches_no_analysis' did not match any Analyses/},
     );
 
     $beekeeper_rows = $beekeeper_nta->fetch_all();
