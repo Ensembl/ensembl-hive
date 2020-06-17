@@ -117,7 +117,7 @@ version of Python or Java will need to be installed on your system:
 
 -  *Python:*
 
-   Python 3 is required. It is known to work with Python 3.5.1 or later, earlier
+   Python 3 is required. It is known to work with Python 3.4 and later, earlier
    Python versions may work but have not been tested.
 
    Like in Perl, no further configuration is needed for custom Python
