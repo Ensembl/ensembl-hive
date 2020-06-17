@@ -166,6 +166,8 @@ sub standaloneJob {
   Arg[2]      : String $url. The location of the database to be created
   Arg[3]      : (optional) Arrayref $args. Extra parameters of the pipeline (as on the command-line)
   Arg[4]      : (optional) Arrayref $tweaks. Tweaks to be applied to the database (as with the -tweak command-line option)
+  Arg[5]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
+                key that is understood is "expect_failure" to reverse the expectation of the test.
   Example     : init_pipeline(
                     'Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultServer_conf',
                     $server_url,
@@ -183,7 +185,7 @@ sub standaloneJob {
 =cut
 
 sub init_pipeline {
-    my ($file_or_module, $url, $options, $tweaks) = @_;
+    my ($file_or_module, $url, $options, $tweaks, $flags) = @_;
 
     $options ||= [];
 
@@ -203,7 +205,7 @@ sub init_pipeline {
     push @args, @$options;
     push @args, map {-tweak => $_} @$tweaks if $tweaks;
 
-    return _test_ehive_script('init_pipeline', undef, \@args);
+    return _test_ehive_script('init_pipeline', undef, \@args, undef, $flags);
 }
 
 
@@ -214,6 +216,8 @@ sub init_pipeline {
   Arg[2]      : String $url. The location of the database
   Arg[3]      : Arrayref $args. Extra arguments given to the script
   Arg[4]      : String $test_name (optional). The name of the test
+  Arg[5]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
+                key that is understood is "expect_failure" to reverse the expectation of the test.
   Description : Generic method that can run any eHive script and check its return status
   Returntype  : None
   Exceptions  : TAP-style
@@ -223,12 +227,19 @@ sub init_pipeline {
 =cut
 
 sub _test_ehive_script {
-    my ($script_name, $url, $args, $test_name) = @_;
+    my ($script_name, $url, $args, $test_name, $flags) = @_;
     $args ||= [];
+    $flags ||= {};
     my @ext_args = ( defined($url) ? (-url => $url) : (), @$args );
-    $test_name ||= 'Can run '.$script_name.(@ext_args ? ' with the following cmdline options: '.join(' ', @ext_args) : '');
 
-    ok(!system($ENV{'EHIVE_ROOT_DIR'}.'/scripts/'.$script_name.'.pl', @ext_args), $test_name);
+    my $rc = system($ENV{'EHIVE_ROOT_DIR'}.'/scripts/'.$script_name.'.pl', @ext_args);
+    if ($flags->{expect_failure}) {
+        $test_name ||= $script_name.' fails'.(@ext_args ? ' with the command-line options: '.join(' ', @ext_args) : '');
+        ok($rc, $test_name);
+    } else {
+        $test_name ||= 'Can run '.$script_name.(@ext_args ? ' with the command-line options: '.join(' ', @ext_args) : '');
+        is($rc, 0, $test_name);
+    }
 }
 
 
@@ -237,6 +248,8 @@ sub _test_ehive_script {
   Arg[1]      : String $url. The location of the database
   Arg[2]      : Arrayref $args. Extra arguments given to runWorker
   Arg[3]      : String $test_name (optional). The name of the test
+  Arg[4]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
+                key that is understood is "expect_failure" to reverse the expectation of the test.
   Example     : runWorker($url, [ -can_respecialize => 1 ]);
   Description : Run a worker on the given pipeline in the current process.
                 The worker options have been divided in three groups: the ones affecting its specialization,
@@ -269,6 +282,8 @@ sub runWorker {
   Arg[1]      : String $url. The location of the database
   Arg[2]      : Arrayref $args. Extra arguments given to seed_pipeline
   Arg[3]      : String $test_name (optional). The name of the test
+  Arg[4]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
+                key that is understood is "expect_failure" to reverse the expectation of the test.
   Example     : $seed_pipeline($url, [$arg1, $arg2], 'Run seed_pipeline with two arguments');
   Description : Very generic function to run seed_pipeline on the given database with the given arguments
   Returntype  : None
@@ -289,6 +304,8 @@ sub seed_pipeline {
   Arg[1]      : String $url. The location of the database
   Arg[2]      : Arrayref $args. Extra arguments given to beekeeper.pl
   Arg[3]      : String $test_name (optional). The name of the test
+  Arg[4]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
+                key that is understood is "expect_failure" to reverse the expectation of the test.
   Example     : beekeeper($url, [$arg1, $arg2], 'Run beekeeper with two arguments');
   Description : Very generic function to run beekeeper on the given database with the given arguments
   Returntype  : None
@@ -307,6 +324,8 @@ sub beekeeper {
   Arg[1]      : String $url. The location of the database
   Arg[2]      : Arrayref $args. Extra arguments given to beekeeper.pl
   Arg[3]      : String $test_name (optional). The name of the test
+  Arg[4]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
+                key that is understood is "expect_failure" to reverse the expectation of the test.
   Example     : tweak_pipeline($url, [$arg1, $arg2], 'Run tweak_pipeline with two arguments');
   Description : Very generic function to run tweak_pipeline on the given database with the given arguments
   Returntype  : None
@@ -326,6 +345,8 @@ sub tweak_pipeline {
   Arg[1]      : String $url or undef. The location of the database
   Arg[2]      : Arrayref $args. Extra arguments given to generate_graph.pl
   Arg[3]      : String $test_name (optional). The name of the test
+  Arg[4]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
+                key that is understood is "expect_failure" to reverse the expectation of the test.
   Example     : generate_graph($url, [-output => 'lm_analyses.png'], 'Generate a PNG A-diagram');
   Description : Very generic function to run generate_graph.pl on the given database with the given arguments
   Returntype  : None
@@ -345,6 +366,8 @@ sub generate_graph {
   Arg[1]      : String $url. The location of the database
   Arg[2]      : Arrayref $args. Extra arguments given to visualize_jobs.pl
   Arg[3]      : String $test_name (optional). The name of the test
+  Arg[4]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
+                key that is understood is "expect_failure" to reverse the expectation of the test.
   Example     : visualize_jobs($url, [-output => 'lm_jobs.png', -accu_values], 'Generate a PNG J-diagram with accu values');
   Description : Very generic function to run visualize_jobs.pl on the given database with the given arguments
   Returntype  : None
@@ -363,6 +386,8 @@ sub visualize_jobs {
   Arg[1]      : String $url. The location of the database
   Arg[2]      : Arrayref $args. Extra arguments given to peekJob.pl
   Arg[3]      : String $test_name (optional). The name of the test
+  Arg[4]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
+                key that is understood is "expect_failure" to reverse the expectation of the test.
   Example     : peekJob($url, [-job_id => 1], 'Check params for job 1');
   Description : Very generic function to run peekJob.pl on the given database with the given arguments
   Returntype  : None
@@ -382,6 +407,8 @@ sub peekJob {
   Arg[1]      : String $url. The location of the database
   Arg[2]      : Arrayref $args. Extra arguments given to db_cmd.pl
   Arg[3]      : String $test_name (optional). The name of the test
+  Arg[4]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
+                key that is understood is "expect_failure" to reverse the expectation of the test.
   Example     : db_cmd($url, [-sql => 'DROP DATABASE'], 'Drop the database');
   Description : Very generic function to run db_cmd.pl on the given database with the given arguments
   Returntype  : None
@@ -401,6 +428,8 @@ sub db_cmd {
   Arg[1]      : String $url. The location of the database
   Arg[2]      : String $sql. The SQL to run on the database
   Arg[3]      : String $test_name (optional). The name of the test
+  Arg[4]      : (optional) Hashref $flags. Flags given to the text framework. Currently the only
+                key that is understood is "expect_failure" to reverse the expectation of the test.
   Example     : run_sql_on_db($url, 'INSERT INTO sweets (name, quantity) VALUES (3, 'Snickers')');
   Description : Execute an SQL command on the given database and test its execution. This expects the
                 command-line client to return a non-zero code in case of a failure.
@@ -412,8 +441,10 @@ sub db_cmd {
 =cut
 
 sub run_sql_on_db {
-    my ($url, $sql, $test_name) = @_;
-    return _test_ehive_script('db_cmd', $url, [-sql => $sql], $test_name // 'Can run '.$sql);
+    my ($url, $sql, $test_name, $flags) = @_;
+    $flags ||= {};
+    $test_name //= $flags->{expect_failure} ? $sql.' fails' : 'Can run '.$sql;
+    return _test_ehive_script('db_cmd', $url, [-sql => $sql], $test_name, $flags);
 }
 
 

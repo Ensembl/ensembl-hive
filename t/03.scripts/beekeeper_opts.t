@@ -66,14 +66,11 @@ my $pipeline_url = get_test_url_or_die();
     is($found_beekeeper_dash_run, 1, 'A beekeeper with option -run was registered in the beekeeper table');
 
     # Check that -run -job_id with a non-existant job id fails with TASK_FAILED
-    # Not using beekeeper() because we expect the command to *fail*
-    my @bad_job_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $hive_dba->dbc->url, '-run', -job_id => 98765);
-    my $rc;
-    my $bk_stderr = capture_stderr {
-        $rc = system(@bad_job_cmd);
-    };
-    ok($rc, 'beekeeper -run -job_id 98765 exited with a non-zero return code');
-    like($bk_stderr, qr/Could not fetch Job with dbID=98765/, 'beekeeper complained that the job cannot be found');
+    beekeeper($hive_dba->dbc->url,
+        ['-run', -job_id => 98765],
+        'beekeeper complained that the job cannot be found',
+        {'expect_failure' => 1},
+    );
 
     $beekeeper_rows = $beekeeper_nta->fetch_all();
     is(scalar(@$beekeeper_rows), 3, 'After -sync, -run, and -run -job_id, there are exactly three entries in the beekeeper table');
@@ -87,16 +84,12 @@ my $pipeline_url = get_test_url_or_die();
     is($found_beekeeper_bad_job, 1, 'A beekeeper with option -job_id was registered in the beekeeper table');
 
     # Check that -loop -analyses_pattern with a non-matching pattern fails with TASK_FAILED
-    # Not using beekeeper() because we expect the command to *fail*
-    my @bad_pattern_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl',
-        -url => $hive_dba->dbc->url,
-        -analyses_pattern => 'this_matches_no_analysis',
-        '-loop');
-    $bk_stderr = capture_stderr {
-        $rc = system(@bad_pattern_cmd);
-    };
-    ok($rc, 'beekeeper -loop -analyses_pattern this_matches_no_analysis exited with a non-zero return code');
-    like($bk_stderr, qr/the -analyses_pattern 'this_matches_no_analysis' did not match any Analyses/, 'beekeeper complained that no analysis could be matched');
+    beekeeper(
+        $hive_dba->dbc->url,
+        ['-loop', -analyses_pattern => 'this_matches_no_analysis'],
+        'beekeeper complained that no analysis could be matched',
+        {'expect_failure' => 1},
+    );
 
     $beekeeper_rows = $beekeeper_nta->fetch_all();
     is(scalar(@$beekeeper_rows), 4, 'After 4 beekeeper commands, there are exactly 4 entries in the beekeeper table');
