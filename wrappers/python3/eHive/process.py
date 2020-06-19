@@ -86,7 +86,7 @@ class BaseRunnable:
         # UTF8 encoding has never been tested. Just hope it works :)
         try:
             self.__write_pipe.write(bytes(j+"\n", 'utf-8'))
-        except BrokenPipeError as e:
+        except BrokenPipeError:
             raise LostHiveConnectionException("__write_pipe") from None
 
     def __send_response(self, response):
@@ -95,7 +95,7 @@ class BaseRunnable:
         # Like above, UTF8 encoding has never been tested. Just hope it works :)
         try:
             self.__write_pipe.write(bytes('{"response": "' + str(response) + '"}\n', 'utf-8'))
-        except BrokenPipeError as e:
+        except BrokenPipeError:
             raise LostHiveConnectionException("__write_pipe") from None
 
     def __read_message(self):
@@ -105,7 +105,7 @@ class BaseRunnable:
             l = self.__read_pipe.readline()
             self.__print_debug(" ... -> ", l[:-1].decode())
             return json.loads(l.decode())
-        except BrokenPipeError as e:
+        except BrokenPipeError:
             raise LostHiveConnectionException("__read_pipe") from None
         except ValueError as e:
             # HiveJSONMessageException is a more meaningful name than ValueError
