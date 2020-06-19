@@ -57,6 +57,8 @@ def testRunnable(testcase, runnableClass, inputParameters, refEvents, config=Non
                 - no_cleanup: bool, default False.
                               whether the temporary directory is removed at the end
                               of the run.
+                - debug: int, default 0.
+                         the debug level.
                 - test_autoflow: bool, default not set.
                                  when set, check that this is the final value of the
                                  job's autoflow attribute.
@@ -104,6 +106,8 @@ def testRunnable(testcase, runnableClass, inputParameters, refEvents, config=Non
             job.lethal_for_worker = False
             job.transient_error = True
             self.input_job = job
+
+            self.debug = self.__config.get('debug', 0)
 
         def __job_life_cycle(self):
             """Run the job's life cycle. This must match BaseRunnable.__job_life_cycle"""
