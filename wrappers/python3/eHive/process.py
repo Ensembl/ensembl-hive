@@ -19,12 +19,12 @@ This module mainly implements python's counterpart of GuestProcess. Read
 the later for more information about the JSON protocol used to communicate.
 """
 
+import json
 import os
 import sys
-import json
+import traceback
 import unittest
 import warnings
-import traceback
 
 from . import params
 
