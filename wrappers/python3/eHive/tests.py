@@ -54,6 +54,9 @@ def testRunnable(testcase, runnableClass, inputParameters, refEvents, config=Non
                             pre_cleanup should run).
                 - no_write: bool, default False.
                             whether write_output is skipped.
+                - no_cleanup: bool, default False.
+                              whether the temporary directory is removed at the end
+                              of the run.
                 - test_autoflow: bool, default not set.
                                  when set, check that this is the final value of the
                                  job's autoflow attribute.
@@ -131,7 +134,8 @@ def testRunnable(testcase, runnableClass, inputParameters, refEvents, config=Non
             except Exception as e:
                 self.__handle_exception(e)
 
-            self.__cleanup_worker_temp_directory()
+            if not self.__config.get('no_cleanup'):
+                self.__cleanup_worker_temp_directory()
 
         def __run_method_if_exists(self, method):
             """Run the method (one of "fetch_input", "run", "write_output",
