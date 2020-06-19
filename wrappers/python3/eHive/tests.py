@@ -52,8 +52,8 @@ def testRunnable(testcase, runnableClass, inputParameters, refEvents, config=Non
                 - is_retry: bool or int, default False.
                             whether the job is considered a retry (i.e.  whether
                             pre_cleanup should run).
-                - execute_writes: bool or int, default True.
-                                  whether write_output is run.
+                - no_write: bool, default False.
+                            whether write_output is skipped.
                 - test_autoflow: bool, default not set.
                                  when set, check that this is the final value of the
                                  job's autoflow attribute.
@@ -109,7 +109,7 @@ def testRunnable(testcase, runnableClass, inputParameters, refEvents, config=Non
             steps = ['fetch_input', 'run']
             if self.input_job.retry_count:
                 steps.insert(0, 'pre_cleanup')
-            if self.__config.get('execute_writes', 1):
+            if not self.__config.get('no_write'):
                 steps.append('write_output')
                 steps.append('post_healthcheck')
 
