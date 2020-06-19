@@ -22,8 +22,8 @@ All the specific warnings and exceptions inherit from ParamWarning
 and ParamException.
 """
 
-import numbers
 import collections
+import numbers
 
 
 class ParamWarning(Warning):
