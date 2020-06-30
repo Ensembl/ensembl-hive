@@ -414,6 +414,9 @@ sub remove {    # remove the object by primary_key
     my $self        = shift @_;
     my $object      = shift @_;
 
+    # the object hasn't actually been stored yet / in this database
+    return if(UNIVERSAL::can($object, 'adaptor') and (!$object->adaptor or $object->adaptor != $self));
+
     my $primary_key_constraint  = $self->primary_key_constraint( $self->slicer($object, $self->primary_key()) );
 
     return $self->remove_all( $primary_key_constraint );
