@@ -213,7 +213,7 @@ class BaseRunnable(object):
     def dataflow(self, output_ids, branch_name_or_code = 1):
         """Dataflows the output_id(s) on a given branch (default 1). Returns whatever the Perl side returns"""
         if branch_name_or_code == 1:
-            self.autoflow = False
+            self.input_job.autoflow = False
         self.__send_message('DATAFLOW', {'output_ids': output_ids, 'branch_name_or_code': branch_name_or_code, 'params': {'substituted': self.__params.param_hash, 'unsubstituted': self.__params.unsubstituted_param_hash}})
         return self.__read_message()['response']
 
