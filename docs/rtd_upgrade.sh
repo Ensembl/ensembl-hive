@@ -31,7 +31,7 @@ mkdir packages
 cd packages
 # List of extra packages we need
 echo http://archive.ubuntu.com/ubuntu/pool/main/libd/libdbi-perl/libdbi-perl_1.640-1_amd64.deb \
-     http://archive.ubuntu.com/ubuntu/pool/universe/libd/libdbd-sqlite3-perl/libdbd-sqlite3-perl_1.58-1_amd64.deb \
+     http://archive.ubuntu.com/ubuntu/pool/universe/libd/libdbd-sqlite3-perl/libdbd-sqlite3-perl_1.56-1_amd64.deb \
      http://archive.ubuntu.com/ubuntu/pool/universe/libj/libjson-xs-perl/libjson-xs-perl_3.040-1_amd64.deb \
      http://archive.ubuntu.com/ubuntu/pool/main/libj/libjson-perl/libjson-perl_2.90-1_all.deb \
      http://archive.ubuntu.com/ubuntu/pool/universe/libc/libcommon-sense-perl/libcommon-sense-perl_3.74-2build2_amd64.deb \
