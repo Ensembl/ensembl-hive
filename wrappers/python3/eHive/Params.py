@@ -144,6 +144,11 @@ class ParamContainer(object):
         The result is a string (like structure)
         """
         self.debug_print("subst_all_hashpairs", structure)
+        
+        # Allow a single literal hash?
+        if structure.count("#") == 1:
+            return structure
+        
         result = []
         while True:
             (head,_,tmp) = structure.partition('#')
