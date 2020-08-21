@@ -160,7 +160,7 @@ class ParamContainer(object):
         """
         self.debug_print("subst_all_hashpairs", structure)
         
-        # Allow a single literal hash?
+        # Allow a single literal hash
         if structure.count("#") == 1:
             return structure
         
