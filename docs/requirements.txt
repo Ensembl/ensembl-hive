@@ -1,1 +1,2 @@
 sphinxcontrib-doxylink==1.3
+doxypypy
