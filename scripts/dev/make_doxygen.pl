@@ -86,10 +86,9 @@ sub generate_docs_doxygen_python {
     chomp $doxy_bin;
     die "Cannot run doxygen binary, please make sure it is installed and is in the path.\n" unless(-r $doxy_bin);
 
-    my $doxy_filter = `which doxypy`;
-    chomp $doxy_filter;
-
-    die "Cannot find the Doxygen Python filter 'doxypy' in the current PATH.\n" unless -e $doxy_filter;
+    my $doxypypy = `which doxypypy`;
+    chomp $doxypypy;
+    die "Cannot find the Doxygen Python filter 'doxypypy' in the current PATH.\n" unless -e $doxypypy;
 
     my @cmds = (
         "rm -rf $doxy_target/python3",
@@ -100,9 +99,9 @@ sub generate_docs_doxygen_python {
         "echo 'OUTPUT_DIRECTORY       = $doxy_target'",
         "echo 'STRIP_FROM_PATH        = $ehrd/wrappers/python3'",
         "echo 'INPUT                  = $ehrd/wrappers/python3'",
-        "echo 'INPUT_FILTER           = $doxy_filter'",
         "echo 'HTML_OUTPUT            = python3'",
         "echo 'FILE_PATTERNS          = *.py README.md'",
+        "echo 'FILTER_PATTERNS        = *.py=$ehrd/scripts/dev/doxypypy_filter.sh'",
         "echo 'EXTRACT_PRIVATE        = YES'",
         "echo 'EXTRACT_STATIC         = YES'",
         "echo 'CLASS_DIAGRAMS         = YES'",
