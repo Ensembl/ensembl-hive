@@ -27,7 +27,9 @@ class TestRunnable(eHive.BaseRunnable):
     def param_defaults(self):
         return {
             'alpha' : 37,
-            'beta' : 78
+            'beta' : 78,
+            'gamma' : '#alpha#',
+            'delta' : 'one#hash',
         }
 
     def fetch_input(self):
@@ -36,6 +38,8 @@ class TestRunnable(eHive.BaseRunnable):
         print("beta is", self.param_required('beta'))
         self.temp_dir = self.worker_temp_directory()
         print("my directory name is", self.temp_dir)
+        print("gamma is", self.param_required('gamma'))
+        print("delta is", self.param_required('delta'))
 
     def run(self):
         self.warning("Run the world !")
