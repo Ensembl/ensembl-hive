@@ -22,13 +22,17 @@ class TestRunnable(eHive.BaseRunnable):
     def param_defaults(self):
         return {
             'alpha' : 37,
-            'beta' : 78
+            'beta' : 78,
+            'gamma' : '#alpha#',
+            'delta' : 'one#hash',
         }
 
     def fetch_input(self):
         self.warning("Fetch the world !")
         print("alpha is", self.param_required('alpha'))
         print("beta is", self.param_required('beta'))
+        print("gamma is", self.param_required('gamma'))
+        print("delta is", self.param_required('delta'))
 
     def run(self):
         self.warning("Run the world !")
