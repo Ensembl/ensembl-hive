@@ -258,6 +258,7 @@ class ParamContainerTestSubstitutions(unittest.TestCase):
         TestParamEntry('alpha', 2, 2),
         TestParamEntry('beta', 5, 5),
         TestParamEntry('delta', '#expr( #alpha#*#beta# )expr#', 10),
+        TestParamEntry('epsilon', 'alpha#beta', 'alpha#beta'),  # Single hash -> no substitution
 
         TestParamEntry('gamma', [10, 20, 33, 15], [10, 20, 33, 15]),
         TestParamEntry('gamma_prime', '#expr( #gamma# )expr#', [10, 20, 33, 15]),
