@@ -1,4 +1,5 @@
 #!/bin/bash
 
+echo "Platform LSF"
 echo 'My cluster name is test_clUster'
 
