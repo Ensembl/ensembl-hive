@@ -209,7 +209,7 @@ sub main {
             ? 'SELECT when_submitted, when_started, when_finished, worker_id, resource_class_id, analysis_id FROM worker LEFT JOIN role USING (worker_id)'
             : 'SELECT when_submitted, when_born, when_died, worker_id, resource_class_id FROM worker';
         my @tmp_dates = @{$hive_dbc->selectall_arrayref($sql)};
-        warn scalar(@tmp_dates), " rows\n" if $verbose;
+        warn scalar(@tmp_dates), " rows in ", $hive_dbc->dbname, "\n" if $verbose;
 
         foreach my $db_entry (@tmp_dates) {
             my ($when_submitted, $when_born, $when_died, $worker_id, $resource_class_id, $analysis_id) = @$db_entry;
