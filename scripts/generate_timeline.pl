@@ -247,6 +247,7 @@ sub main {
                 add_event(\%layers, $key_value, $when_submitted, $when_born, 'length_by_60', $resolution);
             }
         }
+        $hive_dbc->disconnect_if_idle;
     }
     warn "Events recorded: ", scalar(keys %events), " ", scalar(keys %layers), "\n" if $verbose;
 
