@@ -589,7 +589,7 @@ You can optionally ask the script to generate an image with Gnuplot.
     generate_timeline.pl -url mysql://username:secret@hostname:port/database -mode memory -output timeline_memory.png
 
         # Draw the CPU-usage timeline across several databases
-    generate_timeline.pl -url mysql://username:secret@hostname:port/database -url mysql://username:secret@hostname:port/another_database -mode cpu -output timeline_cpu.png
+    generate_timeline.pl -url mysql://username:secret@hostname:port/database -url mysql://username:secret@hostname:port/another_database -mode cores -output timeline_cpu.png
 
 
 =head1 OPTIONS
