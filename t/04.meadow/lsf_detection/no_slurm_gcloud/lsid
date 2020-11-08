@@ -1,0 +1,10 @@
+#!/bin/sh
+
+exec cat <<EOF
+Slurm 20.02.3, Feb 1 2020
+Copyright SchedMD LLC, 2010-2017.
+
+My cluster name is g2
+My master name is g2-controller
+EOF
+

@@ -21,13 +21,14 @@ use warnings;
 use Cwd;
 use File::Basename;
 
-use Test::More tests => 22;
+use Test::More tests => 24;
 use Test::Exception;
 
 use Bio::EnsEMBL::Hive::Utils::Config;
 
 BEGIN {
     use_ok( 'Bio::EnsEMBL::Hive::Valley' );
+    use_ok( 'Bio::EnsEMBL::Hive::Meadow::LSF' );
 }
 
 # Need EHIVE_ROOT_DIR to access the default config file
@@ -222,6 +223,24 @@ lives_and( sub {
 }, 'Suppressed bacct when AccountingDisabled when checking a date range');
 
 } # end local $ENV{'PATH'}
+
+subtest "Cluster detection", sub {
+    my $lsf_detection_root_dir = $ENV{'EHIVE_ROOT_DIR'}.'/t/04.meadow/lsf_detection';
+    opendir( my $dir_fh, $lsf_detection_root_dir) || die "Can't opendir $lsf_detection_root_dir: $!";
+    foreach my $subdir ( readdir($dir_fh) ) {
+        next unless -d "$lsf_detection_root_dir/$subdir";
+        local $ENV{'PATH'} = "$lsf_detection_root_dir/$subdir:$ini_path";
+        if ($subdir =~ /^ok_(.*)$/) {
+            my $detected_name = Bio::EnsEMBL::Hive::Meadow::LSF::name();
+            ok($detected_name, "Detects $subdir");
+            is($detected_name, $1, "Correct cluster name");
+        } elsif ($subdir =~ /^no/) {
+            my $detected_name = Bio::EnsEMBL::Hive::Meadow::LSF::name();
+            ok(!$detected_name, "Does not detect $subdir");
+        }
+    }
+    closedir($dir_fh);
+};
 
 done_testing();
 
