@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# Old LSF version (7.*)
+# http://sunray2.mit.edu/kits/platform-lsf/7.0.6/1/guides/kit_lsf_guide_source/admin/cluster_ops.html
+exec cat <<EOF
+Platform LSF 7 Update 6 May 6 2009
+Copyright 1992-2009 Platform Computing Corporation
+
+My cluster name is cluster1
+My master name is hostA 
+EOF
+

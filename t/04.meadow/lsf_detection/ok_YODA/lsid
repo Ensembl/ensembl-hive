@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# LSF EBI "yoda" farm
+exec cat <<EOF
+IBM Spectrum LSF Standard 10.1.0.0, Jul 08 2016
+Copyright International Business Machines Corp. 1992, 2016.
+US Government Users Restricted Rights - Use, duplication or disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+
+My cluster name is YODA
+My master name is hh-yoda-02-02.ebi.ac.uk
+EOF
+
