@@ -35,9 +35,12 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 my @config_files = Bio::EnsEMBL::Hive::Utils::Config->default_config_files();
 my $config = Bio::EnsEMBL::Hive::Utils::Config->new(@config_files);
 
+my $ini_path = $ENV{'PATH'};
+
 # WARNING: the data in this script must be in sync with what the fake
 # binaries output
-$ENV{'PATH'} = $ENV{'EHIVE_ROOT_DIR'}.'/t/04.meadow/fake_bin:'.$ENV{'PATH'};
+{ # begin local $ENV{'PATH'}
+$ENV{'PATH'} = $ENV{'EHIVE_ROOT_DIR'}.'/t/04.meadow/fake_bin:'.$ini_path;
 
 my $test_pipeline_name = 'tracking_homo_sapiens_funcgen_81_38_hive';
 my $test_meadow_name = 'test_clUster';
@@ -217,6 +220,8 @@ lives_and( sub {
     my $h = $lsf_meadow->get_report_entries_for_time_interval('2015-10-11 12:23:45', '2015-12-12 23:56:59', 'kb3');
     is_deeply($h, {}, 'No bacct output when accounting disabled');
 }, 'Suppressed bacct when AccountingDisabled when checking a date range');
+
+} # end local $ENV{'PATH'}
 
 done_testing();
 
