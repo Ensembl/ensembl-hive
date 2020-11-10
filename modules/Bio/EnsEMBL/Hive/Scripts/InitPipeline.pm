@@ -59,7 +59,18 @@ sub init_pipeline {
     $hive_dba->dbc->requires_write_access();
 
     print "> Parsing the PipeConfig file and adding objects (this may take a while).\n\n";
-    $pipeconfig_object->add_objects_from_config( $pipeline );
+    eval {
+        $pipeconfig_object->add_objects_from_config( $pipeline );
+    };
+    if ($@) {
+        print "\n> Error: $@\n";
+        print "> Dropping the database due to errors.\n\n";
+        my $drop_cmd = $pipeconfig_object->db_cmd('DROP DATABASE IF EXISTS');
+        if (system($drop_cmd)) {
+            die "Can't drop the database ".$pipeconfig_object->pipeline_url();
+        }
+        exit 1;
+    }
 
     if($tweaks and @$tweaks) {
         print "> Applying tweaks.\n\n";
