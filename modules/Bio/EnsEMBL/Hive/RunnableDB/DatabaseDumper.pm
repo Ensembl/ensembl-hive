@@ -250,12 +250,10 @@ sub fetch_input {
     my $completion_signature = sprintf('dump_%d_restored', defined $self->input_job->dbID ? $self->input_job->dbID : 0);
 
     if ($self->param('skip_dump') or $self->param($completion_signature)) {
-        # A command that always succeeds
-        $self->param('cmd', 'true');
         if ($self->param('skip_dump')) {
-            $self->warning('Skipping the dump because "skip_dump" is defined');
+            $self->complete_early('Skipping the dump because "skip_dump" is defined');
         } else {
-            $self->warning("Skipping the dump because this database has been restored from the target dump. We don't want to overwrite it");
+            $self->complete_early("Skipping the dump because this database has been restored from the target dump. We don't want to overwrite it");
         }
     } elsif ($self->param('nb_ehive_tables')) {
         # OK, we can dump and this is an eHive database.
