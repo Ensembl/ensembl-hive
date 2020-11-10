@@ -255,8 +255,7 @@ sub fetch_input {
         } else {
             $self->complete_early("Skipping the dump because this database has been restored from the target dump. We don't want to overwrite it");
         }
-    } elsif ($self->param('nb_ehive_tables')) {
-        # OK, we can dump and this is an eHive database.
+    } elsif ($self->param('nb_ehive_tables') and !$self->worker->adaptor) {
         # We add the signature to the dump, so that the
         # job won't rerun on a restored database
         # We're very lucky that gzipped streams can be concatenated and the
@@ -265,7 +264,7 @@ sub fetch_input {
         $extra_sql =~ s/>/>>/;
         $self->param('cmd', "$cmd; $extra_sql");
     } else {
-        # Direct dump on a non-eHive database
+        # No signature to add (non-eHive database or standalone job)
         $self->param('cmd', $cmd);
     }
 }
