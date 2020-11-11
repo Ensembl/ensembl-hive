@@ -192,12 +192,7 @@ sub main {
         $key_name{"$pipeline..".$_->dbID} = $_->display_name for $pipeline->collection_of($key eq 'analysis' ? 'Analysis' : 'ResourceClass')->list;
         $key_name{"$pipeline..-1"} = 'UNSPECIALIZED';
     }
-    if (scalar(@pipelines) > 1) {
-        # Add a pseudo category for each display name
-        foreach my $display_name (values %key_name) {
-            $key_name{$display_name} = $display_name;
-        }
-    }
+    my @key_names = values %key_name;
     warn scalar(keys %key_name), " keys: ", Dumper \%key_name if $verbose;
 
     # Get the events from the database
@@ -222,9 +217,8 @@ sub main {
             $resource_class_id  //= $default_resource_class{"$pipeline..$analysis_id"};
             my $key_value = $key eq 'analysis' ? $analysis_id : $resource_class_id;
             $key_value = -1 if not defined $key_value;
-
             $key_value = "$pipeline..$key_value";
-            $key_value = $key_name{$key_value} if scalar(@pipelines) > 1;
+            $key_value = $key_name{$key_value};
             $resource_class_id = "$pipeline..$resource_class_id";
             $worker_id = "$pipeline..$worker_id";
 
@@ -253,7 +247,7 @@ sub main {
 
     my @event_dates = sort {$a cmp $b} (keys %events);
 
-    my $time_samples_data = cumulate_events(\%events, [keys %key_name], $start_date, $end_date, \%events, $verbose);
+    my $time_samples_data = cumulate_events(\%events, \@key_names, $start_date, $end_date, \%events, $verbose);
     my %tot_analysis = %{$time_samples_data->[0]};
     my @xdata        = map {$_->[0]} @{$time_samples_data->[1]};
     my @data_timings = map {$_->[1]} @{$time_samples_data->[1]};
@@ -261,12 +255,11 @@ sub main {
 
     my $total_total = sum(values %tot_analysis);
 
-    my @sorted_key_ids = sort {($tot_analysis{$b} <=> $tot_analysis{$a}) || (lc $key_name{$a} cmp lc $key_name{$b})} (grep {$tot_analysis{$_}} keys %tot_analysis);
+    my @sorted_key_ids = sort {($tot_analysis{$b} <=> $tot_analysis{$a}) || (lc $a cmp lc $b)} (grep {$tot_analysis{$_}} keys %tot_analysis);
     warn "Sorted key_ids: ", Dumper \@sorted_key_ids if $verbose;
-    warn Dumper([map {$key_name{$_}} @sorted_key_ids]) if $verbose;
 
     if (not $gnuplot_terminal) {
-        print join("\t", 'date', "OVERALL_$mode", map {$key_name{$_}} @sorted_key_ids), "\n";
+        print join("\t", 'date', "OVERALL_$mode", @sorted_key_ids), "\n";
         print join("\t", 'total', $total_total, map {$tot_analysis{$_}} @sorted_key_ids), "\n";
         print join("\t", 'proportion', 'NA', map {$tot_analysis{$_}/$total_total} @sorted_key_ids), "\n";
         my $s = 0;
@@ -278,7 +271,7 @@ sub main {
         return;
     }
 
-    my $layer_samples_data = cumulate_events(\%layers, [keys %key_name], $start_date, $end_date, \%events, $verbose);
+    my $layer_samples_data = cumulate_events(\%layers, \@key_names, $start_date, $end_date, \%events, $verbose);
     my @layer_timings = map {$_->[1]} @{$layer_samples_data->[1]};
 
     if ($mode eq 'pending_time') {
@@ -305,7 +298,7 @@ sub main {
     # Each analysis is plotted as the sum of itself and the top ones
     foreach my $i (reverse 1..$n_relevant_analysis) {
         add_dataset(\@datasets, \@data_timings, \@layer_timings, \@xdata,
-            [@sorted_key_ids[0..($i-1)]], $key_name{$sorted_key_ids[$i-1]}, $palette[$i-1], $pseudo_zero_value, $additive_layer ? [$sorted_key_ids[$i-1]] : undef);
+            [@sorted_key_ids[0..($i-1)]], $sorted_key_ids[$i-1], $palette[$i-1], $pseudo_zero_value, $additive_layer ? [$sorted_key_ids[$i-1]] : undef);
     }
 
     my $safe_database_location = scalar(@pipelines) > 1 ? scalar(@pipelines) . ' pipelines' : $pipelines[0]->display_name;
