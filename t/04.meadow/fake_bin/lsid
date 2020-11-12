@@ -15,5 +15,6 @@
 # limitations under the License.
 
 
+echo "Platform LSF"
 echo 'My cluster name is test_clUster'
 

@@ -128,13 +128,13 @@ sub main {
     my @palette = qw(#E41A1C #377EB8 #4DAF4A #984EA3 #FF7F00 #FFFF33 #A65628 #F781BF #999999     #8DD3C7 #BEBADA #FB8072 #80B1D3 #FDB462 #B3DE69 #FCCDE5 #D9D9D9 #BC80BD #CCEBC5 #FFED6F    #2F4F4F);
 
     my %terminal_mapping = (
-        'emf' => 'emf',
-        'png' => 'png',
-        'svg' => 'svg',
-        'jpg' => 'jpeg',
-        'gif' => 'gif',
-        'ps'  => 'postscript eps enhanced colour',
-        'pdf' => 'pdf colour enhanced',
+        'emf' => 'emf noenhanced',
+        'png' => 'png noenhanced',
+        'svg' => 'svg noenhanced',
+        'jpg' => 'jpeg noenhanced',
+        'gif' => 'gif noenhanced',
+        'ps'  => 'postscript eps noenhanced colour',
+        'pdf' => 'pdf colour noenhanced',
     );
     my $gnuplot_terminal = undef;
     if ($output and $output =~ /\.(\w+)$/) {

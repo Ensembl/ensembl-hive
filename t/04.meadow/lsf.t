@@ -21,13 +21,14 @@ use warnings;
 use Cwd;
 use File::Basename;
 
-use Test::More tests => 23;
+use Test::More tests => 25;
 use Test::Exception;
 
 use Bio::EnsEMBL::Hive::Utils::Config;
 
 BEGIN {
     use_ok( 'Bio::EnsEMBL::Hive::Valley' );
+    use_ok( 'Bio::EnsEMBL::Hive::Meadow::LSF' );
 }
 
 # Need EHIVE_ROOT_DIR to access the default config file
@@ -39,9 +40,12 @@ throws_ok {
     my $valley = Bio::EnsEMBL::Hive::Valley->new($config, 'LSF');
 } qr/Meadow 'LSF' does not seem to be available on this machine, please investigate at/, 'No LSF meadow if "lsid" is not present (or does not behave well';
 
+my $ini_path = $ENV{'PATH'};
+
 # WARNING: the data in this script must be in sync with what the fake
 # binaries output
-local $ENV{'PATH'} = $ENV{'EHIVE_ROOT_DIR'}.'/t/04.meadow/fake_bin:'.$ENV{'PATH'};
+{ # begin local $ENV{'PATH'}
+$ENV{'PATH'} = $ENV{'EHIVE_ROOT_DIR'}.'/t/04.meadow/fake_bin:'.$ini_path;
 
 my $test_pipeline_name = 'tracking_homo_sapiens_funcgen_81_38_hive';
 my $test_meadow_name = 'test_clUster';
@@ -228,6 +232,26 @@ lives_and( sub {
     my $h = $lsf_meadow->get_report_entries_for_time_interval('2015-10-11 12:23:45', '2015-12-12 23:56:59', 'kb3');
     is_deeply($h, {}, 'No bacct output when accounting disabled');
 }, 'Suppressed bacct when AccountingDisabled when checking a date range');
+
+} # end local $ENV{'PATH'}
+
+subtest "Cluster detection", sub {
+    my $lsf_detection_root_dir = $ENV{'EHIVE_ROOT_DIR'}.'/t/04.meadow/lsf_detection';
+    opendir( my $dir_fh, $lsf_detection_root_dir) || die "Can't opendir $lsf_detection_root_dir: $!";
+    foreach my $subdir ( readdir($dir_fh) ) {
+        next unless -d "$lsf_detection_root_dir/$subdir";
+        local $ENV{'PATH'} = "$lsf_detection_root_dir/$subdir:$ini_path";
+        if ($subdir =~ /^ok_(.*)$/) {
+            my $detected_name = Bio::EnsEMBL::Hive::Meadow::LSF::name();
+            ok($detected_name, "Detects $subdir");
+            is($detected_name, $1, "Correct cluster name");
+        } elsif ($subdir =~ /^no/) {
+            my $detected_name = Bio::EnsEMBL::Hive::Meadow::LSF::name();
+            ok(!$detected_name, "Does not detect $subdir");
+        }
+    }
+    closedir($dir_fh);
+};
 
 done_testing();
 

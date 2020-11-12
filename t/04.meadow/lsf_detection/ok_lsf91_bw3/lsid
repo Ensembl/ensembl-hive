@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Old LSF version (9.*)
+# https://www.bsc.es/support/LSF/9.1.2/lsf_admin/index.htm?cluster_info_viewing_lsf.html~main
+exec cat <<EOF
+IBM Platform LSF Standard 9.1.2, May 5 2013 
+© Copyright IBM Corporation 1992, 2013. 
+US Governmant Users Restricted Rights - Use, duplication or disclosure restricted
+  by GSA ADP Schedule Contract with IBM Corp.
+My cluster name is lsf91_bw3 
+My master name is delpe04.lsf.ibm.com
+EOF
+

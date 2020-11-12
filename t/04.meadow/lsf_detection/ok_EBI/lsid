@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# LSF EBI "noah" farm
+exec cat <<EOF
+IBM Spectrum LSF Standard 10.1.0.6, May 25 2018
+Copyright International Business Machines Corp. 1992, 2016.
+US Government Users Restricted Rights - Use, duplication or disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+
+My cluster name is EBI
+My master name is ebi-master-001
+EOF
+
