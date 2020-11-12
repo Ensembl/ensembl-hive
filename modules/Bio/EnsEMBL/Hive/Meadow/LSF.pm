@@ -77,12 +77,16 @@ our $VERSION = '5.2';       # Semantic version of the Meadow interface:
 =cut
 
 sub name {
-    my $mcni = 'My cluster name is';
+    my $re_lsf_names = qr/(IBM Spectrum LSF|Platform LSF|openlava project)/;
+    my $re_cluster_name = qr/^My cluster name is\s+(\S+)/;
     my @lsid_out = `lsid 2>/dev/null`;
 
+    my $is_lsf = 0;
     foreach my $lsid_line (@lsid_out) {
-        if ($lsid_line =~ /^$mcni\s+(\S+)/) {
-            return $1;
+        if ($lsid_line =~ $re_lsf_names) {
+            $is_lsf = 1;
+        } elsif ($lsid_line =~ $re_cluster_name) {
+            return $1 if $is_lsf;
         }
     }
 }

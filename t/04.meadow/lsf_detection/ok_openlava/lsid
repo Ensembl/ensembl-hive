@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# openlava
+# https://jensd.be/404/linux/install-and-use-the-openlava-job-scheduler-and-openlava-web-gui-on-centos
+exec cat <<EOF
+openlava project 2.2, Nov  6 2014
+
+My cluster name is openlava
+My master name is node01
+EOF
+
