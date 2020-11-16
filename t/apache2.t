@@ -90,6 +90,7 @@ foreach my $f (@source_files) {
     next if $f =~ /\/docutils\//;
     next if $f =~ /\/fake_bin\//;
     next if $f =~ /\/deceptive_bin\//;
+    next if $f =~ /\/lsf_detection\//;
     next if $f =~ /\/deps\//;
     # Unlicensed files
     next if $f =~ /\.(png|jpg|pdf|pyc|tgz|txt|dot|rst|fa|fastq|md|json|xml)$/;
