@@ -1,4 +1,4 @@
-=pod 
+=pod
 
 =head1 NAME
 
@@ -115,6 +115,8 @@ sub dataflow {
             my $key_signature = $accu_address;
             $key_signature=~s/(\w+)/$emitting_job->_param_possibly_overridden($1,$output_id)/eg;
 
+            $self->checkEmptyKeys($key_signature, $accu_address);
+
             push @rows, {
                 'sending_job_id'            => $sending_job_id,
                 'receiving_semaphore_id'    => $receiving_semaphore_id,
@@ -131,6 +133,60 @@ sub dataflow {
     }
 }
 
+sub checkEmptyKeys {
+  my ( $self, $key_signature, $accu_address ) = @_;
+  # we get number of brackets, that are empty for key signature and address
+  # and verify that each empty brackets in key_signature is empty in adress
+  my @curvedBrackets = $self->findEmptyBrackets($key_signature, '{', '}');
+  my @curvedBracketsAddress = $self->findEmptyBrackets($accu_address, '{', '}');
+  my %addressBrackets = map { $_ => 1 } @curvedBracketsAddress;
+
+  foreach my $position ( @curvedBrackets ) {
+    if (!exists($addressBrackets{$position})) {
+        die "Null hash key in accumulator";
+    }
+  }
+
+  my @squareBrackets = $self->findEmptyBrackets($key_signature, '[', ']');
+  my @squareBracketsAddress = $self->findEmptyBrackets($accu_address, '[', ']');
+  %addressBrackets = map { $_ => 1 } @squareBracketsAddress;
+
+  foreach my $position ( @squareBrackets ) {
+    if (!exists($addressBrackets{$position})) {
+        die "Null hash key in accumulator";
+    }
+  }
+}
+
+sub findEmptyBrackets {
+    my ( $self, $string, $open, $close ) = @_;
+
+    my @result;
+    my $offset = 0;
+    my $openIndex = 0;
+    my $numberOfBracket = 0;
+    my $i = 0;
+
+    # we get first open bracket. If next goes closed bracket -
+    # we remember the number of this empty bracket (not position,
+    # it can differs due key substitution)
+    # than we repeat search with offset considering found bracket
+    # an array of empty brackets number we return;
+    while ($openIndex != -1) {
+      $openIndex = index($string, $open, $offset);
+      if ( $openIndex != -1) {
+        $numberOfBracket = $numberOfBracket + 1;
+        if ($close eq substr($string, $openIndex+1, 1))  {
+          @result[$i] = $numberOfBracket;
+          $i = $i + 1;
+        }
+      }
+      $offset = $openIndex+1;
+
+    };
+
+    return @result;
+}
 
 sub toString {
     my $self = shift @_;
@@ -139,4 +195,3 @@ sub toString {
 }
 
 1;
-
