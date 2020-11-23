@@ -137,23 +137,23 @@ sub checkEmptyKeys {
   my ( $self, $key_signature, $accu_address ) = @_;
   # we get number of brackets, that are empty for key signature and address
   # and verify that each empty brackets in key_signature is empty in adress
-  my @curvedBrackets = $self->findEmptyBrackets($key_signature, '{', '}');
-  my @curvedBracketsAddress = $self->findEmptyBrackets($accu_address, '{', '}');
-  my %addressBrackets = map { $_ => 1 } @curvedBracketsAddress;
+  my $curvedBrackets = $self->findEmptyBrackets($key_signature, '{', '}');
+  my $curvedBracketsAddress = $self->findEmptyBrackets($accu_address, '{', '}');
+  my %addressBrackets = map { $_ => 1 } @$curvedBracketsAddress;
 
-  foreach my $position ( @curvedBrackets ) {
+  foreach my $position ( @$curvedBrackets ) {
     if (!exists($addressBrackets{$position})) {
-        die "Null hash key in accumulator";
+        die "Null hash key in accumulator, empty curved brackets number " . $position;
     }
   }
 
-  my @squareBrackets = $self->findEmptyBrackets($key_signature, '[', ']');
-  my @squareBracketsAddress = $self->findEmptyBrackets($accu_address, '[', ']');
-  %addressBrackets = map { $_ => 1 } @squareBracketsAddress;
+  my $squareBrackets = $self->findEmptyBrackets($key_signature, '[', ']');
+  my $squareBracketsAddress = $self->findEmptyBrackets($accu_address, '[', ']');
+  %addressBrackets = map { $_ => 1 } @$squareBracketsAddress;
 
-  foreach my $position ( @squareBrackets ) {
+  foreach my $position ( @$squareBrackets ) {
     if (!exists($addressBrackets{$position})) {
-        die "Null hash key in accumulator";
+        die "Null array key in accumulator, empty square brackets number " . $position;
     }
   }
 }
@@ -161,7 +161,7 @@ sub checkEmptyKeys {
 sub findEmptyBrackets {
     my ( $self, $string, $open, $close ) = @_;
 
-    my @result;
+    my $result;
     my $offset = 0;
     my $openIndex = 0;
     my $numberOfBracket = 0;
@@ -177,7 +177,7 @@ sub findEmptyBrackets {
       if ( $openIndex != -1) {
         $numberOfBracket = $numberOfBracket + 1;
         if ($close eq substr($string, $openIndex+1, 1))  {
-          @result[$i] = $numberOfBracket;
+          $result->[$i] = $numberOfBracket;
           $i = $i + 1;
         }
       }
@@ -185,7 +185,7 @@ sub findEmptyBrackets {
 
     };
 
-    return @result;
+    return $result;
 }
 
 sub toString {
