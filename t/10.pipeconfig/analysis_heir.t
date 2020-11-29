@@ -64,9 +64,13 @@ subtest 'Drop on error' => sub {
     );
 
     my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $pipeline_url);
-    throws_ok {
-        $dbc->connect;
-    } qr/Could not connect to database.*DBI connect\(.*\) failed/s, q{The database doesn't exist};
+    if ($dbc->driver eq 'sqlite') {
+        ok(!-e $dbc->dbname, $dbc->dbname . q{ doesn't exist})
+    } else {
+        throws_ok {
+            $dbc->connect;
+        } qr/Could not connect to database.*DBI connect\(.*\) failed/s, q{The database doesn't exist};
+    }
 
 };
 
