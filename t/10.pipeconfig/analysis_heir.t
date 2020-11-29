@@ -18,11 +18,12 @@
 use strict;
 use warnings;
 
+use Test::Exception;
 use Test::More;
 use Data::Dumper;
 use Capture::Tiny 'capture_stderr';
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_url_or_die);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker db_cmd get_test_url_or_die);
 
 my $expected_error_pattern = qq{WARNING: Could not find a local analysis named 'oops_i_am_missing' \Q(dataflow from analysis 'first')};
 
@@ -49,6 +50,25 @@ my $gc_init_stderr = capture_stderr {
 };
 
 unlike($gc_init_stderr, qr/WARNING/, 'no warning from pipeline without missing analysis');
+
+subtest 'Drop on error' => sub {
+
+    # To ensure we start with the database being absent
+    db_cmd($pipeline_url, [-sql => 'DROP DATABASE IF EXISTS']);
+
+    # Will fail because PERL5LIB hasn't been updated to include the local directory
+    init_pipeline('TestPipeConfig::MissingAnalysis_conf', $pipeline_url, [], [],
+        {
+            'expect_failure' => qr/Can't locate TestPipeConfig\/MissingAnalysis_conf.pm in \@INC/,
+        }
+    );
+
+    my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $pipeline_url);
+    throws_ok {
+        $dbc->connect;
+    } qr/Could not connect to database.*DBI connect\(.*\) failed/s, q{The database doesn't exist};
+
+};
 
 done_testing();
 
