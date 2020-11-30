@@ -6,16 +6,7 @@
 
 =head1 DESCRIPTION
 
-    A data container object (methods are intelligent getters/setters) that corresponds to a row stored in 'dataflow_rule' table:
-
-    CREATE TABLE dataflow_rule (
-        dataflow_rule_id    int(10) unsigned NOT NULL AUTO_INCREMENT,
-        from_analysis_id    int(10) unsigned NOT NULL,
-        branch_code         int(10) default 1 NOT NULL,
-
-        PRIMARY KEY (dataflow_rule_id),
-        UNIQUE (from_analysis_id, to_analysis_url)
-    );
+    A data container object (methods are intelligent getters/setters) that corresponds to a row stored in 'dataflow_rule' table
 
     A dataflow rule is activated when a Bio::EnsEMBL::Hive::AnalysisJob::dataflow_output_id is called at any moment during a RunnableDB's execution.
     The current RunnableDB's analysis ($from_analysis) and the requested $branch_code (1 by default) define the entry conditions,
