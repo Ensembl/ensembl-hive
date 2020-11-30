@@ -471,7 +471,7 @@ sub toString {
             $include_analysis ? ( 'analysis='.($current_role ? $current_role->analysis->logic_name.'('.$current_role->analysis_id.')' : 'UNSPECIALIZED') ) : (),
             'resource_class_id='.($self->resource_class_id // 'NULL'),
             'meadow='.$self->meadow_type.'/'.$self->meadow_name,
-            'process='.$self->meadow_user.'@'.$self->meadow_host.'#'.$self->process_id,
+            'process='.$self->meadow_user.($self->meadow_host ? '@'.$self->meadow_host : 'UNALLOCATED').'#'.$self->process_id,
             'when_checked_in='.($self->when_checked_in // 'NEVER'),
             'batch_size='.($current_role ? $current_role->analysis->stats->get_or_estimate_batch_size() : 'UNSPECIALIZED'),
             'job_limit='.($self->job_limiter->available_capacity() // 'NONE'),
