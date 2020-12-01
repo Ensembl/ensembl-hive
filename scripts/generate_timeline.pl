@@ -674,6 +674,7 @@ what should be displayed on the y-axis. Allowed values are "workers" (default), 
 the path to a Perl script that defines a function named "get_key_name". The function is used to provide custom key names for analyses and
 resource classes instead of their own display names. The function must take the object (Analysis or ResourceClass) as a sole argument and
 return a (non empty) string.
+See scripts/dev/generate_timeline_example_key_transform_file.pl for an example.
 
 =item --resolution <integer>
 
