@@ -187,13 +187,13 @@ sub main {
         $default_resource_class{"$pipeline..".$_->dbID} = $_->resource_class_id for $pipeline->collection_of('Analysis')->list;
     }
     warn "default_resource_class: ", Dumper \%default_resource_class if $verbose;
-    my %key_name;
+    my %key_name_mapping;
     foreach my $pipeline (@pipelines) {
-        $key_name{"$pipeline..".$_->dbID} = $_->display_name for $pipeline->collection_of($key eq 'analysis' ? 'Analysis' : 'ResourceClass')->list;
-        $key_name{"$pipeline..-1"} = 'UNSPECIALIZED';
+        $key_name_mapping{"$pipeline..".$_->dbID} = $_->display_name for $pipeline->collection_of($key eq 'analysis' ? 'Analysis' : 'ResourceClass')->list;
+        $key_name_mapping{"$pipeline..-1"} = 'UNSPECIALIZED';
     }
-    my @key_names = values %key_name;
-    warn scalar(keys %key_name), " keys: ", Dumper \%key_name if $verbose;
+    my @key_names = values %key_name_mapping;
+    warn scalar(keys %key_name_mapping), " keys: ", Dumper \%key_name_mapping if $verbose;
 
     # Get the events from the database
     my %events = ();
@@ -215,30 +215,28 @@ sub main {
             # In case $resource_class_id is undef
             next unless $resource_class_id or $analysis_id;
             $resource_class_id  //= $default_resource_class{"$pipeline..$analysis_id"};
-            my $key_value = $key eq 'analysis' ? $analysis_id : $resource_class_id;
-            $key_value = -1 if not defined $key_value;
-            $key_value = "$pipeline..$key_value";
-            $key_value = $key_name{$key_value};
+            my $key_id = "$pipeline.." . (($key eq 'analysis' ? $analysis_id : $resource_class_id) // -1);
+            my $key_name = $key_name_mapping{$key_id};
             $resource_class_id = "$pipeline..$resource_class_id";
             $worker_id = "$pipeline..$worker_id";
 
             if ($mode eq 'workers') {
-                add_event(\%events, $key_value, $when_born, $when_died, 1, $resolution);
+                add_event(\%events, $key_name, $when_born, $when_died, 1, $resolution);
 
             } elsif ($mode eq 'memory') {
                 my $offset = ($mem_resources{$resource_class_id} || $default_memory) / 1024.;
-                add_event(\%events, $key_value, $when_born, $when_died, $offset, $resolution);
+                add_event(\%events, $key_name, $when_born, $when_died, $offset, $resolution);
                 $offset = ($used_res{$worker_id}->[0]) / 1024. if exists $used_res{$worker_id} and $used_res{$worker_id}->[0];
-                add_event(\%layers, $key_value, $when_born, $when_died, $offset, $resolution);
+                add_event(\%layers, $key_name, $when_born, $when_died, $offset, $resolution);
 
             } elsif ($mode eq 'cores') {
                 my $offset = ($cpu_resources{$resource_class_id} || $default_cores);
-                add_event(\%events, $key_value, $when_born, $when_died, $offset, $resolution);
+                add_event(\%events, $key_name, $when_born, $when_died, $offset, $resolution);
                 $offset = $used_res{$worker_id}->[1] if exists $used_res{$worker_id} and $used_res{$worker_id}->[1];
-                add_event(\%layers, $key_value, $when_born, $when_died, $offset, $resolution);
+                add_event(\%layers, $key_name, $when_born, $when_died, $offset, $resolution);
             } else {
-                add_event(\%events, $key_value, $when_submitted, $when_born, 1, $resolution);
-                add_event(\%layers, $key_value, $when_submitted, $when_born, 'length_by_60', $resolution);
+                add_event(\%events, $key_name, $when_submitted, $when_born, 1, $resolution);
+                add_event(\%layers, $key_name, $when_submitted, $when_born, 'length_by_60', $resolution);
             }
         }
         $hive_dbc->disconnect_if_idle;
