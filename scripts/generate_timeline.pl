@@ -39,7 +39,7 @@ exit(0);
 
 sub main {
 
-    my (@urls, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $help, $verbose, $mode, $start_date, $end_date, $output, $top, $default_memory, $default_cores, $key, $resolution);
+    my (@urls, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $help, $verbose, $mode, $start_date, $end_date, $output, $top, $default_memory, $default_cores, $key, $key_transform_file, $resolution);
 
     GetOptions(
                 # connect to the database:
@@ -58,6 +58,7 @@ sub main {
             'end_date=s'                 => \$end_date,
             'mode=s'                     => \$mode,
             'key=s'                      => \$key,
+            'key_transform_file=s'       => \$key_transform_file,
             'resolution=i'               => \$resolution,
             'top=f'                      => \$top,
             'mem=i'                      => \$default_memory,
@@ -127,6 +128,19 @@ sub main {
         $key = 'analysis';
     }
 
+    # Custom key transformations (categories)
+    if ($key_transform_file) {
+        unless (-e $key_transform_file) {
+            die "File '$key_transform_file' doesn't exist";
+        }
+        # "do" does some trick with @INC unless the path starts with one of qw(/ ./ ../)
+        $key_transform_file = "./$key_transform_file" unless $key_transform_file =~ /^.?.?\//;
+        do $key_transform_file;
+        unless (defined &get_key_name) {
+            die "'$key_transform_file' doesn't contain a function named 'get_key_name'";
+        }
+    }
+
     # Durations are rounded up to a multiple of this (number of minutes)
     $resolution ||= 1;
 
@@ -189,10 +203,16 @@ sub main {
     warn "default_resource_class: ", Dumper \%default_resource_class if $verbose;
     my %key_name_mapping;
     foreach my $pipeline (@pipelines) {
-        $key_name_mapping{"$pipeline..".$_->dbID} = $_->display_name for $pipeline->collection_of($key eq 'analysis' ? 'Analysis' : 'ResourceClass')->list;
+        foreach my $key_object ($pipeline->collection_of($key eq 'analysis' ? 'Analysis' : 'ResourceClass')->list) {
+            my $key_id = "$pipeline..".$key_object->dbID;
+            my $key_name = $key_transform_file ? get_key_name($key_object) : $key_object->display_name;
+            die "No key name for ".$key_object->toString unless $key_name;
+            $key_name_mapping{$key_id} = $key_name;
+        }
         $key_name_mapping{"$pipeline..-1"} = 'UNSPECIALIZED';
     }
-    my @key_names = values %key_name_mapping;
+    my %unique_key_names = map {$_ => 1} values %key_name_mapping;
+    my @key_names = keys %unique_key_names;
     warn scalar(keys %key_name_mapping), " keys: ", Dumper \%key_name_mapping if $verbose;
 
     # Get the events from the database
@@ -648,6 +668,12 @@ what should be displayed on the y-axis. Allowed values are "workers" (default), 
 =item --key <string>
 
 "analysis" (default) or "resource_class": how to bin the Workers
+
+=item --key_transform_file <string>
+
+the path to a Perl script that defines a function named "get_key_name". The function is used to provide custom key names for analyses and
+resource classes instead of their own display names. The function must take the object (Analysis or ResourceClass) as a sole argument and
+return a (non empty) string.
 
 =item --resolution <integer>
 
