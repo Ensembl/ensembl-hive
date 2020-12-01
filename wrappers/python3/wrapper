@@ -67,7 +67,7 @@ if mode not in available_modes:
 if len(sys.argv)-2 < len(available_modes[mode][1]):
     usage('Not enough arguments for mode "' + mode + '". Expecting: ' + ' '.join(available_modes[mode][1]))
 if len(sys.argv)-2 > len(available_modes[mode][1]):
-    usage('Too many arguments for mode "' + mode + '". Expecting: ' + (' '.join(available_modes[mode][1]) if len(available_modes[mode][1]) else '(none)'))
+    usage('Too many arguments for mode "' + mode + '". Expecting: ' + (' '.join(available_modes[mode][1]) if available_modes[mode][1] else '(none)'))
 
 available_modes[mode][0]()
 
