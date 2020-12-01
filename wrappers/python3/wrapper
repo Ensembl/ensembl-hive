@@ -40,7 +40,6 @@ def do_run():
 
 def do_build():
     print("Nothing to do")
-    return
 
 ## And here we select the mode
 
