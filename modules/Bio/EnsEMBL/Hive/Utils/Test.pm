@@ -46,7 +46,7 @@ use Bio::EnsEMBL::Hive::Scripts::StandaloneJob;
 our @ISA         = qw(Exporter);
 our @EXPORT      = ();
 our %EXPORT_TAGS = ();
-our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker beekeeper generate_graph visualize_jobs db_cmd seed_pipeline tweak_pipeline peekJob get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls make_hive_db safe_drop_database all_source_files);
+our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker beekeeper generate_graph visualize_jobs db_cmd seed_pipeline peekJob get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls make_hive_db safe_drop_database all_source_files);
 
 our $VERSION = '0.00';
 
