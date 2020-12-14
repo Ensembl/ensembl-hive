@@ -24,14 +24,20 @@ use File::Spec;
 use File::Basename qw/dirname/;
 use Test::More;
 use Test::Warnings;
-use Term::ANSIColor;
-use Bio::EnsEMBL::Hive::Utils::Test qw(all_source_files);
 
 if ( not $ENV{TEST_AUTHOR} ) {
   my $msg = 'Author test. Set $ENV{TEST_AUTHOR} to a true value to run.';
   plan( skip_all => $msg );
 }
 
+eval {
+  require Test::Perl::Critic;
+  require Perl::Critic::Utils;
+};
+if($@) {
+  plan( skip_all => 'Test::Perl::Critic required.' );
+  note $@;
+}
 
 #chdir into the file's target & request cwd() which should be fully resolved now.
 #then go back
@@ -40,45 +46,15 @@ my $original_dir = cwd();
 chdir($file_dir);
 my $cur_dir = cwd();
 chdir($original_dir);
-my $root = File::Spec->catdir($cur_dir, File::Spec->updir());
+my $root = File::Spec->catdir($cur_dir, File::Spec->updir(), File::Spec->updir());
 
+# Configure critic
+Test::Perl::Critic->import(-profile => File::Spec->catfile($root, 'perlcriticrc'), -severity => 5, -verbose => 8);
 
-sub is_ascii {
-    my $filename = shift;
-
-    my $has_non_ascii;
-    open(my $fh, '<', $filename) or die "Cannot open '$filename' because '$!'\n";
-    while(<$fh>) {
-        if (/[^[:space:][:print:]]/) {
-            $has_non_ascii = 1;
-            s/([^[:space:][:print:]]+)/colored($1, 'on_red')/eg;
-            diag($filename.' has '.$_);
-        }
-    }
-    close($fh);
-    if ($has_non_ascii) {
-        fail($filename);
-    } else {
-        pass($filename);
-    }
-}
-
-my @source_files = all_source_files($root);
 #Find all files & run
-foreach my $f (@source_files) {
-    # Docker-swarm tutorial
-    next if $f =~ /docs\/contrib\/docker-swarm\/tutorial\.rst$/;
-    # Binary files
-    next if $f =~ /\.(jar|class|png|jpg|pdf|pyc|tgz)$/;
-    # Simulated program output
-    next if $f =~ /lsf_detection\/.*/;
-    next if $f =~ /deceptive_bin\/.*/;
-    next if $f =~ /fake_bin\/.*/;
-    # Unicode-art
-    next if $f =~ /modules\/Bio\/EnsEMBL\/Hive\/(Analysis|HivePipeline)\.pm$/;
-    next if $f =~ /\/generate_graph\/.*::PipeConfig::.*\.txt$/;
-    is_ascii($f);
+my @perl_files = map {Perl::Critic::Utils::all_perl_files(File::Spec->catfile($root, $_))} qw(modules scripts t);
+foreach my $perl (@perl_files) {
+  critic_ok($perl);
 }
 
 done_testing();
-
