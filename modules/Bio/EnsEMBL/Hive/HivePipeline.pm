@@ -707,6 +707,16 @@ sub apply_tweaks {
 
             } else {
 
+                # Auto-vivification of the ResourceClass
+                unless (@$resource_classes) {
+                    print "Tweak.Adding  \tresource_class[$rc_pattern]\n";
+                    my ($resource_class) = $self->add_new_or_update( 'ResourceClass',   # NB: add_new_or_update returns a list
+                        'name'  => $rc_pattern,
+                    );
+                    push @$resource_classes, $resource_class;
+                    $need_write = 1;
+                }
+
                 my $new_value = destringify( $new_value_str );
                 my ($new_submission_cmd_args, $new_worker_cmd_args) = (ref($new_value) eq 'ARRAY') ? @$new_value : ($new_value, '');
 
