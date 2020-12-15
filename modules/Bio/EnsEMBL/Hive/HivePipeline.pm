@@ -646,20 +646,14 @@ sub apply_tweaks {
                 if( $attrib_name eq 'resource_class' ) {
 
                     if($operator eq '?') {
-                        if(my $old_value = $analysis->resource_class) {
-                            print "Tweak.Show    \tanalysis[$analysis_name].resource_class ::\t".$old_value->name."\n";
-                        } else {
-                            print "Tweak.Show    \tanalysis[$analysis_name].resource_class ::\t(missing value)\n";
-                        }
+                        my $old_value = $analysis->resource_class;
+                        print "Tweak.Show    \tanalysis[$analysis_name].resource_class ::\t".$old_value->name."\n";
                     } elsif($operator eq '#') {
-                        print "Tweak.Error   \tDeleting of ResourceClasses is not supported\n";
+                        print "Tweak.Error   \tDeleting of an Analysis' resource-class is not supported\n";
                     } else {
 
-                        if(my $old_value = $analysis->resource_class) {
-                            print "Tweak.Changing\tanalysis[$analysis_name].resource_class ::\t".$old_value->name." --> $new_value_str\n";
-                        } else {
-                            print "Tweak.Adding  \tanalysis[$analysis_name].resource_class ::\t(missing value) --> $new_value_str\n";    # do we ever NOT have resource_class set?
-                        }
+                        my $old_value = $analysis->resource_class;
+                        print "Tweak.Changing\tanalysis[$analysis_name].resource_class ::\t".$old_value->name." --> $new_value_str\n";
 
                         my $resource_class;
                         if($resource_class = $self->collection_of( 'ResourceClass' )->find_one_by( 'name', $new_value )) {
