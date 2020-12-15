@@ -658,15 +658,12 @@ sub apply_tweaks {
                         my $resource_class;
                         if($resource_class = $self->collection_of( 'ResourceClass' )->find_one_by( 'name', $new_value )) {
                             print "Tweak.Found   \tresource_class[$new_value_str]\n";
+                            $analysis->resource_class( $resource_class );
+                            $need_write = 1;
                         } else {
-                            print "Tweak.Adding  \tresource_class[$new_value_str]\n";
+                            print "Tweak.Error   \t'$new_value_str' is not a known resource-class\n";
 
-                            ($resource_class) = $self->add_new_or_update( 'ResourceClass',   # NB: add_new_or_update returns a list
-                                'name'  => $new_value,
-                            );
                         }
-                        $analysis->resource_class( $resource_class );
-                        $need_write = 1;
                     }
 
                 } elsif( $attrib_name eq 'dbID' ) {
