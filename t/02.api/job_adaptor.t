@@ -34,6 +34,7 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 
 my $pipeline_url = get_test_url_or_die();
 my $dbc = make_hive_db($pipeline_url);
+$dbc->disconnect_if_idle();
 
 # Minimal pipeline on which we can create jobs
 my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(-url => $pipeline_url, -no_sql_schema_version_check => 1);
@@ -204,7 +205,7 @@ subtest 'store_nested_semaphores' => sub {
     );
 };
 
-$dbc->disconnect_if_idle();
+$pipeline->hive_dba->dbc->disconnect_if_idle();
 run_sql_on_db($pipeline_url, 'DROP DATABASE');
 
 done_testing();
