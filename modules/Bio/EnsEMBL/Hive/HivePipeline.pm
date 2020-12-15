@@ -782,6 +782,9 @@ sub apply_tweaks {
                            $need_write = 1;
                         }
                     }
+                } elsif( $attrib_name eq 'dbID' ) {
+                    print "Tweak.Error   \tChanging the dbID of an Analysis is not supported\n";
+
                 } elsif($analysis->can($attrib_name)) {
                     my $old_value = stringify($analysis->$attrib_name());
 
