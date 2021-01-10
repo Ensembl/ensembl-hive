@@ -355,6 +355,80 @@ sub store_a_semaphored_group_of_jobs {
 }
 
 
+=head2 store_nested_semaphores
+
+  Arg [1]    : Hashref $semaphore_hash
+  Arg [2]    : (optional) Bio::EnsEMBL::Hive::AnalysisJob $emitting_job
+  Arg [3]    : (optional) Bio::EnsEMBL::Hive::Semaphore $controlled_semaphore
+  Example    : my $funnel_job = $job_adaptor->store_nested_semaphores($semaphore_hash, $emitting_job);
+  Description: Creates a nested hierarchy of jobs and semaphores following $semaphore_hash. This
+               method allows certain combinations of jobs and semaphores that can't be achieved
+               through the PipeConfig language for dataflows.
+               $semaphore_hash is expected to have two keys:
+                 - "analysis" (mapped to a valid Bio::EnsEMBL::Hive::Analysis object),
+                 - "input_id" (mapped to the input_id - a string or a hashref - of a job to create).
+               An optional third key, "required_jobs", should map to an arrayref of hashref of the
+               same structure that describe the jobs that are required to complete before this job
+               is allowed to start (a semaphore will be used to ensure this).
+               The jobs will be created as children of $emitting_job if the latter is provided, and
+               will inherit its stack parameters and accu.
+               The job created will be added to $controlled_semaphore if provided. If the latter is
+               not provided but $emitting_job has a controlled_semaphore, the method will in effect
+               escape from $emitting_job's semaphore.
+               NOTE: this method has only been tested with jobs and analyses belonging to the same
+               database.
+               Example:
+                {
+                    'analysis'  => $analysis1,
+                    'input_id'  => {'alpha' => 2},
+                    'required_jobs' => [
+                        {
+                            'analysis'  => $analysis2,
+                            'input_id'  => {'beta' => 21},
+                        },
+                        {
+                            'analysis'  => $analysis1,
+                            'input_id'  => {'beta' => 22},
+                        },
+                    ],
+                }
+  Returntype : Bio::EnsEMBL::Hive::AnalysisJob $job
+
+=cut
+
+sub store_nested_semaphores {
+    my ($self, $semaphore_hash, $emitting_job, $controlled_semaphore) = @_;
+
+    my $job = Bio::EnsEMBL::Hive::AnalysisJob->new(
+        'prev_job'          => $emitting_job,
+        'analysis'          => $semaphore_hash->{'analysis'},
+        'hive_pipeline'     => $semaphore_hash->{'analysis'}->hive_pipeline,
+        'input_id'          => $semaphore_hash->{'input_id'},
+        'controlled_semaphore'  => $controlled_semaphore,
+    );
+
+    if ($emitting_job) {
+        $job->param_id_stack($emitting_job->param_id_stack);
+        $job->accu_id_stack($emitting_job->accu_id_stack);
+    }
+
+    if (my @required_jobs = @{$semaphore_hash->{'required_jobs'} // []}) {
+        # So that the correct analysis_stats counter gets updated
+        $job->status('SEMAPHORED');
+        # Create the funnel and a semaphore
+        my ($semaphore_id, $funnel_job_id, @fan_job_ids) = $self->store_a_semaphored_group_of_jobs($job, [], $emitting_job);
+        # The job status has been reset to READY because the group of fan jobs
+        # in the above call is empty. Now switch it back to SEMAPHORED.
+        $self->semaphore_job_by_id($funnel_job_id);
+        # Store the required jobs
+        my $semaphore = $self->db->get_SemaphoreAdaptor->fetch_by_dbID($semaphore_id);
+        my @fan_jobs = map {$self->store_nested_semaphores($_, $emitting_job, $semaphore)} @required_jobs;
+    } else {
+        my ($job_id) = $self->store_jobs_and_adjust_counters([$job], 0);
+    }
+    return $job;
+}
+
 
 =head2 fetch_all_by_analysis_id_status
 
