@@ -44,13 +44,6 @@ use Bio::EnsEMBL::Hive::NakedTable;
 use base ('Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor');
 
 
-sub slicer {    # take a slice of the hashref (if only we could inline in Perl!)
-    my ($self, $hashref, $fields) = @_;
-
-    return [ @$hashref{@$fields} ];
-}
-
-
 sub objectify {    # pretend the hashref becomes an object (if only we could inline in Perl!)
     return pop @_;
 }

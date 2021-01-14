@@ -700,9 +700,7 @@ sub fetch_input_ids_for_job_ids {
         $sth->execute();
 
         while(my ($job_id, $input_id) = $sth->fetchrow_array() ) {
-            if($input_id =~ /^_ext(?:\w+)_data_id (\d+)$/) {
-                $input_id = $self->db->get_AnalysisDataAdaptor->fetch_by_analysis_data_id_TO_data($1);
-            }
+            $input_id = $self->check_and_dereference_analysis_data($input_id);
             $input_ids{$job_id * $id_scale + $id_offset} = $input_id;
         }
     }

@@ -48,6 +48,13 @@ sub default_table_name {
 }
 
 
+sub overflow_limit {
+    return {
+        'key_signature' => 255,
+    };
+}
+
+
 sub fetch_structures_for_job_ids {
     my ($self, $job_ids_csv, $id_scale, $id_offset) = @_;
     $id_scale   ||= 1;
@@ -62,6 +69,9 @@ sub fetch_structures_for_job_ids {
         $sth->execute();
 
         ROW: while(my ($receiving_job_id, $struct_name, $key_signature, $stringified_value) = $sth->fetchrow_array() ) {
+
+            ($key_signature, $struct_name) = map {$self->check_and_dereference_analysis_data($_)}
+                ($key_signature, $struct_name);
 
             my $value = destringify($stringified_value);
 
