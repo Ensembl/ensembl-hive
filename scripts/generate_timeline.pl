@@ -39,7 +39,7 @@ exit(0);
 
 sub main {
 
-    my (@urls, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $help, $verbose, $mode, $start_date, $end_date, $output, $top, $default_memory, $default_cores, $key, $resolution);
+    my (@urls, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $help, $verbose, $mode, $start_date, $end_date, $output, $top, $default_memory, $default_cores, $key, $key_transform_file, $resolution);
 
     GetOptions(
                 # connect to the database:
@@ -58,6 +58,7 @@ sub main {
             'end_date=s'                 => \$end_date,
             'mode=s'                     => \$mode,
             'key=s'                      => \$key,
+            'key_transform_file=s'       => \$key_transform_file,
             'resolution=i'               => \$resolution,
             'top=f'                      => \$top,
             'mem=i'                      => \$default_memory,
@@ -127,6 +128,19 @@ sub main {
         $key = 'analysis';
     }
 
+    # Custom key transformations (categories)
+    if ($key_transform_file) {
+        unless (-e $key_transform_file) {
+            die "File '$key_transform_file' doesn't exist";
+        }
+        # "do" does some trick with @INC unless the path starts with one of qw(/ ./ ../)
+        $key_transform_file = "./$key_transform_file" unless $key_transform_file =~ /^.?.?\//;
+        do $key_transform_file;
+        unless (defined &get_key_name) {
+            die "'$key_transform_file' doesn't contain a function named 'get_key_name'";
+        }
+    }
+
     # Durations are rounded up to a multiple of this (number of minutes)
     $resolution ||= 1;
 
@@ -187,18 +201,19 @@ sub main {
         $default_resource_class{"$pipeline..".$_->dbID} = $_->resource_class_id for $pipeline->collection_of('Analysis')->list;
     }
     warn "default_resource_class: ", Dumper \%default_resource_class if $verbose;
-    my %key_name;
+    my %key_name_mapping;
     foreach my $pipeline (@pipelines) {
-        $key_name{"$pipeline..".$_->dbID} = $_->display_name for $pipeline->collection_of($key eq 'analysis' ? 'Analysis' : 'ResourceClass')->list;
-        $key_name{"$pipeline..-1"} = 'UNSPECIALIZED';
-    }
-    if (scalar(@pipelines) > 1) {
-        # Add a pseudo category for each display name
-        foreach my $display_name (values %key_name) {
-            $key_name{$display_name} = $display_name;
+        foreach my $key_object ($pipeline->collection_of($key eq 'analysis' ? 'Analysis' : 'ResourceClass')->list) {
+            my $key_id = "$pipeline..".$key_object->dbID;
+            my $key_name = $key_transform_file ? get_key_name($key_object) : $key_object->display_name;
+            die "No key name for ".$key_object->toString unless $key_name;
+            $key_name_mapping{$key_id} = $key_name;
         }
+        $key_name_mapping{"$pipeline..-1"} = 'UNSPECIALIZED';
     }
-    warn scalar(keys %key_name), " keys: ", Dumper \%key_name if $verbose;
+    my %unique_key_names = map {$_ => 1} values %key_name_mapping;
+    my @key_names = keys %unique_key_names;
+    warn scalar(keys %key_name_mapping), " keys: ", Dumper \%key_name_mapping if $verbose;
 
     # Get the events from the database
     my %events = ();
@@ -209,7 +224,7 @@ sub main {
             ? 'SELECT when_submitted, when_started, when_finished, worker_id, resource_class_id, analysis_id FROM worker LEFT JOIN role USING (worker_id)'
             : 'SELECT when_submitted, when_born, when_died, worker_id, resource_class_id FROM worker';
         my @tmp_dates = @{$hive_dbc->selectall_arrayref($sql)};
-        warn scalar(@tmp_dates), " rows\n" if $verbose;
+        warn scalar(@tmp_dates), " rows in ", $hive_dbc->dbname, "\n" if $verbose;
 
         foreach my $db_entry (@tmp_dates) {
             my ($when_submitted, $when_born, $when_died, $worker_id, $resource_class_id, $analysis_id) = @$db_entry;
@@ -220,39 +235,37 @@ sub main {
             # In case $resource_class_id is undef
             next unless $resource_class_id or $analysis_id;
             $resource_class_id  //= $default_resource_class{"$pipeline..$analysis_id"};
-            my $key_value = $key eq 'analysis' ? $analysis_id : $resource_class_id;
-            $key_value = -1 if not defined $key_value;
-
-            $key_value = "$pipeline..$key_value";
-            $key_value = $key_name{$key_value} if scalar(@pipelines) > 1;
+            my $key_id = "$pipeline.." . (($key eq 'analysis' ? $analysis_id : $resource_class_id) // -1);
+            my $key_name = $key_name_mapping{$key_id};
             $resource_class_id = "$pipeline..$resource_class_id";
             $worker_id = "$pipeline..$worker_id";
 
             if ($mode eq 'workers') {
-                add_event(\%events, $key_value, $when_born, $when_died, 1, $resolution);
+                add_event(\%events, $key_name, $when_born, $when_died, 1, $resolution);
 
             } elsif ($mode eq 'memory') {
                 my $offset = ($mem_resources{$resource_class_id} || $default_memory) / 1024.;
-                add_event(\%events, $key_value, $when_born, $when_died, $offset, $resolution);
+                add_event(\%events, $key_name, $when_born, $when_died, $offset, $resolution);
                 $offset = ($used_res{$worker_id}->[0]) / 1024. if exists $used_res{$worker_id} and $used_res{$worker_id}->[0];
-                add_event(\%layers, $key_value, $when_born, $when_died, $offset, $resolution);
+                add_event(\%layers, $key_name, $when_born, $when_died, $offset, $resolution);
 
             } elsif ($mode eq 'cores') {
                 my $offset = ($cpu_resources{$resource_class_id} || $default_cores);
-                add_event(\%events, $key_value, $when_born, $when_died, $offset, $resolution);
+                add_event(\%events, $key_name, $when_born, $when_died, $offset, $resolution);
                 $offset = $used_res{$worker_id}->[1] if exists $used_res{$worker_id} and $used_res{$worker_id}->[1];
-                add_event(\%layers, $key_value, $when_born, $when_died, $offset, $resolution);
+                add_event(\%layers, $key_name, $when_born, $when_died, $offset, $resolution);
             } else {
-                add_event(\%events, $key_value, $when_submitted, $when_born, 1, $resolution);
-                add_event(\%layers, $key_value, $when_submitted, $when_born, 'length_by_60', $resolution);
+                add_event(\%events, $key_name, $when_submitted, $when_born, 1, $resolution);
+                add_event(\%layers, $key_name, $when_submitted, $when_born, 'length_by_60', $resolution);
             }
         }
+        $hive_dbc->disconnect_if_idle;
     }
     warn "Events recorded: ", scalar(keys %events), " ", scalar(keys %layers), "\n" if $verbose;
 
     my @event_dates = sort {$a cmp $b} (keys %events);
 
-    my $time_samples_data = cumulate_events(\%events, [keys %key_name], $start_date, $end_date, \%events, $verbose);
+    my $time_samples_data = cumulate_events(\%events, \@key_names, $start_date, $end_date, \%events, $verbose);
     my %tot_analysis = %{$time_samples_data->[0]};
     my @xdata        = map {$_->[0]} @{$time_samples_data->[1]};
     my @data_timings = map {$_->[1]} @{$time_samples_data->[1]};
@@ -260,12 +273,11 @@ sub main {
 
     my $total_total = sum(values %tot_analysis);
 
-    my @sorted_key_ids = sort {($tot_analysis{$b} <=> $tot_analysis{$a}) || (lc $key_name{$a} cmp lc $key_name{$b})} (grep {$tot_analysis{$_}} keys %tot_analysis);
+    my @sorted_key_ids = sort {($tot_analysis{$b} <=> $tot_analysis{$a}) || (lc $a cmp lc $b)} (grep {$tot_analysis{$_}} keys %tot_analysis);
     warn "Sorted key_ids: ", Dumper \@sorted_key_ids if $verbose;
-    warn Dumper([map {$key_name{$_}} @sorted_key_ids]) if $verbose;
 
     if (not $gnuplot_terminal) {
-        print join("\t", 'date', "OVERALL_$mode", map {$key_name{$_}} @sorted_key_ids), "\n";
+        print join("\t", 'date', "OVERALL_$mode", @sorted_key_ids), "\n";
         print join("\t", 'total', $total_total, map {$tot_analysis{$_}} @sorted_key_ids), "\n";
         print join("\t", 'proportion', 'NA', map {$tot_analysis{$_}/$total_total} @sorted_key_ids), "\n";
         my $s = 0;
@@ -277,7 +289,7 @@ sub main {
         return;
     }
 
-    my $layer_samples_data = cumulate_events(\%layers, [keys %key_name], $start_date, $end_date, \%events, $verbose);
+    my $layer_samples_data = cumulate_events(\%layers, \@key_names, $start_date, $end_date, \%events, $verbose);
     my @layer_timings = map {$_->[1]} @{$layer_samples_data->[1]};
 
     if ($mode eq 'pending_time') {
@@ -304,7 +316,7 @@ sub main {
     # Each analysis is plotted as the sum of itself and the top ones
     foreach my $i (reverse 1..$n_relevant_analysis) {
         add_dataset(\@datasets, \@data_timings, \@layer_timings, \@xdata,
-            [@sorted_key_ids[0..($i-1)]], $key_name{$sorted_key_ids[$i-1]}, $palette[$i-1], $pseudo_zero_value, $additive_layer ? [$sorted_key_ids[$i-1]] : undef);
+            [@sorted_key_ids[0..($i-1)]], $sorted_key_ids[$i-1], $palette[$i-1], $pseudo_zero_value, $additive_layer ? [$sorted_key_ids[$i-1]] : undef);
     }
 
     my $safe_database_location = scalar(@pipelines) > 1 ? scalar(@pipelines) . ' pipelines' : $pipelines[0]->display_name;
@@ -588,7 +600,7 @@ You can optionally ask the script to generate an image with Gnuplot.
     generate_timeline.pl -url mysql://username:secret@hostname:port/database -mode memory -output timeline_memory.png
 
         # Draw the CPU-usage timeline across several databases
-    generate_timeline.pl -url mysql://username:secret@hostname:port/database -url mysql://username:secret@hostname:port/another_database -mode cpu -output timeline_cpu.png
+    generate_timeline.pl -url mysql://username:secret@hostname:port/database -url mysql://username:secret@hostname:port/another_database -mode cores -output timeline_cpu.png
 
 
 =head1 OPTIONS
@@ -656,6 +668,13 @@ what should be displayed on the y-axis. Allowed values are "workers" (default), 
 =item --key <string>
 
 "analysis" (default) or "resource_class": how to bin the Workers
+
+=item --key_transform_file <string>
+
+the path to a Perl script that defines a function named "get_key_name". The function is used to provide custom key names for analyses and
+resource classes instead of their own display names. The function must take the object (Analysis or ResourceClass) as a sole argument and
+return a (non empty) string.
+See scripts/dev/generate_timeline_example_key_transform_file.pl for an example.
 
 =item --resolution <integer>
 
