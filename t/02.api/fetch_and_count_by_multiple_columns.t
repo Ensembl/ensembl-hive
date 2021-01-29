@@ -37,7 +37,7 @@ my $ehive_test_pipeline_urls = get_test_urls();
 foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
 
 subtest 'Test on '.$pipeline_url, sub {
-    plan tests => 20;
+    plan tests => 17;
 
 init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf', $pipeline_url);
 
