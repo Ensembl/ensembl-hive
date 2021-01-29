@@ -6,14 +6,7 @@
 
 =head1 DESCRIPTION
 
-    A data container object (the only methods are getters/setters) that corresponds to a row in 'resource_class' table:
-
-    CREATE TABLE resource_class (
-        resource_class_id   int(10) unsigned NOT NULL AUTO_INCREMENT,     # unique internal id
-        name                varchar(40) NOT NULL,
-
-        PRIMARY KEY(resource_class_id)
-    );
+    A data container object (the only methods are getters/setters) that corresponds to a row in 'resource_class' table
 
 =head1 LICENSE
 

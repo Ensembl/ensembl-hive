@@ -6,16 +6,7 @@
 
 =head1 DESCRIPTION
 
-    A data container object (the only methods are getters/setters) that corresponds to a row in 'resource_description' table:
-
-    CREATE TABLE resource_description (
-        resource_class_id     int(10) unsigned NOT NULL,
-        meadow_type           varchar(40) NOT NULL,
-        submission_cmd_args     VARCHAR(255) NOT NULL DEFAULT '',
-        worker_cmd_args         VARCHAR(255) NOT NULL DEFAULT '',
-
-        PRIMARY KEY(resource_class_id, meadow_type)
-    ) ENGINE=InnoDB;
+    A data container object (the only methods are getters/setters) that corresponds to a row in 'resource_description' table
 
 =head1 LICENSE
 
