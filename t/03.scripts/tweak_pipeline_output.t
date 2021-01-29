@@ -40,7 +40,6 @@ init_pipeline('Bio::EnsEMBL::Hive::Examples::SystemCmd::PipeConfig::AnyCommands_
 my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url );
 
 my @tweak_requests = ();
-my @tweak_request_errors = ();
 
 #Check pipeline.param (show, delete, set)
 push @tweak_requests,  ["-SET" => "pipeline.param[take_time]=20", "-json"];
@@ -55,6 +54,7 @@ push @tweak_requests,  ["-tweak" => "pipeline.hive_use_param_stac?", "-json"];
 #Check analysis (show, delete, set) / (resource_class / is_excluded / error)
 push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].resource_class?", "-json"];
 push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].resource_class=20", "-json"];
+push @tweak_requests,  ['-tweak', "resource_class[20].LSF=-q yesteryear", "-tweak", "analysis[perform_cmd].resource_class=20", "-json"];
 push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].resource_class#", "-json"];
 
 push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].is_excluded?", "-json"];
