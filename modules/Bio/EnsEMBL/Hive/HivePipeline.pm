@@ -646,34 +646,28 @@ sub apply_tweaks {
                 if( $attrib_name eq 'resource_class' ) {
 
                     if($operator eq '?') {
-                        if(my $old_value = $analysis->resource_class) {
-                            print "Tweak.Show    \tanalysis[$analysis_name].resource_class ::\t".$old_value->name."\n";
-                        } else {
-                            print "Tweak.Show    \tanalysis[$analysis_name].resource_class ::\t(missing value)\n";
-                        }
+                        my $old_value = $analysis->resource_class;
+                        print "Tweak.Show    \tanalysis[$analysis_name].resource_class ::\t".$old_value->name."\n";
                     } elsif($operator eq '#') {
-                        print "Tweak.Error   \tDeleting of ResourceClasses is not supported\n";
+                        print "Tweak.Error   \tDeleting of an Analysis' resource-class is not supported\n";
                     } else {
 
-                        if(my $old_value = $analysis->resource_class) {
-                            print "Tweak.Changing\tanalysis[$analysis_name].resource_class ::\t".$old_value->name." --> $new_value_str\n";
-                        } else {
-                            print "Tweak.Adding  \tanalysis[$analysis_name].resource_class ::\t(missing value) --> $new_value_str\n";    # do we ever NOT have resource_class set?
-                        }
+                        my $old_value = $analysis->resource_class;
+                        print "Tweak.Changing\tanalysis[$analysis_name].resource_class ::\t".$old_value->name." --> $new_value_str\n";
 
                         my $resource_class;
                         if($resource_class = $self->collection_of( 'ResourceClass' )->find_one_by( 'name', $new_value )) {
                             print "Tweak.Found   \tresource_class[$new_value_str]\n";
+                            $analysis->resource_class( $resource_class );
+                            $need_write = 1;
                         } else {
-                            print "Tweak.Adding  \tresource_class[$new_value_str]\n";
+                            print "Tweak.Error   \t'$new_value_str' is not a known resource-class\n";
 
-                            ($resource_class) = $self->add_new_or_update( 'ResourceClass',   # NB: add_new_or_update returns a list
-                                'name'  => $new_value,
-                            );
                         }
-                        $analysis->resource_class( $resource_class );
-                        $need_write = 1;
                     }
+
+                } elsif( $attrib_name eq 'dbID' ) {
+                    print "Tweak.Error   \tChanging the dbID of an Analysis is not supported\n";
 
                 } elsif($analysis->can($attrib_name)) {
                     my $old_value = stringify($analysis->$attrib_name());
@@ -712,6 +706,16 @@ sub apply_tweaks {
                 }
 
             } else {
+
+                # Auto-vivification of the ResourceClass
+                unless (@$resource_classes) {
+                    print "Tweak.Adding  \tresource_class[$rc_pattern]\n";
+                    my ($resource_class) = $self->add_new_or_update( 'ResourceClass',   # NB: add_new_or_update returns a list
+                        'name'  => $rc_pattern,
+                    );
+                    push @$resource_classes, $resource_class;
+                    $need_write = 1;
+                }
 
                 my $new_value = destringify( $new_value_str );
                 my ($new_submission_cmd_args, $new_worker_cmd_args) = (ref($new_value) eq 'ARRAY') ? @$new_value : ($new_value, '');
