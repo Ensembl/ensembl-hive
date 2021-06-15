@@ -61,7 +61,7 @@ sub default_options {
             #   [bash]      export -n ENSEMBL_CVS_ROOT_DIR  # will stop exporting, but the value in current shell stays as it was
             #   [tcsh]      unsetenv ENSEMBL_CVS_ROOT_DIR   # will destroy the variable even in current shell, and stop exporting
 
-        'ensembl_cvs_root_dir'  => $ENV{'ENSEMBL_ROOT_DIR'} || $self->o('ensembl_root_dir') || $ENV{'ENSEMBL_CVS_ROOT_DIR'} || $self->o('ensembl_cvs_root_dir'),    # it will make sense to set this variable if you are going to use ehive with ensembl
+	'ensembl_cvs_root_dir'  => $self->o('ensembl_root_dir') || $self->o('ensembl_cvs_root_dir') || $ENV{'ENSEMBL_ROOT_DIR'} || $ENV{'ENSEMBL_CVS_ROOT_DIR'},    # it will make sense to set this variable if you are going to use ehive with ensembl
 
         'ensembl_release'       => Bio::EnsEMBL::ApiVersion::software_version(),                        # snapshot of EnsEMBL Core API version. Please do not change if not sure.
         'rel_suffix'            => '',                                                                  # an empty string by default, a letter otherwise
