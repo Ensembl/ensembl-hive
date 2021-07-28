@@ -1,6 +1,72 @@
 Changelog
 *********
 
+Version 2.6
+===========
+
+   *Summer 2021 "codon" update
+
+Release overview
+----------------
+
+Version 2.6 is a stability and usability release, with a number
+of small improvements. The primary motivation of this release is
+to provide users with a feature- and schema- stable eHive version
+that incorporates two important changes for compatibility with Ensembl's
+future computing environment. First, the temporary directories used by eHive
+processes are determined in a much more flexible manner than in previous
+versions, and there is a facility for users to explicitly set temporary
+directories if desired. Second, there have been several improvements made
+for the guest language "wrappers" - particularly for the Python wrappers.
+
+Major new features and scripts
+------------------------------
+
+* Temp directories can be explicitly set by the user as worker submission options, via hive_config.json, or by setting the $TMPDIR environment variable
+* new peekJob.pl script to show parameters visible to a particular job
+* New --big_red_button option for beekeeper.pl to attempt to stop an entire pipeline, including all Beekeepers and Workers
+* New pure Python framework for testing Runnables
+
+General improvements
+--------------------
+
+* Various documentation improvements, including a tip sheet
+* Root directory environment variables can be with or without "_CVS_"
+* Updates for compatibility with new versions of DBI::st
+* More flexible checks for db permissions
+* CPAN dependencies are cached for faster builds
+* Improved handling of SQL errors
+* Changes to logging and output to improve both clarity and performance
+* Improved deadlock protection for bulk operations on Jobs (e.g. --reset_all_jobs)
+
+Guest language support
+----------------------
+
+* GuestLanguage interface now has a build phase to allow pre-compiling
+* Python wrappers have been packaged so that they can be added as a requirements.txt compatibility and are more compatible with IDEs
+* Python code refactored to harmonise with Ensembl Python standards
+* General improvements and bugfixes to the Python wrapper
+* Wrappers added to Docker image
+
+Profiling and testing framework
+-------------------------------
+
+* Custom categories can be added to generate_timeline.pl
+* Improvements to resource_usage view
+* New semaphore_job view
+* Improved output from the Runnables test interface
+* Redirected Beekeeper output to avoid cluttering unit test output
+
+Usability improvements
+----------------------
+
+* Beekeeper output improved for clarity and more accurate job counts
+* New debug mode prevents the forking of eHive processes that confused the Perl debugger
+* JSON output option for tweak_pipeline.pl
+* Can now search for analysis logic_names and tags using regexes
+* Fixed output bugs in init_pipeline.pl and tweak_pipeline.pl
+* Explicit errors thrown when encountering a missing or invalid reg_conf
+
 Version 2.5
 ===========
 
