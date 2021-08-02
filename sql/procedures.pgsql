@@ -32,7 +32,7 @@ CONTACT
 --
 -- Usage:
 --       select * from progress;                                         # the whole table (may take ages to generate, depending on the size of your pipeline)
---       select * from progress where logic_name like 'family_blast%';   # only show family_blast-related analyses
+--       select * from progress where analysis_name_and_id like 'family_blast%';   # only show family_blast-related analyses
 --       select * from progress where retry_count>1;                     # only show jobs that have been tried more than once
 
 CREATE OR REPLACE VIEW progress AS
