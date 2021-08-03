@@ -61,8 +61,12 @@ sub default_options {
             #   [bash]      export -n ENSEMBL_CVS_ROOT_DIR  # will stop exporting, but the value in current shell stays as it was
             #   [tcsh]      unsetenv ENSEMBL_CVS_ROOT_DIR   # will destroy the variable even in current shell, and stop exporting
 
-	'ensembl_cvs_root_dir'  => $self->o('ensembl_root_dir') || $self->o('ensembl_cvs_root_dir') || $ENV{'ENSEMBL_ROOT_DIR'} || $ENV{'ENSEMBL_CVS_ROOT_DIR'},    # it will make sense to set this variable if you are going to use ehive with ensembl
-
+            # have to be careful not to check for $self->o('ensembl_cvs_root_dir') unless no env variable is set, or else
+            # it will cause options missing errors. Also, the $self->o() system doesn't support optional options at
+            # the time of this commit, so we can only have one of ensembl_root_dir or ensembl_cvs_root_dir, otherwise
+            # there would always be an options missing error. We choose ensembl_cvs_root_dir for backwards compatibility.
+        'ensembl_cvs_root_dir'  => defined($ENV{'ENSEMBL_ROOT_DIR'} || $ENV{'ENSEMBL_CVS_ROOT_DIR'}) ?
+             $ENV{'ENSEMBL_ROOT_DIR'} || $ENV{'ENSEMBL_CVS_ROOT_DIR'} : $self->o('ensembl_cvs_root_dir'),
         'ensembl_release'       => Bio::EnsEMBL::ApiVersion::software_version(),                        # snapshot of EnsEMBL Core API version. Please do not change if not sure.
         'rel_suffix'            => '',                                                                  # an empty string by default, a letter otherwise
         'rel_with_suffix'       => $self->o('ensembl_release').$self->o('rel_suffix'),
