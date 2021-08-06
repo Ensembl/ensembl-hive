@@ -6,7 +6,7 @@
 
 =head1 SYNOPSIS
 
-    use Bio::EnsEMBL::Hive::Version 2.5;
+    use Bio::EnsEMBL::Hive::Version 2.6;
 
 =head1 DESCRIPTION
 
