@@ -25,9 +25,9 @@ return something like undef to tell the caller that no operation was done.
  GarbageCollector:       [LSF/EBI Meadow:]       LOST:20
 
  GarbageCollector:       Discovered 20 lost LSF Workers
- LSF::parse_report_source_line( "bacct -l '4126850[15]' '4126850[6]' '4126835[24]' '4126850[33]' '4126835[10]' '4126835[39]' '4126850[23]' '4126835[3]' '4126835[19]' '4126835[31]' '4126835[40]' '4126835[41]' '4126850[5]' '4126850[41]' '4126850[2]' '4126850[3]' '4126835[5]' '4126835[33]' '4126850[7]' '4126850[42]'" )
+ LSF::parse_report_source_line( "bacct -f - -l '4126850[15]' '4126850[6]' '4126835[24]' '4126850[33]' '4126835[10]' '4126835[39]' '4126850[23]' '4126835[3]' '4126835[19]' '4126835[31]' '4126835[40]' '4126835[41]' '4126850[5]' '4126850[41]' '4126850[2]' '4126850[3]' '4126835[5]' '4126835[33]' '4126850[7]' '4126850[42]'" )
  ls_getclustername(): Slave LIM configuration is not ready yet. Please give file name.
- Could not read from 'bacct -l '4126850[15]' '4126850[6]' '4126835[24]' '4126850[33]' '4126835[10]' '4126835[39]' '4126850[23]' '4126835[3]' '4126835[19]' '4126835[31]' '4126835[40]' '4126835[41]' '4126850[5]' '4126850[41]' '4126850[2]' '4126850[3]' '4126835[5]' '4126835[33]' '4126850[7]' '4126850[42]''. Received the error 255
+ Could not read from 'bacct -f - -l '4126850[15]' '4126850[6]' '4126835[24]' '4126850[33]' '4126835[10]' '4126835[39]' '4126850[23]' '4126835[3]' '4126835[19]' '4126835[31]' '4126835[40]' '4126835[41]' '4126850[5]' '4126850[41]' '4126850[2]' '4126850[3]' '4126835[5]' '4126835[33]' '4126850[7]' '4126850[42]''. Received the error 255
 
 =back
 
@@ -322,7 +322,7 @@ sub get_report_entries_for_process_ids {
 
     unless ($self->config_get('AccountingDisabled')) {
         while (my $pid_batch = join(' ', map { "'$_'" } splice(@_, 0, 20))) {  # can't fit too many pids on one shell cmdline
-            my $cmd = "bacct -l $pid_batch";
+            my $cmd = "bacct -f - -l $pid_batch";
 
 #           warn "LSF::get_report_entries_for_process_ids() running cmd:\n\t$cmd\n";
 
@@ -348,7 +348,7 @@ sub get_report_entries_for_time_interval {
         my $to_timepiece = Time::Piece->strptime($to_time, '%Y-%m-%d %H:%M:%S') + 2*ONE_MINUTE;
         $to_time = $to_timepiece->strftime('%Y/%m/%d/%H:%M');
 
-        my $cmd = "bacct -l -C $from_time,$to_time ".($username ? "-u $username" : '');
+        my $cmd = "bacct -f - -l -C $from_time,$to_time ".($username ? "-u $username" : '');
 
 #        warn "LSF::get_report_entries_for_time_interval() running cmd:\n\t$cmd\n";
 
