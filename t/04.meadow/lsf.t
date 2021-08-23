@@ -207,14 +207,15 @@ my $expected_bacct = {
 };
 
 $lsf_meadow->config_set("AccountingDisabled", 0);
+my $bacct_opts = $lsf_meadow->config_get('BacctExtraOptions') || "";
 lives_and( sub {
-    local $ENV{EHIVE_EXPECTED_BACCT} = '-f - -l 34 56[7]';
+    local $ENV{EHIVE_EXPECTED_BACCT} = $bacct_opts.'-l 34 56[7]';
     my $h = $lsf_meadow->get_report_entries_for_process_ids(34, '56[7]');
     is_deeply($h, $expected_bacct, 'Got bacct output');
 }, 'Can call bacct on process_ids');
 
 lives_and( sub {
-    local $ENV{EHIVE_EXPECTED_BACCT} = '-f - -l -C 2020/10/11/12:23,2020/12/12/23:58 -u kb3';
+    local $ENV{EHIVE_EXPECTED_BACCT} = $bacct_opts.'-l -C 2020/10/11/12:23,2020/12/12/23:58 -u kb3';
     my $h = $lsf_meadow->get_report_entries_for_time_interval('2020-10-11 12:23:45', '2020-12-12 23:56:59', 'kb3');
     is_deeply($h, $expected_bacct, 'Got bacct output');
 }, 'Can call bacct on a date range');
@@ -222,13 +223,13 @@ lives_and( sub {
 
 $lsf_meadow->config_set("AccountingDisabled", 1);
 lives_and( sub {
-    local $ENV{EHIVE_EXPECTED_BACCT} = '-f - -l 34 56[7]';
+    local $ENV{EHIVE_EXPECTED_BACCT} = $bacct_opts.'-l 34 56[7]';
     my $h = $lsf_meadow->get_report_entries_for_process_ids(34, '56[7]');
     is_deeply($h, {}, 'No bacct output when accounting disabled');
 }, 'Suppressed bacct when AccountingDisabled when checking process_ids');
 
 lives_and( sub {
-    local $ENV{EHIVE_EXPECTED_BACCT} = '-f - -l -C 2015/10/11/12:23,2015/12/12/23:58 -u kb3';
+    local $ENV{EHIVE_EXPECTED_BACCT} = $bacct_opts.'-l -C 2015/10/11/12:23,2015/12/12/23:58 -u kb3';
     my $h = $lsf_meadow->get_report_entries_for_time_interval('2015-10-11 12:23:45', '2015-12-12 23:56:59', 'kb3');
     is_deeply($h, {}, 'No bacct output when accounting disabled');
 }, 'Suppressed bacct when AccountingDisabled when checking a date range');

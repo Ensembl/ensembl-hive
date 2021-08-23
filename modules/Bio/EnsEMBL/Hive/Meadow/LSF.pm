@@ -322,7 +322,8 @@ sub get_report_entries_for_process_ids {
 
     unless ($self->config_get('AccountingDisabled')) {
         while (my $pid_batch = join(' ', map { "'$_'" } splice(@_, 0, 20))) {  # can't fit too many pids on one shell cmdline
-            my $cmd = "bacct -f - -l $pid_batch";
+            my $bacct_opts = $self->config_get('BacctExtraOptions') || "";
+            my $cmd = "bacct $bacct_opts -l $pid_batch";
 
 #           warn "LSF::get_report_entries_for_process_ids() running cmd:\n\t$cmd\n";
 
@@ -348,7 +349,8 @@ sub get_report_entries_for_time_interval {
         my $to_timepiece = Time::Piece->strptime($to_time, '%Y-%m-%d %H:%M:%S') + 2*ONE_MINUTE;
         $to_time = $to_timepiece->strftime('%Y/%m/%d/%H:%M');
 
-        my $cmd = "bacct -f - -l -C $from_time,$to_time ".($username ? "-u $username" : '');
+        my $bacct_opts = $self->config_get('BacctExtraOptions') || "";
+        my $cmd = "bacct $bacct_opts -l -C $from_time,$to_time ".($username ? "-u $username" : '');
 
 #        warn "LSF::get_report_entries_for_time_interval() running cmd:\n\t$cmd\n";
 
