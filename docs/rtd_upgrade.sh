@@ -31,7 +31,6 @@ mkdir packages
 cd packages
 # List of extra packages we need
 apt-get download \
-     libdbi-perl \
      libdbd-sqlite3-perl \
      libjson-xs-perl \
      libjson-perl \
@@ -45,6 +44,9 @@ apt-get download \
      doxypy \
      libproc-daemon-perl \
 
+# manual download because rtd hasn't updated apt-cache
+echo http://archive.ubuntu.com/ubuntu/pool/main/libd/libdbi-perl/libdbi-perl_1.640-1_amd64.deb \
+  | xargs -n 1 curl -O
 
 mkdir ../root
 for i in *.deb; do dpkg -x "$i" ../root/; done
