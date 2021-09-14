@@ -73,6 +73,7 @@ User documentation
    advanced_usage/mpi
    advanced_usage/slack
    advanced_usage/continuous_pipelines
+   advanced_usage/json
 
 .. toctree::
    :caption: External plugins
