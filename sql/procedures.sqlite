@@ -50,6 +50,38 @@ CREATE VIEW IF NOT EXISTS progress AS
     ORDER BY a.analysis_id, j.status;
 
 
+-- show the hierarchy of hive jobs (which analysis seeded jobs where) ----------------------------
+--
+-- Usage:
+--       select * from job_hierarchy;                                         # the whole table (may take ages to generate, depending on the size of your pipeline)
+--       select * from job_hierarchy where retry_count>1;                     # only show jobs that have been tried more than once
+
+DROP VIEW IF EXISTS job_hierarchy;
+CREATE VIEW IF NOT EXISTS job_hierarchy AS
+	SELECT
+		a1.logic_name || '(' || a1.analysis_id || ')' AS analysis_name_and_id,
+		a2.logic_name || '(' || a2.analysis_id || ')' AS parent_analysis_name_and_id,
+		j1.status AS status,
+		j1.retry_count AS retry_count,
+		COUNT(0) AS cnt,
+		MIN(j1.job_id) AS example_job_id
+	FROM
+		job j1
+		LEFT JOIN job j2 ON (j1.prev_job_id = j2.job_id)
+		LEFT JOIN analysis_base a1 ON (j1.analysis_id = a1.analysis_id)
+		LEFT JOIN analysis_base a2 ON (j2.analysis_id = a2.analysis_id)
+	GROUP BY
+		a1.logic_name,
+		a2.logic_name,
+		j1.status,
+		j1.retry_count
+	ORDER BY
+		a1.analysis_id,
+		a2.analysis_id,
+		j1.retry_count;
+DROP VIEW job_hierarchy;
+
+
 -- a convenient view that also incorporates (otherwise redundant) analysis_id and logic_name ------------
 --
 -- Usage:
