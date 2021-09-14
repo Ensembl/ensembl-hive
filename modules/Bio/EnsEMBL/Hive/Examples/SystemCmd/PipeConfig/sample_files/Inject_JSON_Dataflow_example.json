@@ -1,0 +1,3 @@
+{"addressed_to_one"  : "message for one"}
+2 {"addressed_to_two"  : "message for two"}
+4 {"addressed_to_four" : "message for four" , "also_addressed_to_four" : "second message for four"}
