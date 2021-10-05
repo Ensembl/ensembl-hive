@@ -15,7 +15,19 @@
     The command line must be stored in the parameters() as the value corresponding to the 'cmd' key.
     It allows to pass in other parameters and use the parameter substitution mechanism in its full glory.
 
-=head1 CONFIGURATION EXAMPLE
+    This Runnable also allows the creation of dataflow using JSON stored in an external file.
+    Each line of this file contains an optional branch number, followed by a complete JSON serialisation of the parameters (output_id)
+    appearing on the same single line. For example, a line to direct dataflow on branch 2 might look like:
+
+          2 {"parameter_name" : "parameter_value"}
+
+    If no branch number is provided, then dataflow of those parameters will occour on the branch number
+    passed to SystemCmd in the 'dataflow_branch' parameter, if given. Otherwise, it will default to
+    branch 1 (autoflow).
+
+    A sample file is provided at ${EHIVE_ROOT_DIR}/modules/Bio/EnsEMBL/Hive/Examples/SystemCmd/PipeConfig/sample_files/Inject_JSON_Dataflow_example.json
+
+=head1 CONFIGURATION EXAMPLES
 
     # The following example shows how to configure SystemCmd in a PipeConfig module
     # to create a MySQL snapshot of the Hive database before executing a critical operation.
@@ -29,6 +41,17 @@
                 'filename'  => $ENV{'HOME'}.'/db_snapshot_before_critical_A',
                 'cmd'       => $self->db_cmd().' --executable mysqldump > #filename#',
             },
+        },
+
+    # The following example shows how to configure SystemCmd in a PipeConfig module
+    # to generate dataflow events based on parameters stored as JSON in a file named "some_parameters.json"
+
+        {  -logic_name => 'inject_parameters_from_file',
+           -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+           -parameters => {
+                'dataflow_file' => 'some_parameters.json',
+                'cmd'           => 'sleep 0', # a command must be provided in the cmd parameter
+           },
         },
 
 =head1 LICENSE
