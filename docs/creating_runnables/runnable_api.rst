@@ -138,4 +138,4 @@ to easily generate events. The method takes two arguments:
    the default branch number.
 #. The default branch number (defaults to 1).
 
-
+Use of this is demonstrated in the Runnable :doxehive:`Bio::EnsEMBL::Hive::RunnableDB::SystemCmd`

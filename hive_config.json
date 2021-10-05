@@ -36,6 +36,9 @@
             "EBI" : {
                 "SubmissionOptions"  : "",
                 "TotalRunningWorkersMax"    : 10000
+            },
+            "codon" : {
+                "BacctExtraOptions"  : "-f -"
             }
         },
         "SGE" : {
