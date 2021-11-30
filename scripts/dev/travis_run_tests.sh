@@ -46,7 +46,9 @@ if [[ ($rt -eq 0) && ($rtp -eq 0) && ($rtj -eq 0) ]]; then
     fi
     cover --nosummary -report codecov
   fi
-  exit $?
+  # ignore any failures from coverage testing. Due to the if, can only reach this
+  # point if there were no test failures
+  exit 0
 else
   exit 255
 fi
