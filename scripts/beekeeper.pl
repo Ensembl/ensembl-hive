@@ -572,6 +572,12 @@ sub run_autonomously {
 
         print("\nBeekeeper : loop #$iteration ======================================================\n");
 
+        my $pipeline_name = $pipeline->hive_pipeline_name;
+        if ($pipeline_name) {
+          print "\nPipeline name: $pipeline_name";
+        }
+        print "\nPipeline URL: ".$self->{'url'}."\n\n";
+
         $queen->check_for_dead_workers($valley, 0) unless $self->{'read_only'};
 
         # this section is where the beekeeper decides whether or not to stop looping
