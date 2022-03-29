@@ -39,7 +39,7 @@ before_install:
     - eval "$(perl -Mlocal::lib=${HOME}/deps)"
     - mkdir deps
     - cd deps
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl
+    - git clone --branch main --depth 1 https://github.com/Ensembl/ensembl
     - export PERL5LIB=$PWD/ensembl/modules:$PERL5LIB
     - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
     - export PERL5LIB=$PWD/bioperl-live:$PERL5LIB
