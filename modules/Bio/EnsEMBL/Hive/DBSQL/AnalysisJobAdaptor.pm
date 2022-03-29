@@ -592,11 +592,11 @@ sub reset_or_grab_job_by_dbID {
 =head2 reset_job_by_input_id_and_sync
 
   Arg [1]: string $input_id pattern
-  Arg [2]: array $analsyes_object_array
+  Arg [2]: array $analyses_object_array
   Example:
-    my $job = $self->{'dba'}->get_AnalysisJobAdaptor->reset_job_by_input_id_and_sync($input_id_pattern, $analsyes_object_array);
+    my $job = $self->{'dba'}->get_AnalysisJobAdaptor->reset_job_by_input_id_and_sync($input_id_pattern, $analyses_object_array);
   Description:
-    Reset jobs for the specified $input_id pattern and $analsyis_object_array. $input_id can be a wildcard argument.
+    Reset jobs for the specified $input_id pattern and $analysis_object_array. $input_id can be a wildcard argument.
   Returntype : none
   Exceptions :
   Caller     : beekeeper.pl

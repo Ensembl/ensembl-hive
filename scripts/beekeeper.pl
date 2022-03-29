@@ -385,7 +385,7 @@ sub main {
     }
 
     if($reset_jobs_for_input_id and ! $self->{'analyses_pattern'}) {
-        die "Please use -reset_job_by_input_id in combination with -analyses_pattern <pattern>";
+        die "Please use -reset_jobs_by_input_id in combination with -analyses_pattern <pattern>";
     }
 
     if ($unblock_semaphored_jobs) {
