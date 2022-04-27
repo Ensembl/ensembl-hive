@@ -113,9 +113,9 @@ sub dataflow {
         foreach my $output_id (@$output_ids) {
 
             my $key_signature = $accu_address;
-            $key_signature=~s/(\w+)/$emitting_job->_param_possibly_overridden($1,$output_id)/eg;
+            $key_signature=~s{(\w+)}{$emitting_job->_param_possibly_overridden($1,$output_id) // '' }eg;
 
-            $self->checkEmptyKeys($key_signature, $accu_address);
+            _check_empty_keys($key_signature, $accu_address);
 
             push @rows, {
                 'sending_job_id'            => $sending_job_id,
@@ -133,58 +133,56 @@ sub dataflow {
     }
 }
 
-sub checkEmptyKeys {
-  my ( $self, $key_signature, $accu_address ) = @_;
-  # we get number of brackets, that are empty for key signature and address
-  # and verify that each empty brackets in key_signature is empty in adress
-  my $curvedBrackets = $self->findEmptyBrackets($key_signature, '{', '}');
-  my $curvedBracketsAddress = $self->findEmptyBrackets($accu_address, '{', '}');
-  my %addressBrackets = map { $_ => 1 } @$curvedBracketsAddress;
+=head2 _check_empty_keys
 
-  foreach my $position ( @$curvedBrackets ) {
-    if (!exists($addressBrackets{$position})) {
-        die "Null hash key in accumulator, empty curved brackets number " . $position;
+    Description: a private function that checks the $key_signature for empty
+    bracket pairs that weren't empty before
+
+=cut
+
+sub _check_empty_keys {
+    my ( $key_signature, $accu_address ) = @_;
+
+    foreach my $pair ( ( ['{', '}'], ['[', ']'] ) ) {
+
+        # verify that each empty pair of brackets in key_signature was also empty in accu_address
+        my $empty_in_key = _find_empty_brackets( $key_signature, $pair->[0], $pair->[1] );
+        my $empty_in_address = _find_empty_brackets( $accu_address, $pair->[0], $pair->[1] );
+        my %empty_in_address_idx = map { $_ => 1 } @$empty_in_address;
+
+        foreach my $index (@$empty_in_key) {
+            if ( !exists( $empty_in_address_idx{$index} ) ) {
+                die "A key in the accumulator had an empty substitution. Bracket '"
+                  . $pair->[0] . $pair->[1] .
+                  "' pair number $index, substitution from '$accu_address' to '$key_signature'";
+            }
+        }
     }
-  }
-
-  my $squareBrackets = $self->findEmptyBrackets($key_signature, '[', ']');
-  my $squareBracketsAddress = $self->findEmptyBrackets($accu_address, '[', ']');
-  %addressBrackets = map { $_ => 1 } @$squareBracketsAddress;
-
-  foreach my $position ( @$squareBrackets ) {
-    if (!exists($addressBrackets{$position})) {
-        die "Null array key in accumulator, empty square brackets number " . $position;
-    }
-  }
 }
 
-sub findEmptyBrackets {
-    my ( $self, $string, $open, $close ) = @_;
+=head2 _find_empty_brackets
 
-    my $result;
-    my $offset = 0;
-    my $openIndex = 0;
-    my $numberOfBracket = 0;
-    my $i = 0;
+    Description: a private function that finds and counts opening brackets in a
+    string
+    Returns: a ref to an array with an entry for each empty bracket pair. The
+    entry is the count of how many preceding opening brackets there are.
 
-    # we get first open bracket. If next goes closed bracket -
-    # we remember the number of this empty bracket (not position,
-    # it can differs due key substitution)
-    # than we repeat search with offset considering found bracket
-    # an array of empty brackets number we return;
-    while ($openIndex != -1) {
-      $openIndex = index($string, $open, $offset);
-      if ( $openIndex != -1) {
-        $numberOfBracket = $numberOfBracket + 1;
-        if ($close eq substr($string, $openIndex+1, 1))  {
-          $result->[$i] = $numberOfBracket;
-          $i = $i + 1;
+=cut
+
+sub _find_empty_brackets {
+    my ( $string, $open, $close ) = @_;
+    my $count  = 0;
+    my $result = [];
+
+    # look for opening bracket
+    while ( $string =~ /\Q$open/g ) {
+        # count how many opening brackets we have
+        $count++;
+        if ( $string =~ /\G(?=$close)/ ) {
+            # store number of bracket if we find an empty pair (like {})
+            push( @$result, $count );
         }
-      }
-      $offset = $openIndex+1;
-
-    };
-
+    }
     return $result;
 }
 

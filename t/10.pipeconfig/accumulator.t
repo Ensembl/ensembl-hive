@@ -41,9 +41,9 @@ runWorker($pipeline_url, [ '-can_respecialize' ]);
 
 # Check if null hash key error is correct
 my $all_objects = $hive_dba->get_LogMessageAdaptor->fetch_all();
-isnt(index($all_objects->[0]->{'msg'}, 'Null hash key in accumulator, empty curved brackets number 2'), -1, "Correct null hash key error" );
 
-
+my $msg = 'A key in the accumulator had an empty substitution. Bracket \'{}\' pair number 2, substitution from \'{}[]{test}\' to \'{}[]{}\'';
+isnt(index($all_objects->[0]->{'msg'}, $msg), -1, "Detect a null hash key" );
 
 safe_drop_database( $hive_dba );
 
