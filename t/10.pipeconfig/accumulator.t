@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# Copyright [2016-2022] EMBL-European Bioinformatics Institute
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,5 +46,9 @@ my $msg = 'A key in the accumulator had an empty substitution. Bracket \'{}\' pa
 isnt(index($all_objects->[0]->{'msg'}, $msg), -1, "Detect a null hash key" );
 
 safe_drop_database( $hive_dba );
+
+for my $file (glob($ENV{PWD}."/gcpct_*")) {
+    unlink $file;
+}
 
 done_testing();
