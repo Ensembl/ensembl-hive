@@ -64,12 +64,7 @@ sub pipeline_wide_parameters {
             # init_pipeline.pl makes the best guess of the hive root directory and stores it in EHIVE_ROOT_DIR, if it wasn't already set in the shell
         'inputfile'     => $ENV{'EHIVE_ROOT_DIR'} . '/t/input_fasta.fa',    # name of the input file, here set to a sample file included with the eHive distribution
         'input_format'  => 'FASTA',                                         # the expected format of the input file
-
-            # Because this is an example pipeline, we provide a way to slow down execution so
-            # that it can be more easily observed as it runs. The 'take_time' parameter,
-            # specifies how much additional time a step should take before setting itself
-            # to "DONE."
-        'take_time'     => 1,
+        'take_time'     => 0,
     };
 }
 
@@ -98,7 +93,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
             -parameters => {
                 'max_chunk_length'  => 100,                     # amount of sequence, in bases, to include in a single chunk file
-                'output_dir'        => '.',                     # directory to store the chunk files
+                'output_dir'        => '/tmp',                     # directory to store the chunk files
                 'output_prefix'     => 'gcpct_pipeline_chunk_', # common prefix for the chunk files
                 'output_suffix'     => '.chnk',                 # common suffix for the chunk files
 

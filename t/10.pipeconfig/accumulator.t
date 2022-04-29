@@ -47,7 +47,7 @@ isnt(index($all_objects->[0]->{'msg'}, $msg), -1, "Detect a null hash key" );
 
 safe_drop_database( $hive_dba );
 
-for my $file (glob($ENV{PWD}."/gcpct_*")) {
+for my $file ( glob("/tmp/gcpct_pipeline_chunk_*.chnk") ) {
     unlink $file;
 }
 
