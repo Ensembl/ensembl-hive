@@ -32,7 +32,7 @@ my $pipeline_url  = get_test_url_or_die();
 {
     local @INC = @INC;
     push @INC, $ENV{'EHIVE_ROOT_DIR'}.'/t/10.pipeconfig/';
-    init_pipeline('TestPipeConfig::Accumulator::NullHashKey_conf', $pipeline_url, [], ['pipeline.param[take_time]=100']);
+    init_pipeline('TestPipeConfig::Accumulator::NullHashKey_conf', $pipeline_url, [], ['pipeline.param[take_time]=0']);
 }
 my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url );
 
