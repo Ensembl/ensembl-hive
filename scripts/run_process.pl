@@ -9,11 +9,10 @@ use JSON;
 # List of param names that should be treated as arrays
 # TO DO: make this somehow more generic
 my $array_params = {
-  'species_list' => 1, 'analysis_types' => 1, 'datacheck_groups' => 1
+  'analysis_types' => 1, 'datacheck_groups' => 1
 };
 
 # Parse the command line parameters sent to the script
-# TO DO: add option to parse dataflow file
 my $params = parse_options();
 
 if (!defined($params->{'class'})) {
@@ -40,6 +39,19 @@ sub parse_options {
 
     $option =~ s/^-//g;
     my @tmp = split("=", $option);
+
+    if ($tmp[0] eq 'dataflow') {
+      my $decoded_dataflow = decode_json($tmp[1]);
+      while (my ($dt_key, $dt_val) = each %{$decoded_dataflow}) {
+        if ($dt_val && ($dt_val =~ /,/ || $array_params->{$dt_key})) {
+          my @values_array = split(",", $dt_val);
+          $params->{$dt_key} = \@values_array;
+        } else {
+          $params->{$dt_key} = $dt_val;
+        }
+      }
+      next;
+    }
 
     if ($tmp[1] && ($tmp[1] =~ /,/ || $array_params->{$tmp[0]})) {
       my @values_array = split(",", $tmp[1]);
