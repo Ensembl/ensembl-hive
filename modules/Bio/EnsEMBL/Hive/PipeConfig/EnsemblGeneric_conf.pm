@@ -67,6 +67,7 @@ sub default_options {
             # there would always be an options missing error. We choose ensembl_cvs_root_dir for backwards compatibility.
         'ensembl_cvs_root_dir'  => defined($ENV{'ENSEMBL_ROOT_DIR'} || $ENV{'ENSEMBL_CVS_ROOT_DIR'}) ?
              $ENV{'ENSEMBL_ROOT_DIR'} || $ENV{'ENSEMBL_CVS_ROOT_DIR'} : $self->o('ensembl_cvs_root_dir'),
+        'ensembl_root_dir'      => $self->o('ensembl_cvs_root_dir'),
         'ensembl_release'       => Bio::EnsEMBL::ApiVersion::software_version(),                        # snapshot of EnsEMBL Core API version. Please do not change if not sure.
         'rel_suffix'            => '',                                                                  # an empty string by default, a letter otherwise
         'rel_with_suffix'       => $self->o('ensembl_release').$self->o('rel_suffix'),
