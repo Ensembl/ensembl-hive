@@ -282,7 +282,7 @@ sub get_report_entries_for_process_ids {
 
         # sacct -j 19661,19662,19663 
         #  --units=M Display values in specified unit type. [KMGTP] 
-        my $cmd = "sacct -p --units=M --format JobName,JobID,ExitCode,MaxRSS,Reserved,MaxDiskRead,CPUTimeRAW,ElapsedRAW,State,DerivedExitCode -j $pid_batch  " ;
+        my $cmd = "sacct -p --units=M --format JobName,JobID,ExitCode,MaxRSS,MaxDiskRead,CPUTimeRAW,ElapsedRAW,State,DerivedExitCode -j $pid_batch  " ;
 
         warn "SLURM::get_report_entries_for_process_ids() running cmd:\n\t$cmd\n";
         my $batch_of_report_entries = $self->parse_report_source_line( $cmd );
@@ -315,7 +315,7 @@ sub get_report_entries_for_time_interval {
     $to_time = $to_timepiece->strftime('%Y-%m-%dT%H:%M');
 
     # sacct -s CA,CD,CG,F -S 2018-02-27T16:48 -E 2018-02-27T16:50
-    my $cmd = "sacct -p --units=M -s CA,CD,F,OOM  --format JobName,JobID,ExitCode,MaxRSS,Reserved,MaxDiskRead,CPUTimeRAW,ElapsedRAW,State,DerivedExitCode     -S $from_time -E $to_time ".($username ? "-u $username" : '') . ' |';
+    my $cmd = "sacct -p --units=M -s CA,CD,F,OOM  --format JobName,JobID,ExitCode,MaxRSS,MaxDiskRead,CPUTimeRAW,ElapsedRAW,State,DerivedExitCode     -S $from_time -E $to_time ".($username ? "-u $username" : '') . ' |';
 
     warn "SLURM::get_report_entries_for_time_interval() running cmd:\n\t$cmd\n";
 
@@ -354,12 +354,13 @@ sub parse_report_source_line {
         my $job_id     = $col[1];   # JobID 
         my $exit_code  = $col[2];   # ExitCode 
         my $mem_used   = $col[3];   # MaxRSS in units=M 
-        my $reserved_time = $col[4];   # Reserved / pending time ... 
-        my $max_disk_read = $col[5];   # MaxDiskRead 
-        my $total_cpu     = $col[6];   # CPUTimeRAW
-        my $elapsed       = $col[7];   # ElapsedRAW 
-        my $state         = $col[8];   # State 
-        my $exception_status = $col[9];   # DerivedExitCode  
+        #my $reserved_time = $col[4];   # Reserved / pending time ... 
+        my $reserved_time = 0;
+        my $max_disk_read = $col[4];   # MaxDiskRead 
+        my $total_cpu     = $col[5];   # CPUTimeRAW
+        my $elapsed       = $col[6];   # ElapsedRAW 
+        my $state         = $col[7];   # State 
+        my $exception_status = $col[8];   # DerivedExitCode  
 
         print "DEBUG: $job_id\t$state\n";
 
