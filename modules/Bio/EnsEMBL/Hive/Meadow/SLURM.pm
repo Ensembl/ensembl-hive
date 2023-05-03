@@ -516,8 +516,6 @@ sub submit_workers_return_meadow_pids {
          #
          $return_value = [ $slurm_job_id ]; 
        } 
-          
-       print "SLURM: Submitted job ids: " . join(" ", @$return_value)."\n";  
 
        return $return_value; 
        #return ($array_required ? [ map { $slurm_job_id.'['.$_.']' } (1..$required_worker_count) ] : [ $slurm_job_id]); 
