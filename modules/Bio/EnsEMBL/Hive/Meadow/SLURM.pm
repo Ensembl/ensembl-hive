@@ -480,7 +480,7 @@ sub submit_workers_return_meadow_pids {
 
     # execute written file + capture STDOUT and EXIT CODE 
     my  ($stdout, $stderr, $exit) = capture {
-       system ("sh $tmp") && die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax  
+       system ("sh $tmp");
     };
 
     if ( $exit ne 0 ) {  
