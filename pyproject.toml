@@ -1,0 +1,74 @@
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016-2024] EMBL-European Bioinformatics Institute
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+## Generic configuration
+[project]
+name = "ensembl-hive"
+dynamic = [
+    "version",
+]
+requires-python = ">= 3.8"
+description = "Ensembl Python Base Hive Wrapper"
+readme = "README.md"
+authors = [
+    {name = "Ensembl", email = "dev@ensembl.org"},
+]
+license = {text = "Apache License 2.0"}
+keywords = [
+    "ehive",
+    "ensembl",
+    "bioinformatics",
+    "workflow",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+# dependencies = []
+
+[project.urls]
+homepage = "https://www.ensembl.org"
+repository = "https://github.com/Ensembl/ensembl-hive"
+
+# [project.scripts]
+# Python entry-points
+
+[tool.setuptools]
+package-dir = {"" = "wrappers/python3"}
+
+[tool.setuptools.dynamic]
+version = {attr = "eHive.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["wrappers/python3"]  # list of folders that contain the packages (["."] by default)
+
+# For additional information on `setuptools` configuration see:
+#    https://setuptools.pypa.io/en/latest/userguide/quickstart.html
+#    https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
+#    https://packaging.python.org/en/latest/specifications/declaring-project-metadata/
+
+[build-system]
+requires = [
+    "setuptools",
+    "setuptools-scm",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
