@@ -1,5 +1,5 @@
 requires 'DBI';
-requires 'DBD::mysql';
+requires 'DBD::mysql', '< 5.0'; # newer versions do not support MySQL 5
 requires 'DBD::SQLite';
 requires 'DBD::Pg';
 
