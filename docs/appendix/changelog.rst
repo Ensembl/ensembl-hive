@@ -4,7 +4,7 @@ Changelog
 Version 2.6
 ===========
 
-   *Summer 2021 "codon" update
+   *Summer 2021 "codon" update*
 
 Release overview
 ----------------
