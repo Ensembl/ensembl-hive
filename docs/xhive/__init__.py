@@ -24,7 +24,8 @@ import sys
 
 
 def setup_if_needed(this_release, run_doxygen):
-    build_path = os.path.join(os.environ["PWD"], "_build")
+    docswd_path = os.environ["PWD"] 
+    build_path = os.path.join(docswd_path, "_build")
 
     # Check whether we are on the same version of eHive
     is_same = False
@@ -35,20 +36,19 @@ def setup_if_needed(this_release, run_doxygen):
         if previous_release == this_release:
             is_same = True
 
-    # Install packages and setup environment
+    # Setup environment
     on_rtd = os.environ.get("READTHEDOCS", None) == "True"
     if on_rtd:
-        upgrade_path = os.path.join(build_path, "rtd_upgrade")
-        if not is_same:
-            subprocess.check_call(["./rtd_upgrade.sh", upgrade_path], stdout=sys.stdout, stderr=sys.stderr)
-        deb_install_path = os.path.join(upgrade_path, "root")
-        os.environ["PERL5LIB"] = os.path.pathsep.join(os.path.join(deb_install_path, _) for _ in ["usr/share/perl5/", "usr/lib/x86_64-linux-gnu/perl5/5.26/", "usr/lib/x86_64-linux-gnu/perl5/5.26/auto/"])
-        os.environ["PATH"] = os.path.join(deb_install_path, "usr/bin") + os.path.pathsep + os.environ["PATH"]
-        os.environ["ENSEMBL_CVS_ROOT_DIR"] = upgrade_path
+        os.environ["ENSEMBL_CVS_ROOT_DIR"] = os.path.join(docswd_path, os.path.pardir)
     else:
         os.environ["ENSEMBL_CVS_ROOT_DIR"]   # Will raise an error if missing
-    os.environ["EHIVE_ROOT_DIR"] = os.path.join(os.environ["PWD"], os.path.pardir)
-    os.environ["PERL5LIB"] = os.path.join(os.environ["EHIVE_ROOT_DIR"], "modules") + os.path.pathsep + os.environ["PERL5LIB"]
+
+    os.environ["EHIVE_ROOT_DIR"] = os.path.join(docswd_path, os.path.pardir)
+
+    if "PERL5LIB" in os.environ:
+        os.environ["PERL5LIB"] = os.path.join(os.environ["EHIVE_ROOT_DIR"], "modules") + os.path.pathsep + os.environ["PERL5LIB"]
+    else:
+        os.environ["PERL5LIB"] = os.path.join(os.environ["EHIVE_ROOT_DIR"], "modules")
 
     # Doxygen
     mkdoxygen_path = os.path.join(os.environ["EHIVE_ROOT_DIR"], "scripts", "dev", "make_doxygen.pl")
