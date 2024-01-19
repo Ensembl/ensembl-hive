@@ -1,9 +1,37 @@
 version: 2
 
+build:
+   os: ubuntu-20.04
+   apt_packages:
+     - dvipng
+     - graphviz
+     - texlive-latex-base
+     - texlive-latex-extra
+     - texlive-latex-recommended
+     - libjson-perl
+     - libjson-xs-perl
+     - libdbd-sqlite3-perl
+     - libcommon-sense-perl
+     - libtypes-serialiser-perl
+     - libxml-xpath-perl
+     - libparse-recdescent-perl
+     - libipc-run-perl
+     - libio-pty-perl
+     - libgraphviz-perl
+     - libproc-daemon-perl
+   tools:
+     python: "3.10"
+   jobs:
+     post_install:
+       - git clone --branch main --depth 1 https://github.com/Ensembl/ensembl.git 
+       - git clone --branch main --depth 1 https://github.com/Ensembl/ensembl-hive-docker-swarm.git
+       - cp -r ./ensembl-hive-docker-swarm/docs ./docs/contrib/docker-swarm
+
+sphinx:
+  builder: html
+  configuration: docs/conf.py
+  fail_on_warning: false
+
 python:
-  version: 3.6
   install:
     - requirements: docs/requirements.txt
-
-build:
-   image: stable

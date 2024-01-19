@@ -680,7 +680,7 @@ You can create a template for input ids for the next analysis if for example you
 Pipeline wide parameters
 ========================
 
-If you are using pipelinewide parameters, using a prefix could help other people understand when it is a "local" parameters and when it's not. For the RNASeq pipeline Thibaut Hourlier used 'wide_'. We can change it to something different but we need to have one prefix for all our pipeline.
+If you are using pipelinewide parameters, using a prefix could help other people understand when it is a "local" parameters and when it's not. For the RNASeq pipeline Thibaut Hourlier used 'wide\_'. We can change it to something different but we need to have one prefix for all our pipeline.
 
 Input ids
 =========

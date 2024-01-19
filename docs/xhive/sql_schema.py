@@ -112,7 +112,7 @@ def depart_schema_table_header_latex(self, node):
 ## Register the extension
 def setup(app):
     # Add the CSS
-    app.add_stylesheet("schema_doc.css")
+    app.add_css_file("schema_doc.css")
     app.add_directive('schema_diagram', SchemaDiagramDirective)
     app.add_node(versatile_graphviz,
             html=(html_visit_graphviz, None),
