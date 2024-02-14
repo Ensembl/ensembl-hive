@@ -1,4 +1,3 @@
-
 =pod
 
 =head1 NAME
@@ -43,7 +42,6 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Utils qw(split_for_bash timeout);
-use Capture::Tiny ':all';
 use DateTime::Format::ISO8601;
 use File::Temp   qw(tempdir);
 use Scalar::Util qw(looks_like_number);
@@ -97,21 +95,18 @@ sub name {
 sub count_pending_workers_by_rc_name {
     my ($self) = @_;
 
-    #Needed becasue by default slurm reports all jobs
-    my $username = getpwuid($<);
-
     my $jnp = $self->job_name_prefix();
 
     #Prefix for job is not implemented in Slurm, so need to get all
     #and parse it out
-    my $cmd = "squeue --array -h -u ${username} -t PENDING -o '%j' ";
+    my $cmd = "squeue --array -h -u $ENV{USER} -t PENDING -o '%j' ";
 
-    my $lines = execute_command($cmd);
+    my $output = execute_command($cmd);
 
     my %pending_this_meadow_by_rc_name = ();
     my $total_pending_this_meadow = 0;
 
-    foreach my $line (@$lines) {
+    foreach my $line (split /\n/, $output) {
         if ($line =~ /\b\Q$jnp\E(\S+)\-\d+(\[\d+\])?\b/) {
             $pending_this_meadow_by_rc_name{$1}++;
             $total_pending_this_meadow++;
@@ -131,24 +126,16 @@ sub count_pending_workers_by_rc_name {
 =cut
 
 sub count_running_workers {
-    my $self = shift @_;
-    my $meadow_users_of_interest = shift @_ || ['all'];
+    my $self = shift;
 
     my $jnp = $self->job_name_prefix();
 
-    my $total_running_worker_count = 0;
+    my $cmd = "squeue --array -h --me -t RUNNING -o '%j' | grep ^$jnp | wc -l";
+    my $output = execute_command($cmd);
 
-    foreach my $meadow_user (@$meadow_users_of_interest) {
-        my $cmd = "squeue --array -h -u $meadow_user -t RUNNING -o '%j' | grep ^$jnp | wc -l";
-        my $lines = execute_command($cmd);
+    $output =~ /(\d+)/;
 
-        my $meadow_user_worker_count = $lines->[0];
-        $meadow_user_worker_count =~ s/\s+//g;    # remove both leading and trailing spaces
-
-        $total_running_worker_count += $meadow_user_worker_count;
-    }
-
-    return $total_running_worker_count;
+    return $1;
 }
 
 =head status_of_all_our_workers()
@@ -161,38 +148,31 @@ sub count_running_workers {
 =cut
 
 sub status_of_all_our_workers {
-    my $self = shift @_;
-    my $meadow_users_of_interest = shift @_ || ['all'];
+    my $self = shift;
 
     my $jnp = $self->job_name_prefix();    # reederj_ehive_rosaprd_278-Hive-
-
     my @status_list = ();
 
-    foreach my $meadow_user (@$meadow_users_of_interest) {
+    # PENDING, RUNNING, SUSPENDED, CANCELLED, COMPLETING, COMPLETED, CONFIGURING, FAILED,
+    # TIMEOUT, PREEMPTED, NODE_FAIL, REVOKED and SPECIAL_EXIT
 
-        # PENDING, RUNNING, SUSPENDED, CANCELLED, COMPLETING, COMPLETED, CONFIGURING, FAILED,
-        # TIMEOUT, PREEMPTED, NODE_FAIL, REVOKED and SPECIAL_EXIT
+    # jhv : this returns the job_id. Is this job ID alwas suffixed with _1 ?
+    my $cmd = "squeue --array --me -h -o '%i|%T|%u'";
 
-        # jhv : this returns the job_id. Is this job ID alwas suffixed with _1 ?
-        my $cmd = "squeue --array -h -o '%i|%T|%u' ";
-        $cmd .= "-u $meadow_user" if ($meadow_user ne 'all');
+    my $output = execute_command($cmd);
 
-        my $lines = execute_command($cmd);
+    foreach my $line (split /\n/, $output) {
+        chomp($line);
 
-        foreach my $line (@$lines) {
-            chomp($line)
-                ; # Remove the newline from the squeue command otherwise we can't identify job correctly
+        my ($worker_pid, $status, $user) = split(/\|/, $line);
 
-            my ($worker_pid, $status, $user) = split(/\|/, $line);
+        # TODO: not exactly sure what these are used for in the external code -
+        # this is based on the LSF status codes that were ignored
+        # Do not count COMPLETED or FAILED jobs.
+        next if (($status eq 'COMPLETED') or ($status eq 'FAILED'));
 
-            # TODO: not exactly sure what these are used for in the external code -
-            # this is based on the LSF status codes that were ignored
-            # Do not count COMPLETED or FAILED jobs.
-            next if (($status eq 'COMPLETED') or ($status eq 'FAILED'));
-
-            push @status_list, [$worker_pid, $user, $status];
-        }
-    } ## end foreach my $meadow_user (@$meadow_users_of_interest)
+        push @status_list, [$worker_pid, $user, $status];
+    }
     return \@status_list;
 } ## end sub status_of_all_our_workers
 
@@ -211,14 +191,11 @@ sub check_worker_is_alive_and_mine {
     my $wpid = $worker->process_id();
     my $this_user = $ENV{'USER'};
 
-    my $cmd =
-"squeue -h -u $this_user --job=$wpid 2>&1 | grep -v 'Invalid job id specified' | grep -v 'Invalid user'";
-    my $lines = execute_command($cmd);
+    my $cmd = "squeue -h --me --job=$wpid";
 
-    my $is_alive_and_mine = $lines->[0];
-    $is_alive_and_mine =~ s/^\s+|\s+$//g;
+    my $output = execute_command($cmd);
 
-    return $is_alive_and_mine;
+    return $output ? 1 : 0;
 }
 
 =head kill_worker()
@@ -234,7 +211,7 @@ sub kill_worker {
     my ($self, $worker, $fast) = @_;
 
     my $cmd = 'scancel ' . $worker->process_id();
-    my $lines = execute_command($cmd);
+    execute_command($cmd);
 }
 
 =head get_report_entries_for_process_ids()
@@ -251,17 +228,17 @@ sub get_report_entries_for_process_ids {
 
     my %combined_report_entries = ();
 
-    while (my $pid_batch = join(',', map {"'$_'"} splice(@_, 0, 20)))
-    {                       # can't fit too many pids on one shell cmdline
-                            #$pid_batch =~ s/\[//g;
-                            #$pid_batch =~ s/\]//g;
+    while (my $pid_batch = join(',', map {"'$_'"} splice(@_, 0, 20))) {
+        # can't fit too many pids on one shell cmdline
 
         # sacct -j 19661,19662,19663
         #  --units=M Display values in specified unit type. [KMGTP]
         my $cmd =
-"sacct -n -p --units=M --format JobName,JobID,ExitCode,MaxRSS,MaxDiskRead,CPUTimeRAW,ElapsedRAW,State,DerivedExitCode,End -j $pid_batch  ";
+            "sacct -n -p --units=M --format JobName,JobID,ExitCode,MaxRSS," .
+            "MaxDiskRead,CPUTimeRAW,ElapsedRAW,State,DerivedExitCode,End " .
+            "-j $pid_batch";
 
-        warn "SLURM::get_report_entries_for_process_ids() running cmd:\n\t$cmd\n";
+        # "SLURM::get_report_entries_for_process_ids() running cmd:\n\t$cmd\n";
         my $batch_of_report_entries = $self->parse_report_source_line($cmd);
 
         %combined_report_entries = (%combined_report_entries, %$batch_of_report_entries);
@@ -290,11 +267,10 @@ sub get_report_entries_for_time_interval {
     $to_time = $to_timepiece->strftime('%Y-%m-%dT%H:%M');
 
     # sacct -s CA,CD,CG,F -S 2018-02-27T16:48 -E 2018-02-27T16:50
-    my $cmd =
-"sacct -n -p --units=M -s CA,CD,F,OOM --format JobName,JobID,ExitCode,MaxRSS,MaxDiskRead,CPUTimeRAW,ElapsedRAW,State,DerivedExitCode,End -S $from_time -E $to_time "
-        . ($username ? "-u $username" : '') . ' |';
+    my $cmd = "sacct --me -n -p --units=M -s CA,CD,F,OOM --format JobName,JobID,ExitCode,MaxRSS,MaxDiskRead," .
+        "CPUTimeRAW,ElapsedRAW,State,DerivedExitCode,End -S $from_time -E $to_time";
 
-    warn "SLURM::get_report_entries_for_time_interval() running cmd:\n\t$cmd\n";
+        #    warn "SLURM::get_report_entries_for_time_interval() running cmd:\n\t$cmd\n";
 
     my $batch_of_report_entries = $self->parse_report_source_line($cmd);
 
@@ -464,19 +440,11 @@ sub submit_workers_return_meadow_pids {
         DIR      => tempdir());
     print $tmp join(" ", @cmd);
 
-    # execute written file + capture STDOUT and EXIT CODE
-    my ($stdout, $stderr, $exit) = capture {
-        system("sh $tmp");
-    };
+    my $output execute_command("sh $tmp");
 
-    if ($exit ne 0) {
-        die("SLURM: job submission failed with exit status $exit: : $stdout $stderr");
-    }
 
-    unless ($stdout =~ m/Submitted batch job (\d+)/) {
-        die(
-"ERROR: SLURM job submission returned Incorrect return value, so the SLURM JOB ID can't be parsed correctly."
-        );
+    unless ($output->[0] =~ m/Submitted batch job (\d+)/) {
+        die "Could not find job id in sbatch output";
     }
 
     my @out = split /\s/, $stdout;    # STDOUT is like": "Submitted batch job 2683413"
@@ -527,10 +495,10 @@ sub execute_command {
         run(command => $cmd, verbose => 0, timeout => $timeout);
 
     if ($success) {
-        return [split(/\n/, join("", @$stdout_buf))];
+        return join("", @$stdout_buf);
     } else {
-        die
-"Failed to execute command '$cmd'. Error: '$error_message', STDOUT: '@$stdout_buf', STDERR: '@$stderr_buf'";
+        die "Failed to execute command '$cmd'. Error: '$error_message', " .
+            "STDOUT: '@$stdout_buf', STDERR: '@$stderr_buf'";
     }
 }
 
