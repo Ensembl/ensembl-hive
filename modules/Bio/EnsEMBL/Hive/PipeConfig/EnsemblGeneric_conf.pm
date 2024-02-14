@@ -96,5 +96,63 @@ sub pipeline_wide_parameters {
     };
 }
 
+=head2 resource_classes
+
+    Description : Interface method that should return a hash of resource_description_id->resource_description_hash.
+                  Please see existing PipeConfig modules for examples.
+
+=cut
+
+# # WIP
+# sub resource_classes {
+#     my ($self) = @_;
+# 
+#     # The 
+#     my $analyses = $self->pipeline_analyses();
+# 
+#     my $rc_config;
+# 
+#     for my $analysis (@$analyses) {
+#         if (exists $analysis->{'rc_spec'} or exists $analysis->{'-rc_spec'}) {
+#             my $spec = $analysis->{'rc_spec'} // $analysis->{'-rc_spec'};
+#             my $name = rc_spec_to_name($spec);
+#             my $opt = rc_spec_to_option($spec);
+#             $rc_config->{$name} = $opt;
+#         }
+#     }
+# 
+#     if (! $rc_config) {
+#         return $self->SUPER::resource_classes();
+#     }
+# 
+#     return $rc_config;
+# }
+# 
+# sub rc_spec_to_name {
+#     # Reformat a spec to be usable as an RC name
+#     my $spec = shift;
+#     my $name = $spec;
+#     $name =~ s/\s/_/g;
+# 
+#     return $name;
+# }
+# 
+# sub rc_spec_to_option {
+#     my $spec = shift;
+# 
+#     $spec =~ /^ *(\d+(?:\.\d+)? ?[MGTB]+)?(\d+ ?CPU)?(\d+ ?GPU)?(\w+)? *$/;
+#     my ($mem, $cpu, $gpu, $partition) = ($1, $2, $3, $4);
+# 
+#     # create LSF and SLURM options
+# 
+#     my $opts = {
+#         LSF => '',
+#         SLURM => ''
+#     }
+# 
+#     return $opts;
+# }
+
+
 1;
 
