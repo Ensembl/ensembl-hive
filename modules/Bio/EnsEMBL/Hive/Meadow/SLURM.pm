@@ -73,12 +73,12 @@ our $VERSION = '5.5';
 # if sinfo gives a version and a non-zero node count.
 sub name {
     # List the slurm version and the cluster node count like "23.02.7:197"
-    my $slurm_version = `sinfo -ho "%v:%D 2>/dev/null`;
-    $slurm_version =~ /^(\d+)(?:\.\d+)*:(\d+)$/;
+    my $sinfo = `sinfo -ho "%v:%D" 2>/dev/null`;
+    $sinfo =~ /^(\d+)(?:\.\d+)*:(\d+)$/;
     my $slurm_version = $1;
     my $node_count = $2;
 
-    if ($slurm_version >= 23 and $node_count > 0) {
+    if ($slurm_version and $node_count and $slurm_version >= 23 and $node_count > 0) {
         return "slurm";
     }
 }
@@ -97,16 +97,16 @@ sub count_pending_workers_by_rc_name {
 
     my $jnp = $self->job_name_prefix();
 
-    #Prefix for job is not implemented in Slurm, so need to get all
-    #and parse it out
+    # Prefix for job is not implemented in Slurm, so need to get all
+    # and parse it out
     my $cmd = "squeue --array -h -u $ENV{USER} -t PENDING -o '%j' ";
 
-    my $output = execute_command($cmd);
+    my @output = execute_command($cmd);
 
     my %pending_this_meadow_by_rc_name = ();
     my $total_pending_this_meadow = 0;
 
-    foreach my $line (split /\n/, $output) {
+    foreach my $line (@output) {
         if ($line =~ /\b\Q$jnp\E(\S+)\-\d+(\[\d+\])?\b/) {
             $pending_this_meadow_by_rc_name{$1}++;
             $total_pending_this_meadow++;
@@ -159,11 +159,9 @@ sub status_of_all_our_workers {
     # jhv : this returns the job_id. Is this job ID alwas suffixed with _1 ?
     my $cmd = "squeue --array --me -h -o '%i|%T|%u'";
 
-    my $output = execute_command($cmd);
+    my @output = execute_command($cmd);
 
-    foreach my $line (split /\n/, $output) {
-        chomp($line);
-
+    foreach my $line (@output) {
         my ($worker_pid, $status, $user) = split(/\|/, $line);
 
         # TODO: not exactly sure what these are used for in the external code -
@@ -193,7 +191,7 @@ sub check_worker_is_alive_and_mine {
 
     my $cmd = "squeue -h --me --job=$wpid";
 
-    my $output = execute_command($cmd);
+    my $output = eval{execute_command($cmd)};
 
     return $output ? 1 : 0;
 }
@@ -292,14 +290,12 @@ sub parse_report_source_line {
 
     my $jnp = $self->job_name_prefix();    # reederj_ehive_rosaprd_278-Hive-
 
-    my $lines = execute_command($bacct_source_line);
+    my @lines = execute_command($bacct_source_line);
 
     my %report_entry = ();
     my %job_id_to_state;
 
-    for my $row (@$lines) {
-        chomp $row;
-
+    for my $row (@lines) {
         my @col = split(/\|/, $row);
 
         my $job_name = $col[0];     # JobName - for explanation please look at sacct command
@@ -317,7 +313,7 @@ sub parse_report_source_line {
 
         my $datetime = DateTime::Format::ISO8601->parse_datetime($endtime);
 
-        print "DEBUG: $job_id\t$state\n";
+        #print "DEBUG: $job_id\t$state\n";
 
         # parse the correct state
         if ($job_name =~ m/$jnp/) {
@@ -406,51 +402,44 @@ sub submit_workers_return_meadow_pids {
         # We have to submit a job array - this will change the job ids in slurm to <job_id>_ARRAY
 
         @cmd = (
-            'sbatch', '-o', $submit_stdout_file, '-e', $submit_stderr_file, '-a',
-            $job_array_spec,    # inform SLURM we submit an ARRAY
-                # jobs submitted with 'sbatch -a ' get different ids back when executing
-                # 'squeue --array -h -u <user> -o '%i|%T|%u|%A' later
-            '-J', $job_array_common_name, split_for_bash($rc_specific_submission_cmd_args),
-            split_for_bash($meadow_specific_submission_cmd_args), $worker_cmd,
+            'sbatch',
+            '--parsable',
+            '-o', $submit_stdout_file,
+            '-e', $submit_stderr_file,
+            # inform SLURM we submit an ARRAY
+            # jobs submitted with 'sbatch -a ' get different ids back when executing
+            # 'squeue --array -h -u <user> -o '%i|%T|%u|%A' later
+            '-a', $job_array_spec,
+            '-J', $job_array_common_name,
+            split_for_bash($rc_specific_submission_cmd_args),
+            split_for_bash($meadow_specific_submission_cmd_args),
+            '--wrap',
+            $worker_cmd,
         );
     } else {
         @cmd = (
             'sbatch',
-            '-o',
-            $submit_stdout_file,
-            '-e',
-            $submit_stderr_file,
-            '-J',
-            $job_array_common_name,
+            '--parsable',
+            '-o', $submit_stdout_file,
+            '-e', $submit_stderr_file,
+            '-J', $job_array_common_name,
             split_for_bash($rc_specific_submission_cmd_args),
             split_for_bash($meadow_specific_submission_cmd_args),
+            '--wrap',
             $worker_cmd,
         );
 
     }
 
-    print "\n\nExecuting [ " . $self->signature . " ] \t\t" . join(' ', @cmd) . "\n\n";
+    # TODO: make debug    print "\n\nExecuting [ " . $self->signature . " ] \t\t" . join(' ', @cmd) . "\n\n";
 
-    # Hack for sbatchd
-    # Write command to file
-    my $tmp = File::Temp->new(
-        TEMPLATE => "slurm_job__submission.$$.XXXX",
-        UNLINK   => 1,
-        SUFFIX   => '.sh',
-        DIR      => tempdir());
-    print $tmp join(" ", @cmd);
+    my @output = execute_command(\@cmd);
 
-    my $output execute_command("sh $tmp");
-
-
-    unless ($output->[0] =~ m/Submitted batch job (\d+)/) {
+    unless ($output[0] =~ m/(\d+)/) {
         die "Could not find job id in sbatch output";
     }
 
-    my @out = split /\s/, $stdout;    # STDOUT is like": "Submitted batch job 2683413"
-    my $slurm_job_id = $out[-1];
-
-    print join(" ", @out) . "\n";
+    my $slurm_job_id = $output[0];
 
     if (looks_like_number($slurm_job_id)) {
 
@@ -464,29 +453,22 @@ sub submit_workers_return_meadow_pids {
             # job arrays - so they are correctly written to DB + on SLURM scheduler.
             $return_value = [map {$slurm_job_id . '_' . $_ . ''} (1 .. $required_worker_count)];
         } else {
-
-   #
-   # We submitted only a single job - so theoretically we do not have to add the <job_id>_1 suffix
-   # However - if you submit a single job to SLURM, you will still get the ID with index back later:
-   # sbatch bla.sh
-   #
+            # We submitted only a single job - so theoretically we do not have
+            # to add the <job_id>_1 suffix However - if you submit a single job
+            # to SLURM, you will still get the ID with index back later: sbatch
+            # bla.sh
             $return_value = [$slurm_job_id];
         }
 
         return $return_value;
-#return ($array_required ? [ map { $slurm_job_id.'['.$_.']' } (1..$required_worker_count) ] : [ $slurm_job_id]);
-#return ($array_required ? [ map { $slurm_job_id.'['.$_.']' } (1..$required_worker_count) ] : [ $slurm_job_id]);
     } else {
-        die(
-"ERROR: SLURM Job submission failure : it looks like SLURM returned a non-numerical value /job-id returned in $tmp: $stdout\n"
-        );
+        die "Unexpected output for sbatch command. Command: '@cmd'; Stdout: '" . (join "\n", @output) . "'";
     }
-#system( @cmd ) && die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax
 } ## end sub submit_workers_return_meadow_pids
 
 sub execute_command {
     # command can be an arrayref or a string
-    my ($cmd) = @_;
+    my $cmd = shift;
 
     # Timeout for slurm commands
     my $timeout = 20;
@@ -494,12 +476,14 @@ sub execute_command {
     my ($success, $error_message, undef, $stdout_buf, $stderr_buf) =
         run(command => $cmd, verbose => 0, timeout => $timeout);
 
+    my $output;
     if ($success) {
-        return join("", @$stdout_buf);
+        $output = join("", @$stdout_buf);
     } else {
         die "Failed to execute command '$cmd'. Error: '$error_message', " .
             "STDOUT: '@$stdout_buf', STDERR: '@$stderr_buf'";
     }
+    return wantarray ? split(/\n/, $output // "") : $output;
 }
 
 sub get_current_worker_process_id {
@@ -509,9 +493,9 @@ sub get_current_worker_process_id {
     my $slurm_array_job_id = $ENV{'SLURM_ARRAY_JOB_ID'};
     my $slurm_array_task_id = $ENV{'SLURM_ARRAY_TASK_ID'};
 
-    #We have a slurm job
+    # We have a slurm job
     if (defined($slurm_jobid)) {
-        #We have an array job
+        # We have an array job
         if (defined($slurm_array_job_id) and defined($slurm_array_task_id)) {
             return "$slurm_array_job_id\_$slurm_array_task_id";
         } else {
