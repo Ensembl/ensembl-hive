@@ -9,6 +9,8 @@ requires 'Time::Piece';
 requires 'JSON';
 requires 'Proc::Daemon', '0.23';
 requires 'Email::Stuffer';
+requires 'IPC::Cmd';
+requires 'DateTime::Format::ISO8601';
 
 on 'test' => sub {
 	requires 'Test::Exception';

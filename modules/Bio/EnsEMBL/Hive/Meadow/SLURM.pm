@@ -43,9 +43,8 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Utils qw(split_for_bash timeout);
 use DateTime::Format::ISO8601;
-use File::Temp   qw(tempdir);
+use File::Temp qw(tempdir);
 use Scalar::Util qw(looks_like_number);
-use Time::Local;
 use Time::Piece;
 use Time::Seconds;
 use IPC::Cmd qw(run);
@@ -99,7 +98,7 @@ sub count_pending_workers_by_rc_name {
 
     # Prefix for job is not implemented in Slurm, so need to get all
     # and parse it out
-    my $cmd = "squeue --array -h -u $ENV{USER} -t PENDING -o '%j' ";
+    my $cmd = "squeue --array --noheader --me --states='PENDING' --format='%j'";
 
     my @output = execute_command($cmd);
 
@@ -130,7 +129,7 @@ sub count_running_workers {
 
     my $jnp = $self->job_name_prefix();
 
-    my $cmd = "squeue --array -h --me -t RUNNING -o '%j' | grep ^$jnp | wc -l";
+    my $cmd = "squeue --array --noheader --me --states='RUNNING' --format='%j' | grep ^$jnp | wc -l";
     my $output = execute_command($cmd);
 
     $output =~ /(\d+)/;
@@ -156,8 +155,7 @@ sub status_of_all_our_workers {
     # PENDING, RUNNING, SUSPENDED, CANCELLED, COMPLETING, COMPLETED, CONFIGURING, FAILED,
     # TIMEOUT, PREEMPTED, NODE_FAIL, REVOKED and SPECIAL_EXIT
 
-    # jhv : this returns the job_id. Is this job ID alwas suffixed with _1 ?
-    my $cmd = "squeue --array --me -h -o '%i|%T|%u'";
+    my $cmd = "squeue --array --noheader --me --format='%i|%T|%u'";
 
     my @output = execute_command($cmd);
 
@@ -189,7 +187,7 @@ sub check_worker_is_alive_and_mine {
     my $wpid = $worker->process_id();
     my $this_user = $ENV{'USER'};
 
-    my $cmd = "squeue -h --me --job=$wpid";
+    my $cmd = "squeue --noheader --me --job=$wpid";
 
     my $output = eval{execute_command($cmd)};
 
@@ -226,7 +224,7 @@ sub get_report_entries_for_process_ids {
 
     my %combined_report_entries = ();
 
-    while (my $pid_batch = join(',', map {"'$_'"} splice(@_, 0, 20))) {
+    while (my $pid_batch = join(',', splice(@_, 0, 20))) {
         # can't fit too many pids on one shell cmdline
 
         # sacct -j 19661,19662,19663
@@ -236,7 +234,7 @@ sub get_report_entries_for_process_ids {
             "MaxDiskRead,CPUTimeRAW,ElapsedRAW,State,DerivedExitCode,End " .
             "-j $pid_batch";
 
-        # "SLURM::get_report_entries_for_process_ids() running cmd:\n\t$cmd\n";
+            # print "DEBUG get_report_entries_for_process_ids() running cmd:\n\t$cmd\n";
         my $batch_of_report_entries = $self->parse_report_source_line($cmd);
 
         %combined_report_entries = (%combined_report_entries, %$batch_of_report_entries);
@@ -261,14 +259,14 @@ sub get_report_entries_for_time_interval {
     my $from_timepiece = Time::Piece->strptime($from_time, '%Y-%m-%d %H:%M:%S');
     $from_time = $from_timepiece->strftime('%Y-%m-%dT%H:%M');
 
-    my $to_timepiece = Time::Piece->strptime($to_time, '%Y-%m-%d %H:%M:%S') + 2*ONE_MINUTE;
+    my $to_timepiece = Time::Piece->strptime($to_time, '%Y-%m-%d %H:%M:%S') + 2 * ONE_MINUTE;
     $to_time = $to_timepiece->strftime('%Y-%m-%dT%H:%M');
 
     # sacct -s CA,CD,CG,F -S 2018-02-27T16:48 -E 2018-02-27T16:50
-    my $cmd = "sacct --me -n -p --units=M -s CA,CD,F,OOM --format JobName,JobID,ExitCode,MaxRSS,MaxDiskRead," .
+    my $cmd = "sacct -n -p --units=M -s CA,CD,F,OOM --format JobName,JobID,ExitCode,MaxRSS,MaxDiskRead," .
         "CPUTimeRAW,ElapsedRAW,State,DerivedExitCode,End -S $from_time -E $to_time";
 
-        #    warn "SLURM::get_report_entries_for_time_interval() running cmd:\n\t$cmd\n";
+        # print "DEBUG get_report_entries_for_time_interval() running cmd:\n\t$cmd\n";
 
     my $batch_of_report_entries = $self->parse_report_source_line($cmd);
 
@@ -278,8 +276,7 @@ sub get_report_entries_for_time_interval {
 =head parse_report_source_line()
 
    Args:       : Command ( sacct )
-   Comment     : # Works with Slurm 17.02.9
-   Description : Parses the resource Counts the number of pending workers of the user
+   Description : Parses the resource counts the number of pending workers of the user
    Exception   : Dies if command to retrieve pending workers fails.
    Returntype  : Href
 
@@ -313,7 +310,7 @@ sub parse_report_source_line {
 
         my $datetime = DateTime::Format::ISO8601->parse_datetime($endtime);
 
-        #print "DEBUG: $job_id\t$state\n";
+        # print "DEBUG: $job_id\t$state\n";
 
         # parse the correct state
         if ($job_name =~ m/$jnp/) {
@@ -368,16 +365,11 @@ sub parse_report_source_line {
 
 sub submit_workers_return_meadow_pids {
     my ($self, $worker_cmd, $required_worker_count, $iteration, $rc_name,
-        $rc_specific_submission_cmd_args,
-        $submit_log_subdir)
-        = @_;
+        $rc_specific_submission_cmd_args, $submit_log_subdir) = @_;
 
     my $job_array_common_name = $self->job_array_common_name($rc_name, $iteration);
-    #
+
     # Flag if we should submit a job array or not
-    # This is important for later in terms of what SLURM job ID we return.
-    # (so the job can be reidentfied between SLURM scheduler and Database
-    #
     my $array_required = $required_worker_count > 1;
 
     my $job_array_spec = "1-${required_worker_count}";
@@ -431,7 +423,7 @@ sub submit_workers_return_meadow_pids {
 
     }
 
-    # TODO: make debug    print "\n\nExecuting [ " . $self->signature . " ] \t\t" . join(' ', @cmd) . "\n\n";
+    print "Executing [ " . $self->name . " ]: " . join(' ', @cmd) . "\n";
 
     my @output = execute_command(\@cmd);
 
@@ -442,27 +434,21 @@ sub submit_workers_return_meadow_pids {
     my $slurm_job_id = $output[0];
 
     if (looks_like_number($slurm_job_id)) {
-
         my $return_value;
 
         # Modify the return values depending on the submission type: single job vs job array
-        # as these have different indexes.
-        #
+        # as these have different indexes:
+        # array jobs: [54729315_1, 54729315_2]
+        # single job: [54728975]
         if ($array_required) {
-            # We need to return all Job IDS with suffix <job>_1 <job>_2 if we submit
-            # job arrays - so they are correctly written to DB + on SLURM scheduler.
             $return_value = [map {$slurm_job_id . '_' . $_ . ''} (1 .. $required_worker_count)];
         } else {
-            # We submitted only a single job - so theoretically we do not have
-            # to add the <job_id>_1 suffix However - if you submit a single job
-            # to SLURM, you will still get the ID with index back later: sbatch
-            # bla.sh
             $return_value = [$slurm_job_id];
         }
 
         return $return_value;
     } else {
-        die "Unexpected output for sbatch command. Command: '@cmd'; Stdout: '" . (join "\n", @output) . "'";
+        die "Unexpected output for sbatch command. Command: '@cmd'; STDOUT: '" . (join "\n", @output) . "'";
     }
 } ## end sub submit_workers_return_meadow_pids
 
