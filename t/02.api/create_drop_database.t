@@ -44,7 +44,7 @@ foreach my $test_url (@$ehive_test_pipeline_urls) {
     if ($dbc->driver eq 'sqlite') {
         run_sql_on_db($test_url, 'DROP DATABASE', "'rm -f' doesn't care about missing files");
     } else {
-        is(system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') }), 256, "Cannot drop a database that doesn't exist");
+        run_sql_on_db($test_url, 'DROP DATABASE', "Can drop a database that exists", {'expect_failure' => 1});
     }
     run_sql_on_db($test_url, 'CREATE DATABASE', 'Can create a database');
     run_sql_on_db($test_url, 'CREATE DATABASE IF NOT EXISTS', 'Further CREATE DATABASE statements are ignored') unless $dbc->driver eq 'pgsql';
