@@ -44,10 +44,10 @@ Jobs that share same code, common parameters and resource requirements are typic
 and generally an Analysis can be viewed as a "base class" for the Jobs that belong to it.
 However in some sense an Analysis also acts as a "container" for them.
 
-An analysis is implemented as a Runnable file which is a Perl, Python or
-Java module conforming to a special interface. eHive provides some basic
-Runnables, especially one that allows running arbitrary commands (programs
-and scripts written in other languages).
+An analysis is implemented as a Runnable file which is a Perl or Python module
+conforming to a special interface. eHive provides some basic Runnables,
+especially one that allows running arbitrary commands (programs and scripts
+written in other languages).
 
 ### PipeConfig file defines Analyses and dependency rules of the pipeline
 

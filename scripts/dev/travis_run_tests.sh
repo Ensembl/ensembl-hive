@@ -34,10 +34,8 @@ rt=$?
 
 (cd wrappers/python3; python3 -m unittest -v eHive.process eHive.params eHive.examples.TestRunnable)
 rtp=$?
-(cd wrappers/java; mvn "-Dmaven.repo.local=$HOME/deps/maven" test)
-rtj=$?
 
-if [[ ($rt -eq 0) && ($rtp -eq 0) && ($rtj -eq 0) ]]; then
+if [[ ($rt -eq 0) && ($rtp -eq 0) ]]; then
   if [ "$COVERALLS" = 'true' ]; then
     echo "Running Devel::Cover report"
     if [[ "$EHIVE_TEST_PIPELINE_URLS" == mysql* ]]; then

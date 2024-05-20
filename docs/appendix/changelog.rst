@@ -1,6 +1,30 @@
 Changelog
 *********
 
+Version 2.7
+===========
+
+Release overview
+----------------
+
+Version 2.7 provides support for the Slurm meadow and bug fixes.
+The Java guest language was removed, since it did not see adoption.
+
+Major new features and scripts
+------------------------------
+
+* Support for the Slurm meadow
+
+General improvements
+--------------------
+
+* Resource classes for Slurm can be auto-generated. 
+
+Guest language support
+----------------------
+
+* The Java guest language was removed
+
 Version 2.6
 ===========
 

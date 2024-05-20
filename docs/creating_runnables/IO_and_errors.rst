@@ -106,7 +106,7 @@ Dataflow events (:ref:`dataflows <dataflows>`) are a key part of eHive pipelines
 Reading in data from external files and databases
 =================================================
 
-At a basic level, a Runnable is simply a Perl, Python, or Java module, which has access to all of the database and file IO facilities of any standard program. There are some extra facilities provided by eHive for convenience in working with external data sources:
+At a basic level, a Runnable is simply a Perl or Python module, which has access to all of the database and file IO facilities of any standard program. There are some extra facilities provided by eHive for convenience in working with external data sources:
 
    - Database URLs: Runnables can identify any MySQL PostgreSQL, or SQLite database using a URL, not just the eHive pipeline database. Runnable writers can obtain a database connection from a URL using the method ``Bio::EnsEMBL::Hive::Utils::go_figure_dbc()``.
 

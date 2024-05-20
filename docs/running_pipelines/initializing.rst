@@ -39,7 +39,7 @@ Common issues
 There are a few common sources of problems that may be encountered when running
 ``init_pipeline.pl``:
 
-  - During pipeline initialisation, all of the Runnables listed in the given PipeConfig will be compiled. If the Runnables cannot be located by Perl, Python, or Java then initialisation will fail. Errors in a Runnable that prevent compilation, such as syntax errors, will also prevent the pipeline from initialising.
+  - During pipeline initialisation, all of the Runnables listed in the given PipeConfig will be compiled. If the Runnables cannot be located by Perl or Python then initialisation will fail. Errors in a Runnable that prevent compilation, such as syntax errors, will also prevent the pipeline from initialising.
 
   - If the given database already exists, initialisation will fail unless the ``-hive_force_init 1`` option has been given. This protects existing pipeline instances from accidental deletion.
 

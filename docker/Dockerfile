@@ -38,11 +38,6 @@ ADD . /tmp/ensembl-hive
 RUN cd /tmp/ensembl-hive && git clean -d -X -f
 RUN rm -rf /tmp/ensembl-hive/.git
 
-# Build the Java wrapper
-FROM maven:3.6-jdk-12-alpine AS java_builder
-COPY --from=repo /tmp/ensembl-hive/wrappers/java /tmp/java_wrapper
-RUN cd /tmp/java_wrapper && mvn package
-
 # Dependencies
 FROM ubuntu:16.04 AS os_installer
 ADD docker/setup_os.Ubuntu-16.04.sh /tmp/
@@ -59,7 +54,6 @@ RUN cpanm --installdeps --with-recommends /tmp/
 FROM os_installer
 COPY --from=repo /tmp/ensembl-hive /repo/ensembl-hive
 COPY --from=cpan_builder /usr/local /usr/local
-COPY --from=java_builder /tmp/java_wrapper/target/eHive-*-jar-with-dependencies.jar /repo/ensembl-hive/wrappers/java/target/
 ENV EHIVE_ROOT_DIR "/repo/ensembl-hive"
 ENV PATH "/repo/ensembl-hive/scripts:$PATH"
 ENV PERL5LIB "/repo/ensembl-hive/modules:$PERL5LIB"

@@ -6,9 +6,7 @@ The code a Worker actually runs to accomplish its task is in a module called a "
 
    - Bio::EnsEMBL::Hive::Process (Perl),
 
-   - eHive.BaseRunnable (Python), or
-
-   - org.ensembl.hive.BaseRunnable (Java).
+   - eHive.BaseRunnable (Python)
 
 When a Worker specialises to perform a Job, it compiles and runs the Runnable associated with the Job's Analysis.
 

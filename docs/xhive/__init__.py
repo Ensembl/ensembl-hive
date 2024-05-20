@@ -54,7 +54,7 @@ def setup_if_needed(this_release, run_doxygen):
     mkdoxygen_path = os.path.join(os.environ["EHIVE_ROOT_DIR"], "scripts", "dev", "make_doxygen.pl")
     # Only run doxygen if it's missing
     doxygen_target = os.path.join(build_path, "doxygen")
-    if (on_rtd and not is_same) or any(not os.path.exists(os.path.join(doxygen_target, _)) for _ in ["perl", "python3", "java"]):
+    if (on_rtd and not is_same) or any(not os.path.exists(os.path.join(doxygen_target, _)) for _ in ["perl", "python3"]):
         if run_doxygen:
             subprocess.check_call([mkdoxygen_path, doxygen_target])
 

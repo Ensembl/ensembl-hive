@@ -28,14 +28,6 @@ apt-get install -y --no-install-recommends curl python3 perl perl-doc \
                    libtest-exception-perl libtest-simple-perl libtest-warn-perl libtest-json-perl libtest-warnings-perl libtest-file-contents-perl libtest-perl-critic-perl \
                    libgetopt-argvfile-perl libbsd-resource-perl
 
-# Java
-apt-get install -y --no-install-recommends software-properties-common
-add-apt-repository -y ppa:openjdk-r/ppa
-apt-get update -y
-apt-get install -y --no-install-recommends openjdk-12-jre-headless
-dpkg-reconfigure ca-certificates-java
-apt-get purge -y --auto-remove software-properties-common
-
 ## Useful for debugging
 #apt-get install -y netcat.openbsd vim perl-doc iputils-ping net-tools apt-file
 

@@ -118,7 +118,7 @@ refresh_guest_languages.pl is an eHive component script that simplifies rebuildi
     refresh_guest_languages.pl --url mysql://username:secret@hostname:port/ehive_dbname
 
         # Rebuild one wrapper
-    refresh_guest_languages.pl --language java
+    refresh_guest_languages.pl --language python
 
         # Rebuild all the wrappers
     refresh_guest_languages.pl

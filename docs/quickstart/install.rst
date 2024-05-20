@@ -112,8 +112,8 @@ correctly.
 Guest languages
 ---------------
 
-If you wish to use runnable modules written in Python or Java, then an appropriate
-version of Python or Java will need to be installed on your system:
+If you wish to use runnable modules written in Python, then an appropriate
+version of Python will need to be installed on your system:
 
 -  *Python:*
 
@@ -134,10 +134,6 @@ version of Python or Java will need to be installed on your system:
    ::
 
       pip install -e git+https://github.com/Ensembl/ensembl-hive.git#egg=ensembl-hive
-
--  *Java:*
-
-   Requires OpenJDK version 12 or later, along with Apache Maven.
 
 Configuration
 -------------

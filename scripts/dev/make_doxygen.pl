@@ -35,7 +35,6 @@ sub main {
 
         generate_docs_doxygen_perl();
         generate_docs_doxygen_python();
-        generate_docs_doxygen_java();
 }
 
 
@@ -118,40 +117,6 @@ sub generate_docs_doxygen_python {
     system( $full_cmd );
 }
 
-
-sub generate_docs_doxygen_java {
-
-    print "Regenerating $doxy_target/java ...\n\n";
-
-    my $doxy_bin    = `which doxygen`;
-    chomp $doxy_bin;
-
-    die "Cannot run doxygen binary, please make sure it is installed and is in the path.\n" unless(-r $doxy_bin);
-
-    my @cmds = (
-        "rm   -rf $doxy_target/java",
-        "mkdir -p $doxy_target/java",
-        "doxygen -g -",
-        "echo 'PROJECT_NAME           = ensembl-hive-java'",
-        "echo 'PROJECT_NUMBER         = $code_ver'",
-        "echo 'OUTPUT_DIRECTORY       = $doxy_target'",
-        "echo 'STRIP_FROM_PATH        = $ehrd/wrappers/java'",
-        "echo 'INPUT                  = $ehrd/wrappers/java'",
-        "echo 'FILE_PATTERNS          = *.java README.md'",
-        "echo 'HTML_OUTPUT            = java'",
-        "echo 'CLASS_DIAGRAMS         = YES'",
-        "echo 'CALL_GRAPH             = YES'",
-        "echo 'CALLER_GRAPH           = YES'",
-        "echo 'COLLABORATION_GRAPH    = YES'",
-        @shared_params,
-    );
-
-    my $full_cmd = '('.join(' ; ', @cmds).") | doxygen -";
-
-    print "Running the following command:\n\t$full_cmd\n\n";
-
-    system( $full_cmd );
-}
 
 
 __DATA__

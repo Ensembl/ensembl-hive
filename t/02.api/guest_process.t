@@ -52,7 +52,6 @@ subtest 'dummy language' => sub {
 
     my %expected_wrappers = (
         'dummy'     => $ENV{'EHIVE_WRAPPER_DUMMY'},
-        'java'      => $ENV{'EHIVE_ROOT_DIR'}.'/wrappers/java/wrapper',
         'python3'   => $ENV{'EHIVE_ROOT_DIR'}.'/wrappers/python3/wrapper',
     );
 

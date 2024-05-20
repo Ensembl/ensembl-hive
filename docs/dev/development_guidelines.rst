@@ -33,7 +33,6 @@ repositories (``modules``, ``DBSQL``, ``scripts``).
     |   |-- 05.runnabledb
     |   `-- 10.pipeconfig
     `-- wrappers                         # Wrappers for other languages
-        |-- java
         `-- python3
 
 eHive vs Ensembl
@@ -244,7 +243,6 @@ them by running ``beekeeper.pl --versions``::
     Meadow::PBSPro  5.1     unavailable
     Meadow::SGE     4.0     incompatible
     GuestLanguageInterfaceVersion   3
-    GuestLanguage[java]     2.1     incompatible
     GuestLanguage[python3]  3.0     available
     GuestLanguage[ruby]     N/A     unavailable
 
