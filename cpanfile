@@ -7,7 +7,7 @@ requires 'Capture::Tiny';
 requires 'DateTime';
 requires 'Time::Piece';
 requires 'JSON';
-requires 'Proc::Daemon', '0.23';
+requires 'Proc::Daemon', '>= 0.23';
 requires 'Email::Stuffer';
 requires 'IPC::Cmd';
 requires 'DateTime::Format::ISO8601';
