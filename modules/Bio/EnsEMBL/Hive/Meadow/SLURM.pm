@@ -457,7 +457,7 @@ sub execute_command {
     my $cmd = shift;
 
     # Timeout for slurm commands
-    my $timeout = 20;
+    my $timeout = 120;
 
     my ($success, $error_message, undef, $stdout_buf, $stderr_buf) =
         run(command => $cmd, verbose => 0, timeout => $timeout);
