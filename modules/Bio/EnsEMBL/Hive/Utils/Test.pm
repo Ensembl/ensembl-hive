@@ -667,7 +667,7 @@ sub safe_drop_database {
   Arg [n]    : Directories to scan.
   Example    : my @files = all_source_files('modules');
   Description: Scans the given directories and returns all found instances of
-               source code. This includes Perl (pl,pm,t), Java(java), C(c,h) and
+               source code. This includes Perl (pl,pm,t), C(c,h) and
                SQL (sql) suffixed files.
   Returntype : Array of all found files
 
@@ -688,7 +688,7 @@ sub all_source_files {
       push(@dirs, map {File::Spec->catfile($file, $_)} @new_files);
     }
     if ( -f $file ) {
-      #next unless $file =~ /(?-xism:\.(?:[cht]|p[lm]|java|sql))/;
+      #next unless $file =~ /(?-xism:\.(?:[cht]|p[lm]|sql))/;
       push(@files, $file);
     }
   } # while

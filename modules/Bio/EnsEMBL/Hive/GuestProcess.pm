@@ -340,7 +340,7 @@ sub assert_runnable_exists {
 
 =head2 build_wrapper_for_language
 
-  Example     : Bio::EnsEMBL::Hive::GuestProcess::build_wrapper_for_language('java');
+  Example     : Bio::EnsEMBL::Hive::GuestProcess::build_wrapper_for_language('python3');
   Description : Ask the wrapper to build all the necessary code to run Runnables of this language
   Returntype  : None
   Exceptions  : Die if there is no wrapper or the build fails
