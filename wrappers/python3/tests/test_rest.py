@@ -24,12 +24,12 @@ import unittest
 
 import requests_mock
 
-from ensembl.hive.rest import HiveRESTClient
-from ensembl.hive.test import testRunnable, DataflowEvent
+import eHive
+from eHive.rest import HiveRESTClient
 
 
-class TestHiveRest(unittest.TestCase):
-    """Tests `ensembl.hive.rest.HiveRESTClient`"""
+class TestHiveRESTClient(unittest.TestCase):
+    """Tests `eHive.rest.HiveRESTClient`"""
 
     def test_ApiCall200(self):
         """Tests an `HiveRESTClient` eHive runnable"""
@@ -37,13 +37,13 @@ class TestHiveRest(unittest.TestCase):
         mockJSON = {"data": "content"}
         with requests_mock.Mocker() as m:
             m.get(mockURL, json=mockJSON)
-            testRunnable(
+            eHive.tests.testRunnable(
                 self,
                 HiveRESTClient,
                 {
                     "endpoint": mockURL,
                 },
                 [
-                    DataflowEvent({"rest_response": mockJSON}, branch_name_or_code=1),
+                    eHive.tests.DataflowEvent({"rest_response": mockJSON}, branch_name_or_code=1),
                 ],
             )
