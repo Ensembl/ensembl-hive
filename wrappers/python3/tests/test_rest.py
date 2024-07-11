@@ -9,27 +9,27 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-"""Unit testing of :mod:`hive` module.
+"""Unit testing of `ensembl.hive.rest` module.
 
 The unit testing is divided into one test class per submodule/class found in this module, and one test method
 per public function/class method.
 
 Typical usage example::
 
-    $ pytest hive/test_rest.py
+    $ pytest test_rest.py
 
 """
 
 import unittest
 
-import eHive
 import requests_mock
 
-from ensembl.hive.HiveRESTClient import HiveRESTClient
+from ensembl.hive.rest import HiveRESTClient
+from ensembl.hive.test import testRunnable, DataflowEvent
 
 
 class TestHiveRest(unittest.TestCase):
-    """Tests :class:`~ensembl.hive.HiveRESTClient.HiveRESTClient`"""
+    """Tests `ensembl.hive.rest.HiveRESTClient`"""
 
     def test_ApiCall200(self):
         """Tests an `HiveRESTClient` eHive runnable"""
@@ -37,13 +37,13 @@ class TestHiveRest(unittest.TestCase):
         mockJSON = {"data": "content"}
         with requests_mock.Mocker() as m:
             m.get(mockURL, json=mockJSON)
-            eHive.testRunnable(
+            testRunnable(
                 self,
                 HiveRESTClient,
                 {
                     "endpoint": mockURL,
                 },
                 [
-                    eHive.DataflowEvent({"rest_response": mockJSON}, branch_name_or_code=1),
+                    DataflowEvent({"rest_response": mockJSON}, branch_name_or_code=1),
                 ],
             )

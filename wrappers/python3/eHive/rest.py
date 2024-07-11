@@ -19,7 +19,6 @@ import contextlib
 import logging
 
 import requests
-from requests.adapters import HTTPAdapter
 from urllib3 import Retry
 
 from .process import BaseRunnable
@@ -62,7 +61,7 @@ class HiveRESTClient(BaseRunnable):
         Returns:
             A new ``requests.Session`` object
         """
-        adapter = HTTPAdapter(
+        adapter = requests.adapters.HTTPAdapter(
             max_retries=Retry(
                 total=self.param("retry"),
                 status_forcelist=self.param("status_retry"),

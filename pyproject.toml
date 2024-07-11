@@ -42,7 +42,9 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-# dependencies = []
+dependencies = [
+    "requests >= 2.22.0",
+]
 
 [project.urls]
 homepage = "https://www.ensembl.org"
