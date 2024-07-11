@@ -19,7 +19,7 @@ name = "ensembl-hive"
 dynamic = [
     "version",
 ]
-requires-python = ">= 3.8"
+requires-python = ">= 3.10"
 description = "Ensembl Python Base Hive Wrapper"
 readme = "README.md"
 authors = [
