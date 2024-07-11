@@ -28,8 +28,6 @@ import warnings
 
 from . import params
 
-__version__ = "5.0"
-
 
 class Job:
     """Dummy class to hold job-related information"""

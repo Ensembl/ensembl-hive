@@ -29,18 +29,12 @@ Runnables can use the eHive API (like `param()`). See eHive.BaseRunnable
 for the list of available methods.
 """
 
+__version__ = "5.0"
+
 # We take all the interesting classes from both modules, i.e. BaseRunnable and all the exceptions
-from .process import BaseRunnable, CompleteEarlyException, JobFailedException, __version__
+from .process import BaseRunnable, CompleteEarlyException, JobFailedException
 from .params import ParamException, ParamNameException, ParamSubstitutionException, ParamInfiniteLoopException, ParamWarning
 from .rest import logger, HiveRESTClient
 from .tests import testRunnable, DataflowEvent, WarningEvent, CompleteEarlyEvent, FailureEvent
 from .utils import find_module
 
-__all__ = [
-    'BaseRunnable', 'CompleteEarlyException', 'JobFailedException',
-    'ParamException', 'ParamNameException', 'ParamSubstitutionException', 'ParamInfiniteLoopException', 'ParamWarning',
-    'logger', 'HiveRESTClient',
-    'testRunnable', 'DataflowEvent', 'WarningEvent', 'CompleteEarlyEvent', 'FailureEvent',
-    'find_module',
-    '__version__',
-]
