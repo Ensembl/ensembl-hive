@@ -59,6 +59,7 @@ version = {attr = "eHive.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["wrappers/python3"]  # list of folders that contain the packages (["."] by default)
+exclude = ["tests*"]
 
 # For additional information on `setuptools` configuration see:
 #    https://setuptools.pypa.io/en/latest/userguide/quickstart.html
