@@ -1,0 +1,13 @@
+Revision history for Bio::EnsEMBL::Hive
+
+2.7   2024-09-XX
+
+ Release 2.7
+ - New support for Slurm through the SLURM meadow.
+ - The option CleanupTempDirectoryKilledWorkers did not work on Slurm. For that
+   meadow, it is now a no-op.
+ - The Java guest language was removed since it has not been used.
+ 
+ Deprecations:
+ - All meadows except Slurm and Local are now deprecated. We can not currently
+   test on these systems, therefore we can not support them.
