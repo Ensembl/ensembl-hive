@@ -2,6 +2,11 @@ Ensembl eHive
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 Copyright [2016-2024] EMBL-European Bioinformatics Institute
 
+modules/Bio/EnsEMBL/Hive/Meadow/SLURM.pm is:
+Copyright [2017-2018] Genentech, Inc.
+Copyright [2018-2024] EMBL-European Bioinformatics Institute
+
 This product includes software developed at:
 - EMBL-European Bioinformatics Institute
 - Wellcome Trust Sanger Institute
+- Genentech, Inc.
