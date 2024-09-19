@@ -204,10 +204,10 @@ sub resource_classes {
     return {
 ## No longer supported resource declaration syntax:
 #        1 => { -desc => 'default',  'LSF' => '' },
-#        2 => { -desc => 'urgent',   'LSF' => '-q yesterday' },
+#        2 => { -desc => 'urgent',   'LSF' => '-q production' },
 ## Currently supported resource declaration syntax:
         'default' => { 'LSF' => '' },
-        'urgent'  => { 'LSF' => '-q yesterday' },
+        'urgent'  => { 'LSF' => '-q production' },
     };
 }
 
