@@ -15,7 +15,8 @@
 =head1 LICENSE
 
     Copyright [1999-2024] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-    Copyright [2016-2017] EMBL-European Bioinformatics Institute
+    See the NOTICE file distributed with this work for additional information
+    regarding copyright ownership.
     Copyright [2017] Genentech, Inc.
     Copyright [2018] Genentech, Inc.
 
