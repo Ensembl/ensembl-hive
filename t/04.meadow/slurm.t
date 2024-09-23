@@ -36,10 +36,8 @@ if (not $ENV{TEST_EHIVE_SLURM}) {
     plan( skip_all => $msg );
 }
 
-BEGIN {
-    use_ok ('Bio::EnsEMBL::Hive::Valley');
-    use_ok ('Bio::EnsEMBL::Hive::Meadow::SLURM');
-}
+use_ok ('Bio::EnsEMBL::Hive::Valley');
+use_ok ('Bio::EnsEMBL::Hive::Meadow::SLURM');
 
 
 # Currently, this assumes you're on a system with a working Slurm installation,

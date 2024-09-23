@@ -69,10 +69,8 @@
 
 =cut
 
-
 package Bio::EnsEMBL::Hive::Worker;
 
-$! = 1;
 
 use strict;
 use warnings;
@@ -88,6 +86,7 @@ use Bio::EnsEMBL::Hive::Utils ('dir_revhash', 'stringify', 'throw');
 
 use base ( 'Bio::EnsEMBL::Hive::Storable' );
 
+$| = 1;
 
     ## How often we should refresh the AnalysisStats objects
 sub refresh_tolerance_seconds {
