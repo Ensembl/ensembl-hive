@@ -30,6 +30,12 @@ use Time::Seconds;
 use Bio::EnsEMBL::Hive::Utils::Config;
 use Bio::EnsEMBL::Hive::Worker;
 
+# I believe it makes no sense to test this with mock executables
+if ( not $ENV{TEST_AUTHOR} ) {
+    my $msg = 'Author test. Set $ENV{TEST_AUTHOR} to a true value to run.';
+    plan( skip_all => $msg );
+}
+
 BEGIN {
     use_ok ('Bio::EnsEMBL::Hive::Valley');
     use_ok ('Bio::EnsEMBL::Hive::Meadow::SLURM');
