@@ -31,8 +31,8 @@ use Bio::EnsEMBL::Hive::Utils::Config;
 use Bio::EnsEMBL::Hive::Worker;
 
 # I believe it makes no sense to test this with mock executables
-if ( not $ENV{TEST_AUTHOR} ) {
-    my $msg = 'Author test. Set $ENV{TEST_AUTHOR} to a true value to run.';
+if (not $ENV{TEST_EHIVE_SLURM}) {
+    my $msg = 'Needs Slurm available on the local machine. Set TEST_EHIVE_SLURM=1 to run.';
     plan( skip_all => $msg );
 }
 
