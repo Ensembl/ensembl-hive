@@ -9,11 +9,8 @@ relies on a number of Python modules.
 
 Locally, install Python dependencies using these two requirements files:
 
-* https://raw.githubusercontent.com/Ensembl/python-requirements/master/readthedocs/requirements.txt
-* https://raw.githubusercontent.com/Ensembl/ensembl-hive/master/requirements.txt
-
-On the EBI farm, those are already installed and you only need to activate
-the `ehive_sphinx` environment with ``pyenv local ehive_sphinx``.
+* https://github.com/Ensembl/python-requirements/blob/master/readthedocs/requirements.txt
+* https://github.com/Ensembl/ensembl-hive/blob/version/2.6/docs/requirements.txt
 
 Other dependencies
 ------------------

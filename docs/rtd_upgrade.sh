@@ -51,7 +51,7 @@ echo http://archive.ubuntu.com/ubuntu/pool/main/libd/libdbi-perl/libdbi-perl_1.6
 mkdir ../root
 for i in *.deb; do dpkg -x "$i" ../root/; done
 
-git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git ../ensembl
+git clone --branch main --depth 1 https://github.com/Ensembl/ensembl.git ../ensembl
 git clone --branch version/2.6 --depth 1 https://github.com/Ensembl/ensembl-hive-docker-swarm.git ../ensembl-hive-docker-swarm
 
 rm -f ../../../contrib/docker-swarm

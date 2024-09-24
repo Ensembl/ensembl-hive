@@ -480,8 +480,11 @@ Creating a pipeline configuration
 Creating a configuration file
 =============================
 
-This has been implemented on the dev/hive_master branch. But it will be change for all the pipelines as we need to have a base config whith helper methods like creating lsf requirements.
-Your config should inherit from ``Bio::EnsEMBL::Analysis::Hive::Config::HiveBaseConfig_conf`` which inherits from ``HiveGeneric_conf``. Of course in few cases like pipeline which does not use Ensembl APIs such as the UniProt database creation pipeline, your config will inherit from ``HiveGeneric_conf``.
+Your config should inherit from
+``Bio::EnsEMBL::Analysis::Hive::Config::HiveBaseConfig_conf`` which inherits
+from ``HiveGeneric_conf``. Of course in few cases like pipeline which does not
+use Ensembl APIs such as the UniProt database creation pipeline, your config
+will inherit from ``HiveGeneric_conf``.
 
 Parameters and methods in the base config
 -----------------------------------------
@@ -577,7 +580,7 @@ dbowner is set as your linux USER value unless you set a EHIVE_USER or a dbowner
 
 Getting blast parameters
 ========================
-We use the same parameters for some analyses using the same programs like blast or exonerate. At the beginning, a master_config has been created but it means that people have to copy/paste between pipeline config...
+We use the same parameters for some analyses using the same programs like blast or exonerate.
 
 Accessing config hash
 ---------------------
