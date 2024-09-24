@@ -49,8 +49,8 @@ install:
     - cpanm -n --installdeps --with-recommends .
     - cpanm -n --installdeps --cpanfile deps/ensembl/cpanfile .
     - cpanm -n Devel::Cover::Report::Coveralls Devel::Cover::Report::Codecov
-  - mysql -u root -h localhost -e 'GRANT ALL PRIVILEGES ON *.* TO "travis"@"%"'
-  - mysql -u root -h localhost -e 'SET GLOBAL local_infile=1'
+    - mysql -u root -h localhost -e 'GRANT ALL PRIVILEGES ON *.* TO "travis"@"%"'
+    - mysql -u root -h localhost -e 'SET GLOBAL local_infile=1'
 
 script: "./scripts/dev/travis_run_tests.sh"
 
