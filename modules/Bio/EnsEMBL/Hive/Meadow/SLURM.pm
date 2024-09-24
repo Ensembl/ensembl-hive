@@ -90,8 +90,9 @@ sub _init_meadow {
     # Override user config. On Slurm, the tmp dirs are always cleaned up. It is
     # not necessary to set this. To clean up, beekeeper will try an SSH log in
     # to each node. This does not work and only produces error messages.
-    $self->config_set('CleanupTempDirectoryKilledWorkers', 0);
+    $config and $config->set('CleanupTempDirectoryKilledWorkers', 0);
 }
+
 
 =head count_pending_workers_by_rc_name
 
