@@ -47,7 +47,7 @@ use Exporter 'import';
 our @EXPORT_OK = qw(get_code_version report_versions);
 
 
-our $VERSION = '2.7';
+our $VERSION = '2.7.0';
 
 sub get_code_version {
 
