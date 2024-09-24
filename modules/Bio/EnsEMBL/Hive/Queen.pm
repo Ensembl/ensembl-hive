@@ -40,8 +40,8 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-    Copyright [2016-2024] EMBL-European Bioinformatics Institute
+    See the NOTICE file distributed with this work for additional information
+    regarding copyright ownership.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -302,7 +302,7 @@ sub specialize_worker {
         $analyses_pattern //= '%';  # for printing
         my $analyses_matching_pattern   = $worker->hive_pipeline->collection_of( 'Analysis' )->find_all_by_pattern( $analyses_pattern );
 
-            # refresh the stats of matching analyses before re-specialization:
+        # refresh the stats of matching analyses before re-specialization:
         foreach my $analysis ( @$analyses_matching_pattern ) {
             $analysis->stats->refresh();
         }
@@ -503,7 +503,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
                 if( my $meadow = $valley->find_available_meadow_responsible_for_worker( $worker ) ) {
                     if($meadow->can('kill_worker')) {
                         if($worker->meadow_user eq $this_meadow_user) {  # if I'm actually allowed to kill the worker...
-                            print "GarbageCollector:\tKilling/forgetting the UNKWN worker by process_id $process_id";
+                            print "GarbageCollector:\tKilling/forgetting the UNKWN worker by process_id $process_id\n";
 
                             $meadow->kill_worker($worker, 1);
                             $status = 'LOST';
@@ -514,7 +514,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
             $meadow_status_counts{$meadow_signature}{$status}++;
 
-            if(($status eq 'LOST') or ($status eq 'SUBMITTED')) {
+            if(($status eq 'LOST') or ($status eq 'SUBMITTED') or ($status eq 'COMPILATION')) {
 
                 $mt_and_pid_to_lost_worker{$meadow_type}{$process_id} = $worker;
 
@@ -550,7 +550,10 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
             if($report_entries = $this_meadow->get_report_entries_for_process_ids( keys %$pid_to_lost_worker )) {
                 my $lost_with_known_cod = scalar( grep { $_->{'cause_of_death'} } values %$report_entries);
-                print "GarbageCollector:\tFound why $lost_with_known_cod of $meadow_type Workers died\n";
+                print "GarbageCollector:\tFound why $lost_with_known_cod of $meadow_type workers died:\n";
+                print "" . join (", ", (map { $_->{'cause_of_death'} } values %$report_entries)) . "\n";
+            } else {
+                print "GarbageCollector:\tUnknown why $lost_this_meadow $meadow_type workers died\n";
             }
 
             print "GarbageCollector:\tRecording workers' missing attributes, registering their death, releasing their jobs and cleaning up temp directories\n";

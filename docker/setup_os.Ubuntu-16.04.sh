@@ -1,6 +1,6 @@
 #!/bin/bash
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2024] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,14 +27,6 @@ apt-get install -y --no-install-recommends curl python3 perl perl-doc \
                    libcapture-tiny-perl libdatetime-perl libjson-perl libproc-daemon-perl libemail-stuffer-perl\
                    libtest-exception-perl libtest-simple-perl libtest-warn-perl libtest-json-perl libtest-warnings-perl libtest-file-contents-perl libtest-perl-critic-perl \
                    libgetopt-argvfile-perl libbsd-resource-perl
-
-# Java
-apt-get install -y --no-install-recommends software-properties-common
-add-apt-repository -y ppa:openjdk-r/ppa
-apt-get update -y
-apt-get install -y --no-install-recommends openjdk-12-jre-headless
-dpkg-reconfigure ca-certificates-java
-apt-get purge -y --auto-remove software-properties-common
 
 ## Useful for debugging
 #apt-get install -y netcat.openbsd vim perl-doc iputils-ping net-tools apt-file

@@ -46,8 +46,8 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-    Copyright [2016-2024] EMBL-European Bioinformatics Institute
+    See the NOTICE file distributed with this work for additional information
+    regarding copyright ownership.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -69,8 +69,8 @@
 
 =cut
 
-
 package Bio::EnsEMBL::Hive::Worker;
+
 
 use strict;
 use warnings;
@@ -86,6 +86,7 @@ use Bio::EnsEMBL::Hive::Utils ('dir_revhash', 'stringify', 'throw');
 
 use base ( 'Bio::EnsEMBL::Hive::Storable' );
 
+$| = 1;
 
     ## How often we should refresh the AnalysisStats objects
 sub refresh_tolerance_seconds {
@@ -471,7 +472,7 @@ sub toString {
             $include_analysis ? ( 'analysis='.($current_role ? $current_role->analysis->logic_name.'('.$current_role->analysis_id.')' : 'UNSPECIALIZED') ) : (),
             'resource_class_id='.($self->resource_class_id // 'NULL'),
             'meadow='.$self->meadow_type.'/'.$self->meadow_name,
-            'process='.$self->meadow_user.'@'.$self->meadow_host.'#'.$self->process_id,
+            'process='.$self->meadow_user.($self->meadow_host ? '@'.$self->meadow_host : 'UNALLOCATED').'#'.$self->process_id,
             'when_checked_in='.($self->when_checked_in // 'NEVER'),
             'batch_size='.($current_role ? $current_role->analysis->stats->get_or_estimate_batch_size() : 'UNSPECIALIZED'),
             'job_limit='.($self->job_limiter->available_capacity() // 'NONE'),

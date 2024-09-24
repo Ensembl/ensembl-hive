@@ -25,4 +25,3 @@ ratings:
 exclude_paths:
 - "docs/doxygen/"
 - "wrappers/python3/doxygen/"
-- "wrappers/java/doc/"

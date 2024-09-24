@@ -1,12 +1,12 @@
 eHive
 =====
 
-[![Travis Build Status](https://travis-ci.org/Ensembl/ensembl-hive.svg?branch=master)](https://travis-ci.org/Ensembl/ensembl-hive)
-[![Coverage Status](https://coveralls.io/repos/Ensembl/ensembl-hive/badge.svg?branch=master&service=github)](https://coveralls.io/github/Ensembl/ensembl-hive?branch=master)
-[![Documentation Status](https://readthedocs.org/projects/ensembl-hive/badge/?version=master)](http://ensembl-hive.readthedocs.io/en/master)
-[![codecov](https://codecov.io/gh/Ensembl/ensembl-hive/branch/master/graph/badge.svg)](https://codecov.io/gh/Ensembl/ensembl-hive/branch/master)
+[![Travis Build Status](https://travis-ci.org/Ensembl/ensembl-hive.svg?branch=main)](https://travis-ci.org/Ensembl/ensembl-hive)
+[![Coverage Status](https://coveralls.io/repos/Ensembl/ensembl-hive/badge.svg?branch=main&service=github)](https://coveralls.io/github/Ensembl/ensembl-hive?branch=main)
+[![Documentation Status](https://readthedocs.org/projects/ensembl-hive/badge/?version=main)](http://ensembl-hive.readthedocs.io/en/main)
+[![codecov](https://codecov.io/gh/Ensembl/ensembl-hive/branch/main/graph/badge.svg)](https://codecov.io/gh/Ensembl/ensembl-hive/branch/main)
 [![Code Climate](https://codeclimate.com/github/Ensembl/ensembl-hive/badges/gpa.svg)](https://codeclimate.com/github/Ensembl/ensembl-hive)
-[![Docker Build Status](https://img.shields.io/docker/build/ensemblorg/ensembl-hive.svg)](https://hub.docker.com/r/ensemblorg/ensembl-hive)
+[![Docker Image](https://img.shields.io/docker/v/ensemblorg/ensembl-hive?label=Docker)](https://hub.docker.com/r/ensemblorg/ensembl-hive)
 
 eHive is a system for running computation pipelines on distributed computing resources - clusters, farms or grids.
 
@@ -16,7 +16,7 @@ Available documentation
 -----------------------
 
 The main entry point is available online in the [user
-manual](https://ensembl-hive.readthedocs.io/en/master/), from where it can
+manual](https://ensembl-hive.readthedocs.io/en/main/), from where it can
 be downloaded for offline access.
 
 
@@ -44,10 +44,10 @@ Jobs that share same code, common parameters and resource requirements are typic
 and generally an Analysis can be viewed as a "base class" for the Jobs that belong to it.
 However in some sense an Analysis also acts as a "container" for them.
 
-An analysis is implemented as a Runnable file which is a Perl, Python or
-Java module conforming to a special interface. eHive provides some basic
-Runnables, especially one that allows running arbitrary commands (programs
-and scripts written in other languages).
+An analysis is implemented as a Runnable file which is a Perl or Python module
+conforming to a special interface. eHive provides some basic Runnables,
+especially one that allows running arbitrary commands (programs and scripts
+written in other languages).
 
 ### PipeConfig file defines Analyses and dependency rules of the pipeline
 
@@ -74,7 +74,7 @@ eHive has a generic interface named _Meadow_ that describes how to interact with
 Sun Grid Engine (now known as Oracle Grid Engine),
 [HTCondor](https://research.cs.wisc.edu/htcondor/),
 [PBS Pro](http://www.pbspro.org),
-[Docker Swarm](https://docs.docker.com/engine/swarm/) and maybe others. Read more about this on [the user manual](http://ensembl-hive.readthedocs.io/en/master/contrib/alternative_meadows.html).
+[Docker Swarm](https://docs.docker.com/engine/swarm/) and maybe others. Read more about this on [the user manual](http://ensembl-hive.readthedocs.io/en/main/contrib/alternative_meadows.html).
 
 Docker image
 ------------
@@ -106,7 +106,7 @@ Docker Swarm orchestrator, and thus on any cloud infrastructure that supports
 it (e.g. [Amazon Web Services](https://docs.docker.com/docker-cloud/cloud-swarm/create-cloud-swarm-aws/),
 [Microsoft Azure](https://docs.docker.com/docker-cloud/cloud-swarm/create-cloud-swarm-azure/)).
 
-Read more about this on [the user manual](http://ensembl-hive.readthedocs.io/en/master/contrib/docker-swarm.html).
+Read more about this on [the user manual](http://ensembl-hive.readthedocs.io/en/main/contrib/docker-swarm.html).
 
 Contact us (mailing list)
 -------------------------

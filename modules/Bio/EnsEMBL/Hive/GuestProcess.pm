@@ -101,8 +101,8 @@ response from GuestProcess):
 
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2024] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -340,7 +340,7 @@ sub assert_runnable_exists {
 
 =head2 build_wrapper_for_language
 
-  Example     : Bio::EnsEMBL::Hive::GuestProcess::build_wrapper_for_language('java');
+  Example     : Bio::EnsEMBL::Hive::GuestProcess::build_wrapper_for_language('python3');
   Description : Ask the wrapper to build all the necessary code to run Runnables of this language
   Returntype  : None
   Exceptions  : Die if there is no wrapper or the build fails

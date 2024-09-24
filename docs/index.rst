@@ -1,10 +1,3 @@
-.. ehive_user_manual documentation master file, created by
-   sphinx-quickstart on Thu Dec 15 12:59:35 2016.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-.. Have a look at https://raw.githubusercontent.com/rtfd/readthedocs.org/master/docs/index.rst for inspiration
-
 Welcome to the eHive user manual
 ================================
 

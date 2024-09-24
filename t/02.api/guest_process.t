@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2024] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -52,7 +52,6 @@ subtest 'dummy language' => sub {
 
     my %expected_wrappers = (
         'dummy'     => $ENV{'EHIVE_WRAPPER_DUMMY'},
-        'java'      => $ENV{'EHIVE_ROOT_DIR'}.'/wrappers/java/wrapper',
         'python3'   => $ENV{'EHIVE_ROOT_DIR'}.'/wrappers/python3/wrapper',
     );
 

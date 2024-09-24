@@ -16,8 +16,8 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-    Copyright [2016-2024] EMBL-European Bioinformatics Institute
+    See the NOTICE file distributed with this work for additional information
+    regarding copyright ownership.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -670,6 +670,7 @@ sub release_claimed_jobs_from_role {
     my ($self, $role) = @_;
 
         # previous value of role_id is not important, because that Role never had a chance to run the jobs
+        # TODO: If worker died during compilation, do not reset job here.
     my $num_released_jobs = $self->dbc->protected_prepare_execute( [ "UPDATE job SET status='READY', role_id=NULL WHERE role_id=? AND status='CLAIMED'", $role->dbID ],
         sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $role->worker, "releasing claimed jobs from role".$after, 'INFO' ); }
     );
@@ -715,7 +716,7 @@ sub release_undone_jobs_from_role {
         SELECT job_id
           FROM job
          WHERE role_id='$role_id'
-           AND status in ($ALL_STATUSES_OF_RUNNING_JOBS)
+           AND status in ($ALL_STATUSES_OF_TAKEN_JOBS)
     } );
     $sth->execute();
 
@@ -742,7 +743,12 @@ sub release_undone_jobs_from_role {
         $self->db()->get_LogMessageAdaptor()->store_job_message($job_id, $msg, $passed_on ? 'INFO' : 'WORKER_ERROR');
 
         unless($passed_on) {
-            $self->release_and_age_job( $job_id, $max_retry_count, not $resource_overusage );
+            # We can not retry this job if it failed during compilation or due
+            # to a resource constraint. If a gc_dataflow is present, it will
+            # take care of that and create another job.
+            my $worker_status = $worker->status();
+            my $no_retry = ($cod eq 'COMPILATION') || $resource_overusage;
+            $self->release_and_age_job( $job_id, $max_retry_count, not $no_retry );
         }
 
         $role->register_attempt( 0 );

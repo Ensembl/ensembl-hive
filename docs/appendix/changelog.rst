@@ -1,10 +1,52 @@
 Changelog
 *********
 
+Version 2.7.0
+=============
+
+Release overview
+----------------
+
+Version 2.7.0 provides support for the Slurm meadow and bug fixes.
+The Java guest language was removed, since it did not see adoption.
+The version scheme is now the more standard `semantic versioning`.
+
+Major new features and scripts
+------------------------------
+
+* Support for the Slurm meadow
+* Semantic versioning:
+  Major version for incompatible API changes
+  Minor version for added functionality when backward compatible
+  Patch version for backward compatible bugfixes
+  The API for eHive comprises:
+
+  - the command line tools and their switches
+  - the pipeline config (HiveGeneric_conf)
+  - the Runnable interface
+  - the Meadow interface
+  - the guest language interfaces
+
+  The database schema is not an API. There is however a guarantee that the major
+  version will increase whenever a schema change makes it necessary to
+  re-initialize the pipeline.
+
+Removed features
+----------------
+
+* The Java guest language was removed
+
+Deprecations
+------------
+
+* The support for all meadows except Slurm and Local is deprecated. They will be
+  removed in a future version. We can only support cluster schedulers we have
+  available.
+
 Version 2.6
 ===========
 
-   *Summer 2021 "codon" update*
+   *Summer 2021 "codon" update
 
 Release overview
 ----------------

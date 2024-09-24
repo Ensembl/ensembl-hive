@@ -8,5 +8,4 @@ from the annotations and comments added to the source-code.
 
 - `Perl API <../perl/index.html>`__
 - `Python API <../python3/index.html>`__
-- `Java API <../java/index.html>`__
 

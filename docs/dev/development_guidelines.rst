@@ -33,7 +33,6 @@ repositories (``modules``, ``DBSQL``, ``scripts``).
     |   |-- 05.runnabledb
     |   `-- 10.pipeconfig
     `-- wrappers                         # Wrappers for other languages
-        |-- java
         `-- python3
 
 eHive vs Ensembl
@@ -244,7 +243,6 @@ them by running ``beekeeper.pl --versions``::
     Meadow::PBSPro  5.1     unavailable
     Meadow::SGE     4.0     incompatible
     GuestLanguageInterfaceVersion   3
-    GuestLanguage[java]     2.1     incompatible
     GuestLanguage[python3]  3.0     available
     GuestLanguage[ruby]     N/A     unavailable
 
@@ -274,9 +272,9 @@ There are three kinds of branches in eHive:
   blindly update their checkout without risking breaking anything. It is
   forbidden to force push these branches (they are in fact marked as
   *protected* on Github).
-* ``master`` is the staging branch for the next stable release of eHive. It
+* ``main`` is the staging branch for the next stable release of eHive. It
   receives new features (incl. schema changes) until we decide to create a
-  new ``version/X.Y`` branch out of it. Like ``version/X.Y``, ``master`` is
+  new ``version/X.Y`` branch out of it. Like ``version/X.Y``, ``main`` is
   *protected* and cannot be force-pushed.
 * ``experimental/XXX`` are where *experimental* features are being
   developed. These branches can be created, removed or rebased at will. If
@@ -285,22 +283,22 @@ There are three kinds of branches in eHive:
 
 When a bug is discovered, it should be fixed on the oldest stable branch it
 affects (and that is still actively maintained), and then *cascade-merged*
-right up to ``master``, e.g. ``version/2.3`` is merged into ``version/2.4``, which
-is then merged into ``master``. Some merges may fail because of conflict with other
+right up to ``main``, e.g. ``version/2.3`` is merged into ``version/2.4``, which
+is then merged into ``main``. Some merges may fail because of conflict with other
 commits, some bugs have to be fixed differently on different branches. If
 that is the case, either fix the merge commit immediately, or do a merge
 for the sake of it (``git merge -s ours``) and then add the correct
 commits. Forcing merges to happen provides a clearer history and
 facilitates tools like ``git bisect``. 
 
-Experimental branches should be rebased onto master just before the final
+Experimental branches should be rebased onto main just before the final
 merge (which then becomes a **fast-forward**). Together with the above
 rules, this keeps the history as linear as possible.
 
 All changes should be done on an experimental branch or fork, and submitted as a
 pull request. Maintainers will bring in the pull request using GitHub's
-**"Rebase and merge"** option. If the pull request is on a branch other than master,
-the maintainers will coordinate the subsequent cascade-merge up to master.
+**"Rebase and merge"** option. If the pull request is on a branch other than main,
+the maintainers will coordinate the subsequent cascade-merge up to main.
 
 guiHive follows very similar rules:
 
@@ -333,8 +331,8 @@ Finally, GitHub automatically triggers new builds of the documentation
 (here, on ReadTheDocs) and the `Docker images`_.
 
 .. _Travis CI: https://travis-ci.org/Ensembl/ensembl-hive
-.. _codecov.io: https://codecov.io/gh/Ensembl/ensembl-hive/branch/master
-.. _Coveralls: https://coveralls.io/github/Ensembl/ensembl-hive?branch=master
+.. _codecov.io: https://codecov.io/gh/Ensembl/ensembl-hive/branch/main
+.. _Coveralls: https://coveralls.io/github/Ensembl/ensembl-hive?branch=main
 .. _Code Climate: https://codeclimate.com/github/Ensembl/ensembl-hive
 .. _Docker images: https://hub.docker.com/r/ensemblorg/ensembl-hive
 

@@ -1,6 +1,6 @@
 
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2024] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ def depart_schema_table_header_latex(self, node):
 ## Register the extension
 def setup(app):
     # Add the CSS
-    app.add_css_file("schema_doc.css")
+    app.add_stylesheet("schema_doc.css")
     app.add_directive('schema_diagram', SchemaDiagramDirective)
     app.add_node(versatile_graphviz,
             html=(html_visit_graphviz, None),

@@ -1,4 +1,2 @@
-doxypypy
-recommonmark
-sphinx-rtd-theme
 sphinxcontrib-doxylink
+doxypypy
