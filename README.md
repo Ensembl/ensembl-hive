@@ -1,10 +1,10 @@
 eHive
 =====
 
-[![Travis Build Status](https://travis-ci.org/Ensembl/ensembl-hive.svg?branch=main)](https://travis-ci.org/Ensembl/ensembl-hive)
-[![Coverage Status](https://coveralls.io/repos/Ensembl/ensembl-hive/badge.svg?branch=main&service=github)](https://coveralls.io/github/Ensembl/ensembl-hive?branch=main)
-[![Documentation Status](https://readthedocs.org/projects/ensembl-hive/badge/?version=main)](http://ensembl-hive.readthedocs.io/en/main)
-[![codecov](https://codecov.io/gh/Ensembl/ensembl-hive/branch/main/graph/badge.svg)](https://codecov.io/gh/Ensembl/ensembl-hive/branch/main)
+[![Travis Build Status](https://travis-ci.org/Ensembl/ensembl-hive.svg?branch=version/2.7.0)](https://travis-ci.org/Ensembl/ensembl-hive)
+[![Coverage Status](https://coveralls.io/repos/Ensembl/ensembl-hive/badge.svg?branch=version/2.7.0&service=github)](https://coveralls.io/github/Ensembl/ensembl-hive?branch=version/2.7.0)
+[![Documentation Status](https://readthedocs.org/projects/ensembl-hive/badge/?version=version-2.7.0)](http://ensembl-hive.readthedocs.io/en/version-2.7.0)
+[![codecov](https://codecov.io/gh/Ensembl/ensembl-hive/branch/version%2F2.7.0/graph/badge.svg)](https://codecov.io/gh/Ensembl/ensembl-hive/branch/version%2F2.7.0)
 [![Code Climate](https://codeclimate.com/github/Ensembl/ensembl-hive/badges/gpa.svg)](https://codeclimate.com/github/Ensembl/ensembl-hive)
 [![Docker Image](https://img.shields.io/docker/v/ensemblorg/ensembl-hive?label=Docker)](https://hub.docker.com/r/ensemblorg/ensembl-hive)
 
@@ -16,7 +16,7 @@ Available documentation
 -----------------------
 
 The main entry point is available online in the [user
-manual](https://ensembl-hive.readthedocs.io/en/main/), from where it can
+manual](https://ensembl-hive.readthedocs.io/en/version-2.7.0/), from where it can
 be downloaded for offline access.
 
 
@@ -74,7 +74,7 @@ eHive has a generic interface named _Meadow_ that describes how to interact with
 Sun Grid Engine (now known as Oracle Grid Engine),
 [HTCondor](https://research.cs.wisc.edu/htcondor/),
 [PBS Pro](http://www.pbspro.org),
-[Docker Swarm](https://docs.docker.com/engine/swarm/) and maybe others. Read more about this on [the user manual](http://ensembl-hive.readthedocs.io/en/main/contrib/alternative_meadows.html).
+[Docker Swarm](https://docs.docker.com/engine/swarm/) and maybe others. Read more about this on [the user manual](http://ensembl-hive.readthedocs.io/en/version-2.7.0/contrib/alternative_meadows.html).
 
 Docker image
 ------------
@@ -106,7 +106,7 @@ Docker Swarm orchestrator, and thus on any cloud infrastructure that supports
 it (e.g. [Amazon Web Services](https://docs.docker.com/docker-cloud/cloud-swarm/create-cloud-swarm-aws/),
 [Microsoft Azure](https://docs.docker.com/docker-cloud/cloud-swarm/create-cloud-swarm-azure/)).
 
-Read more about this on [the user manual](http://ensembl-hive.readthedocs.io/en/main/contrib/docker-swarm.html).
+Read more about this on [the user manual](http://ensembl-hive.readthedocs.io/en/version-2.7.0/contrib/docker-swarm.html).
 
 Contact us (mailing list)
 -------------------------
