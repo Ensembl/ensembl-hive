@@ -27,9 +27,9 @@ Major new features and scripts
   - the Meadow interface
   - the guest language interfaces
 
-  The database schema is not an API. There is however a guarantee that the major
-  version will increase whenever a schema change makes it necessary to
-  re-initialize the pipeline.
+  The database schema is not an API. Also, there is no guarantee that a database
+  can be re-used with a new version. This changelog will mention incompatible
+  changes.
 
 Removed features
 ----------------
@@ -39,9 +39,16 @@ Removed features
 Deprecations
 ------------
 
-* The support for all meadows except Slurm and Local is deprecated. They will be
-  removed in a future version. We can only support cluster schedulers we have
-  available.
+* The support for all meadows except Slurm and Local is deprecated. 
+  This applies to the built-in LSF and the meadows hosted by EnsEMBL in these
+  repositories:
+
+  - ensembl-hive-htcondor
+  - ensembl-hive-sge
+  - ensembl-hive-pbspro
+  - ensembl-hive-docker-swarm
+
+  Please contact us if you are still using any of these.
 
 Version 2.6
 ===========
