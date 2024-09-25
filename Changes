@@ -1,13 +1,18 @@
 Revision history for Bio::EnsEMBL::Hive
 
-2.7   2024-09-XX
+2.7.0   2024-09-25
 
- Release 2.7
+ Release 2.7.0
  - New support for Slurm through the SLURM meadow.
  - The option CleanupTempDirectoryKilledWorkers did not work on Slurm. For that
    meadow, it is now a no-op.
  - The Java guest language was removed since it has not been used.
  
  Deprecations:
- - All meadows except Slurm and Local are now deprecated. We can not currently
-   test on these systems, therefore we can not support them.
+ - All meadows except Slurm and Local are now deprecated. This applies to the
+   built-in LSF and the meadows hosted by EnsEMBL in these repositories:
+   - ensembl-hive-htcondor
+   - ensembl-hive-sge
+   - ensembl-hive-pbspro
+   - ensembl-hive-docker-swarm
+   Please contact us if you are still using any of these.
