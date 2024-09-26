@@ -52,7 +52,7 @@ mkdir ../root
 for i in *.deb; do dpkg -x "$i" ../root/; done
 
 git clone --branch main --depth 1 https://github.com/Ensembl/ensembl.git ../ensembl
-git clone --branch version/2.6 --depth 1 https://github.com/Ensembl/ensembl-hive-docker-swarm.git ../ensembl-hive-docker-swarm
+git clone --branch version/2.7.0 --depth 1 https://github.com/Ensembl/ensembl-hive-docker-swarm.git ../ensembl-hive-docker-swarm
 
 rm -f ../../../contrib/docker-swarm
 ln -s "$1/ensembl-hive-docker-swarm/docs" ../../../contrib/docker-swarm
