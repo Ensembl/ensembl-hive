@@ -22,6 +22,8 @@ on 'test' => sub {
 	requires 'Test::Perl::Critic';
 	requires 'Perl::Critic::Utils';
 	requires 'GraphViz';
+   requires 'Devel::Cover';
+   requires 'Devel::Cover::Report::Codecov';
 };
 
 recommends 'Getopt::ArgvFile';

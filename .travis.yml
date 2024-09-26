@@ -1,75 +1,83 @@
-branches:
-  only:
-  - main
-  - /^version.*$/
+#branches:
+#  only:
+#  - main
+#  - /^version.*$/
 
-dist: trusty
+language: perl
 
-language: "perl"
-
-perl:
-  - "5.14"      # The other Ensembl components must be compatible with 5.14
-  - "5.30"      # Maintained -- Latest
-
-git:
-  depth: false
+dist: focal
 
 services:
   - mysql
   - postgresql
 
-env:
-  - EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/'
-  - EHIVE_TEST_PIPELINE_URLS='pgsql://postgres@127.0.0.1/'
-  - EHIVE_TEST_PIPELINE_URLS='sqlite:///'
+perl:
+  - '5.26'
+  - '5.32'
 
-sudo: false
+env:
+  global:
+    - ENSDIR=$TRAVIS_BUILD_DIR/..
+    - PERL5LIB=$TRAVIS_BUILD_DIR/../bioperl-live
+    - CACHED_DEPS_DIR=$HOME/deps
+    - CODECOV_TOKEN=${{secret.CODECOV_TOKEN}}
+    - COVERALLS_REPO_TOKEN=${{secret.COVERALLS_REPO_TOKEN}}
+  jobs:
+    - EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/' COVERAGE=true
+    - EHIVE_TEST_PIPELINE_URLS='pgsql://postgres@127.0.0.1/' COVERAGE=false
+    - EHIVE_TEST_PIPELINE_URLS='sqlite:///' COVERAGE=false
+    - EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/' COVERAGE=false
 
 addons:
   apt:
     packages:
-    - python3
-    - maven
-    - graphviz
+      - graphviz
+      - libmysqlclient-dev
+      - libdb-dev
+      - libexpat1-dev
 
 # Dependencies that are brought by a system smart enough to reuse existing
-# files (e.g. CPAN and maven) are cached between builds under $HOME/deps.
+# files (e.g. CPAN) are cached between builds under $HOME/deps.
 # Other dependencies are under $PWD/deps and *not* cached.
 cache:
   directories:
-    - $HOME/deps
+    - $CACHED_DEPS_DIR
 
 before_install:
-    - cpanm -nq local::lib
-    - eval "$(perl -Mlocal::lib=${HOME}/deps)"
-    - mkdir deps
-    - cd deps
+    - cd $ENSDIR
+    - git clone -b release-1-6-924 --depth 1 https://github.com/bioperl/bioperl-live.git
     - git clone --branch main --depth 1 https://github.com/Ensembl/ensembl
-    - export PERL5LIB=$PWD/ensembl/modules:$PERL5LIB
-    - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
-    - export PERL5LIB=$PWD/bioperl-live:$PERL5LIB
-    - mysql -u root -h localhost -e 'GRANT ALL PRIVILEGES ON *.* TO "travis"@"%"'
-    - mysql -hlocalhost -utravis -e "SET GLOBAL sql_mode = 'TRADITIONAL'"
-    - cd ..
-    - mysql --version
-    - sqlite3 --version
-    - env
-    - export PERL5LIB=$PWD/modules:$PERL5LIB
+    - cpanm -nq local::lib
+    - perl -Mlocal::lib=$CACHED_DEPS_DIR
 
 install:
-    - cpanm -v --installdeps --with-recommends --notest .
-    - cpanm -v --installdeps --notest --cpanfile deps/ensembl/cpanfile .
-    - cpanm -n Devel::Cover::Report::Coveralls
-    - cpanm -n Devel::Cover::Report::Codecov
-    - ls $HOME/deps
-    - ls $PWD/deps
+    - cpanm -n --installdeps --cpanfile ensembl/cpanfile .
+    - cd $TRAVIS_BUILD_DIR
+    - cpanm -n --installdeps --with-recommends .
+    - mysql -u root -h localhost -e 'GRANT ALL PRIVILEGES ON *.* TO "travis"@"%"'
+    - mysql -u root -h localhost -e 'SET GLOBAL local_infile=1'
 
-script: "./scripts/dev/travis_run_tests.sh"
+script: "./travisci/harness.sh"
+
+jobs:
+  exclude:
+    - perl: "5.32"
+      env: 
+        - EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/' COVERAGE=true
+        - EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/' COVERAGE=false
+#        - EHIVE_TEST_PIPELINE_URLS='pgsql://postgres@127.0.0.1/' COVERAGE=false
+#        - EHIVE_TEST_PIPELINE_URLS='sqlite:///' COVERAGE=false
+ 
+    - perl: "5.26"
+      env: 
+        - EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/' COVERAGE=true
+#        - EHIVE_TEST_PIPELINE_URLS='pgsql://postgres@127.0.0.1/' COVERAGE=false
+        - EHIVE_TEST_PIPELINE_URLS='sqlite:///' COVERAGE=false
+        - EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/' COVERAGE=false
 
 notifications:
   email:
-    on_success: always
-    on_failure: always
+    on_failure: change
   slack:
     rooms:
       # coregithub
