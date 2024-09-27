@@ -67,14 +67,12 @@ jobs:
   exclude:
     - perl: "5.32"
       env: EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/' COVERAGE=true
-    - perl: "5.32"
-      env: EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/' COVERAGE=false
-    - perl: "5.26"
-      env: EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/' COVERAGE=true
     - perl: "5.26"
       env: EHIVE_TEST_PIPELINE_URLS='sqlite:///' COVERAGE=false
     - perl: "5.26"
       env: EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/' COVERAGE=false
+    - perl: "5.26"
+      env: EHIVE_TEST_PIPELINE_URLS='pgsql://postgres@127.0.0.1/' COVERAGE=false
 
 notifications:
   email:
