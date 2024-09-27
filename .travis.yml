@@ -35,6 +35,7 @@ addons:
       - libmysqlclient-dev
       - libdb-dev
       - libexpat1-dev
+      - libpq-dev
 
 # Dependencies that are brought by a system smart enough to reuse existing
 # files (e.g. CPAN) are cached between builds under $HOME/deps.
@@ -62,18 +63,15 @@ script: "./travisci/harness.sh"
 jobs:
   exclude:
     - perl: "5.32"
-      env: 
-        - EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/' COVERAGE=true
-        - EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/' COVERAGE=false
-#        - EHIVE_TEST_PIPELINE_URLS='pgsql://postgres@127.0.0.1/' COVERAGE=false
-#        - EHIVE_TEST_PIPELINE_URLS='sqlite:///' COVERAGE=false
- 
+      env: EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/' COVERAGE=true
+    - perl: "5.32"
+      env: EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/' COVERAGE=false
     - perl: "5.26"
-      env: 
-        - EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/' COVERAGE=true
-#        - EHIVE_TEST_PIPELINE_URLS='pgsql://postgres@127.0.0.1/' COVERAGE=false
-        - EHIVE_TEST_PIPELINE_URLS='sqlite:///' COVERAGE=false
-        - EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/' COVERAGE=false
+      env: EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/' COVERAGE=true
+    - perl: "5.26"
+      env: EHIVE_TEST_PIPELINE_URLS='sqlite:///' COVERAGE=false
+    - perl: "5.26"
+      env: EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/' COVERAGE=false
 
 notifications:
   email:

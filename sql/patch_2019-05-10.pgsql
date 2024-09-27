@@ -18,8 +18,6 @@
 
 \set expected_version 95
 
-\set ON_ERROR_STOP on
-
     -- warn that we detected the schema version mismatch:
 SELECT ('The patch only applies to schema version '
     || CAST(:expected_version AS VARCHAR)
