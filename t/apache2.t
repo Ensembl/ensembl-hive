@@ -56,6 +56,7 @@ foreach my $f (@source_files) {
     next if $f =~ /\/deceptive_bin\//;
     next if $f =~ /\/lsf_detection\//;
     next if $f =~ /\/deps\//;
+    next if $f =~ /\/travisci\//;
     # Unlicensed files
     next if $f =~ /\.(png|jpg|pdf|pyc|tgz|txt|dot|rst|fa|fastq|md|json|xml)$/;
     next if $f =~ /\/Makefile$/;
