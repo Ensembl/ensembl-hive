@@ -3,6 +3,9 @@
 #  - main
 #  - /^version.*$/
 
+git:
+  depth: false
+
 language: perl
 
 dist: focal
