@@ -51,7 +51,7 @@ my $gc_init_stderr = capture_stderr {
 
 #unlike($gc_init_stderr, qr/WARNING/, 'no warning from pipeline without missing analysis');
 # Hack for dealing with WARNING: MYSQL_OPT_RECONNECT unexpected warning
-if ($gc_init_stderr ~= /WARNING/ && !$gc_init_stderr ~= /WARNING:\s+MYSQL_OPT_RECONNECT/) {
+if ($gc_init_stderr =~ /WARNING/ && !$gc_init_stderr =~ /WARNING:\s+MYSQL_OPT_RECONNECT/) {
     fail('no warning from pipeline without missing analysis');
 }
 
