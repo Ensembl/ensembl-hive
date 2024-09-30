@@ -1,7 +1,7 @@
-#branches:
-#  only:
-#  - main
-#  - /^version.*$/
+branches:
+  only:
+  - main
+  - /^version.*$/
 
 git:
   depth: false
