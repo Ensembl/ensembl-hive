@@ -19,6 +19,7 @@ build:
      - libio-pty-perl
      - libgraphviz-perl
      - libproc-daemon-perl
+     - libdatetime-format-iso8601-perl
    tools:
      python: "3.10"
    jobs:

@@ -52,9 +52,6 @@ def html_visit_graphviz(self, node):
 
     if fname is None:
         self.body.append(self.encode(code))
-    # this svg handler does not make the images clickable
-    #elif format == 'svg':
-        #self.body.append('<a class="reference internal image-reference" href="{0}"><object data="{0}" type="image/svg+xml" class="align-center" style="max-width: 500px; max-height: 500px"><p class="warning">{0}</p></object>'.format(fname))
     else:
         self.body.append('<a class="reference internal image-reference" href="{0}"><img alt="{0}" class="align-center" src="{0}" style="max-width: 500px; max-height: 500px"></a>'.format(fname))
     raise nodes.SkipNode
@@ -112,7 +109,6 @@ def depart_schema_table_header_latex(self, node):
 ## Register the extension
 def setup(app):
     # Add the CSS
-    app.add_stylesheet("schema_doc.css")
     app.add_directive('schema_diagram', SchemaDiagramDirective)
     app.add_node(versatile_graphviz,
             html=(html_visit_graphviz, None),
