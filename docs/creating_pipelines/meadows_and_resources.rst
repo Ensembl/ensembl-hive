@@ -23,7 +23,7 @@ order for a Meadow to be available, two conditions must be met:
 
    - The appropriate Meadow driver must be installed and accessible to Perl (e.g. in your $PERL5LIB).
 
-      - Meadow drivers for LSF and for the LOCAL Meadow are included with the eHive distribution. Other Meadow drivers are :ref:`available in their own repositories <other-job-schedulers>`.
+      - Meadow drivers for SLURM and for the LOCAL Meadow are included with the eHive distribution. Other Meadow drivers are :ref:`available in their own repositories <other-job-schedulers>`.
 
    - The Beekeeper must be running on a head node that can submit jobs managed by the corresponding job management engine.
 
@@ -57,14 +57,14 @@ The Resource Description is a data structure (in practice written as a
 perl hashref) that links Meadows to a job scheduler submission string
 for that Meadow. For example, the following data structure defines a
 Resource Class with a Resource Class Name '1Gb_job'. This Resource
-Class has a Resource Description for running under the LSF scheduler,
-and another description for running under the SGE scheduler:
+Class has a Resource Description for running under the SLURM scheduler,
+and another description for running under the LSF scheduler:
 
 .. code-block:: perl
 
    {
-       '1Gb_job' => { 'LSF' => '-M 1024  -R"select[mem>1024]  rusage[mem=1024ma]"',
-                      'SGE' => '-l h_vmem=1G',
+       '1Gb_job' => { 'SLURM' => ' --time=1:00:00  --mem=1000m',
+                      'LSF' => '-M 1024  -R"select[mem>1024]  rusage[mem=1024ma]"',
                     },
    }
 

@@ -187,8 +187,7 @@ analyses as required to provide the appropriate memory usage steps, e.g.
 
 Relying on MEMLIMIT can be inconvenient at times:
 
-* The mechanism may not be available on all job schedulers (of the ones
-  eHive support, only LSF has that functionality).
+* The mechanism may not be available on all job schedulers.
 * When LSF kills the jobs, the open file handles and database connections
   are interrupted, potentially leading in corrupted data, and temporary
   files hanging around.

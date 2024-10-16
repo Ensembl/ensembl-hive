@@ -27,7 +27,7 @@ The recommended way to stop Workers is to set the analysis_capacity for Analyses
 
 ``tweak_pipeline.pl -url sqlite:///my_hive_db -SET analysis[logic_name].analysis_capacity=0``
 
-In some situations it may be necessary to take more drastic action to stop the Workers in a pipeline. In order to do this, you may need to find the underlying processes and kill them using the command appropriate for your scheduler (e.g. ``bkill`` for LSF, ``qdel`` for PBS-like systems) - or using the ``kill`` command if the Worker is running in the LOCAL meadow. It may help to look up the Worker's process IDs in the "worker" table:
+In some situations it may be necessary to take more drastic action to stop the Workers in a pipeline. In order to do this, you may need to find the underlying processes and kill them using the command appropriate for your scheduler (e.g. ``bkill`` for LSF, ``scancel`` for SLURM) - or using the ``kill`` command if the Worker is running in the LOCAL meadow. It may help to look up the Worker's process IDs in the "worker" table:
 
 ``db_cmd.pl -url sqlite://my_hive_db -sql 'SELECT process_id FROM worker WHERE status in ("JOB_LIFECYCLE", "SUBMITTED")'``
 
