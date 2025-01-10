@@ -204,7 +204,7 @@ sub update {
     my $self = shift;
 
     if($self->adaptor) {
-        $self->adaptor->update_stats_and_monitor($self);
+        $self->adaptor->update_statistics($self);
     }
 }
 

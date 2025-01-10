@@ -1,0 +1,47 @@
+-- See the NOTICE file distributed with this work for additional information
+-- regarding copyright ownership.
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--      http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
+
+-- ---------------------------------------------------------------------------------------------------
+
+CREATE TEMPORARY VIEW exp_ver AS SELECT "95" AS expected_version;
+
+.bail ON
+
+SELECT ('The patch only applies to schema version '
+    || expected_version
+    || ', but the current schema version is '
+    || meta_value
+    || ', skipping the rest.') AS ''
+    FROM hive_meta JOIN exp_ver WHERE meta_key='hive_sql_schema_version' AND meta_value<>expected_version;
+
+INSERT INTO hive_meta (meta_key, meta_value)
+    SELECT hm.* FROM hive_meta AS hm JOIN exp_ver WHERE meta_key='hive_sql_schema_version' AND meta_value<>expected_version;
+
+SELECT ('The patch seems to be compatible with schema version '
+    || expected_version
+    || ', applying the patch...') AS '' FROM exp_ver;
+
+
+-- ----------------------------------<actual_patch> -------------------------------------------------
+
+DROP TABLE IF EXISTS analysis_stats_monitor;
+
+-- ----------------------------------</actual_patch> -------------------------------------------------
+
+
+    -- increase the schema version by one and register the patch:
+UPDATE hive_meta SET meta_value=meta_value+1 WHERE meta_key='hive_sql_schema_version';
+INSERT INTO hive_meta (meta_key, meta_value) SELECT 'patched_to_' || meta_value, CURRENT_TIMESTAMP FROM hive_meta WHERE meta_key = 'hive_sql_schema_version';

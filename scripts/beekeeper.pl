@@ -656,9 +656,12 @@ sub run_autonomously {
 
                     my $submission_message = "submitting $this_meadow_rc_worker_count workers (rc_name=$rc_name) to ".$this_meadow->signature();
                     print "\nBeekeeper : $submission_message\n";
-                    $self->{'logmessage_adaptor'}->store_beekeeper_message($self->{'beekeeper_id'},
-                        "loop iteration $iteration, $submission_message",
-                        'INFO', 'ALIVE');
+                    # Log to DB unless mode is Forever - assume we want no DB entry when we loop forever
+                    if ($loop_until ne 'FOREVER') {
+                        $self->{'logmessage_adaptor'}->store_beekeeper_message($self->{'beekeeper_id'},
+                            "loop iteration $iteration, $submission_message",
+                            'INFO', 'ALIVE');
+                    }
 
                     my ($submission_cmd_args, $worker_cmd_args) = @{ $meadow_type_rc_name2resource_param_list{ $meadow_type }{ $rc_name } || [] };
 
@@ -710,10 +713,13 @@ sub run_autonomously {
             print STDERR "\n";
 
         } else {
-            print "\nBeekeeper : not submitting any workers this iteration\n";
-            $self->{'logmessage_adaptor'}->store_beekeeper_message($self->{'beekeeper_id'},
-                "loop iteration $iteration, 0 workers submitted",
-                'INFO', 'ALIVE');
+            # Log to STDOUT and DB unless mode is Forever - assume we want things quiet when we loop forever
+            if ($loop_until ne 'FOREVER') {
+                print "\nBeekeeper : not submitting any workers this iteration\n";
+                $self->{'logmessage_adaptor'}->store_beekeeper_message($self->{'beekeeper_id'},
+                    "loop iteration $iteration, 0 workers submitted",
+                    'INFO', 'ALIVE');
+            }
         }
 
         if( $iteration != $max_loops ) {    # skip the last sleep

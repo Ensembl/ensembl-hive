@@ -133,7 +133,6 @@ The default set of tables should look something like:
     | analysis_ctrl_rule         |
     | analysis_data              |
     | analysis_stats             |
-    | analysis_stats_monitor     |
     | dataflow_rule              |
     | hive_meta                  |
     | job                        |
