@@ -215,7 +215,7 @@ MODIFIES SQL DATA
 BEGIN
     SET FOREIGN_KEY_CHECKS=0;
     DROP VIEW IF EXISTS msg, progress, resource_usage_stats, live_roles, beekeeper_activity, semaphore_job;
-    DROP TABLE IF EXISTS pipeline_wide_parameters, analysis_stats_monitor, worker_resource_usage, resource_description, analysis_data, job_file, dataflow_target, dataflow_rule, analysis_ctrl_rule, analysis_stats, log_message, accu, job, semaphore, role, worker, beekeeper, analysis_base, resource_class, hive_meta;
+    DROP TABLE IF EXISTS pipeline_wide_parameters, worker_resource_usage, resource_description, analysis_data, job_file, dataflow_target, dataflow_rule, analysis_ctrl_rule, analysis_stats, log_message, accu, job, semaphore, role, worker, beekeeper, analysis_base, resource_class, hive_meta;
     SET FOREIGN_KEY_CHECKS=1;
 END; //
 DELIMITER ;

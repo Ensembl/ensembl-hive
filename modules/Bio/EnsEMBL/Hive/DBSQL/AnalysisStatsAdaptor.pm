@@ -89,7 +89,7 @@ sub objectify {     # turn the hashref into an object
 ################
 
 
-sub update_stats_and_monitor {
+sub update_statistics {
   my ($self, $stats) = @_;
 
   my $sql = "UPDATE analysis_stats SET status='".$stats->status."' ";
@@ -116,9 +116,6 @@ sub update_stats_and_monitor {
   $sql .= " WHERE analysis_id='".$stats->analysis_id."' ";
 
   my $sth = $self->prepare($sql);
-  $sth->execute();
-  $sth->finish;
-  $sth = $self->prepare("INSERT INTO analysis_stats_monitor SELECT CURRENT_TIMESTAMP, analysis_stats.* from analysis_stats WHERE analysis_id = ".$stats->analysis_id);
   $sth->execute();
   $sth->finish;
   $stats->seconds_since_when_updated(0); #not exact but good enough :)

@@ -1,6 +1,29 @@
 Changelog
 *********
 
+Version 2.8.0
+=============
+
+Release overview
+----------------
+
+This version has changes to beekeeper.pl to make it run more smoothly in
+continuous / automatic mode (-loop / --loop_until forever).
+
+Changed features and scripts
+------------------------------
+* When beekeeper.pl runs with loop_mode forever, no info about the beekeeper
+  iteration count is logged to the DB or STDOUT.
+
+Removed features
+----------------
+* The analysis_stats_monitor table and related code. It was found to be unused.
+
+DB schema change
+----------------
+* The DB schema is now 96.
+
+
 Version 2.7.0
 =============
 
