@@ -232,19 +232,15 @@ Internal versioning
 eHive has a number of interfaces, that are mostly versioned. You can see
 them by running ``beekeeper.pl --versions``::
 
-    CodeVersion     2.5
-    CompatibleHiveDatabaseSchemaVersion     92
-    CompatibleGuestLanguageCommunicationProtocolVersion     0.3
+    CodeVersion     2.7.0
+    CompatibleHiveDatabaseSchemaVersion    96
     MeadowInterfaceVersion  5
-    Meadow::DockerSwarm     5.1     unavailable
-    Meadow::HTCondor        5.0     unavailable
     Meadow::LOCAL   5.0     available
     Meadow::LSF     5.2     unavailable
-    Meadow::PBSPro  5.1     unavailable
-    Meadow::SGE     4.0     incompatible
-    GuestLanguageInterfaceVersion   3
-    GuestLanguage[python3]  3.0     available
-    GuestLanguage[ruby]     N/A     unavailable
+    Meadow::SLURM   5.5     available
+    GuestLanguageInterfaceVersion   5
+    GuestLanguage[python3]  5.0     available
+
 
 * *CodeVersion* is the software version (see how it is handled in the section
   below).
@@ -265,16 +261,16 @@ Releases, code branching and GIT
 
 There are three kinds of branches in eHive:
 
-* ``version/X.Y`` represent released versions of eHive. They are considered
+* ``version/X.Y.Z`` represent released versions of eHive. They are considered
   *stable*, i.e. are feature-frozen, and only receive bug-fixes. Schema
   changes are prohibited as it would break the database versioning
-  mechanism. Users on a given ``version/X.Y`` branch must be able to
+  mechanism. Users on a given ``version/X.Y.Z`` branch must be able to
   blindly update their checkout without risking breaking anything. It is
   forbidden to force push these branches (they are in fact marked as
   *protected* on Github).
 * ``main`` is the staging branch for the next stable release of eHive. It
   receives new features (incl. schema changes) until we decide to create a
-  new ``version/X.Y`` branch out of it. Like ``version/X.Y``, ``main`` is
+  new ``version/X.Y.Z`` branch out of it. Like ``version/X.Y.Z``, ``main`` is
   *protected* and cannot be force-pushed.
 * ``experimental/XXX`` are where *experimental* features are being
   developed. These branches can be created, removed or rebased at will. If
@@ -289,7 +285,10 @@ commits, some bugs have to be fixed differently on different branches. If
 that is the case, either fix the merge commit immediately, or do a merge
 for the sake of it (``git merge -s ours``) and then add the correct
 commits. Forcing merges to happen provides a clearer history and
-facilitates tools like ``git bisect``. 
+facilitates tools like ``git bisect``.
+
+This is however the historical way. Since eHive version 2.7, all the older
+versions are deprecated and not maintained anymore.
 
 Experimental branches should be rebased onto main just before the final
 merge (which then becomes a **fast-forward**). Together with the above

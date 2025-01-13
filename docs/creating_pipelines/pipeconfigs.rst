@@ -222,7 +222,7 @@ Resource classes for a pipeline are defined in a PipeConfig's resource_classes m
 
        return {
            %{$self->SUPER::resource_classes},
-           'high_memory' => { 'LSF' => '-C0 -M16000 -R"rusage[mem=16000]"' },
+           'high_memory' => { 'SLURM' => ' --time=7-00:00:00  --mem=100000m' },
        };
    }
 

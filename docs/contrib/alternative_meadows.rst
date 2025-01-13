@@ -19,33 +19,30 @@ LOCAL
   configuration found in the ``hive_config.json`` file and (ii) the
   *analysis_capacity* and *hive_capacity* mechanisms.
 
-LSF
-  A meadow that supports `IBM Platform LSF <http://www-03.ibm.com/systems/spectrum-computing/products/lsf/>`__
+SLURM
+  A meadow that supports `SLURM <https://slurm.schedmd.com/>`__
   This meadow is extensively used by the Ensembl project and is regularly
   updated. It is fully implemented and supports workloads reaching
   thousands of parallel jobs.
 
-Other meadows have been contributed to the project, though sometimes not
-all the features are implemented.  Being developed outside of the main
-codebase, they may be at times out of sync with the latest version of
-eHive.  Nevertheless, several are continuously tested on `Travis CI
-<https://travis-ci.org/Ensembl>`__ using single-machine Docker
-installations. Refer to the documentation or README in each of those
-repositories to know more about their compatibility and support.
+Other meadows - now deprecated - contributed to the project in the past,
+though sometimes not all the features were implemented.  Being developed outside of the main
+codebase, they could be at times out of sync with the latest version of
+eHive.  These meadows are listed below for the records.
 
-SGE
+LSF (Deprecated)
+  A meadow that supports `IBM Platform LSF <http://www-03.ibm.com/systems/spectrum-computing/products/lsf/>`__ This meadow was extensively used by the Ensembl project until 2024. It was fully implemented and supported workloads reaching thousands of parallel jobs.
+
+SGE (Deprecated)
   A meadow that supports Sun Grid Engine (now known as Oracle Grid Engine). Available for download on GitHub at `Ensembl/ensembl-hive-sge <https://github.com/Ensembl/ensembl-hive-sge>`__.
 
-HTCondor
+HTCondor (Deprecated)
   A meadow that supports `HTCondor <https://research.cs.wisc.edu/htcondor/>`__. Available for download on GitHub at `Ensembl/ensembl-hive-htcondor <https://github.com/Ensembl/ensembl-hive-htcondor>`__.
 
-PBSPro
+PBSPro (Deprecated)
   A meadow that supports `PBS Pro <http://www.pbspro.org>`__. Available for download on GitHub at `Ensembl/ensembl-hive-pbspro <https://github.com/Ensembl/ensembl-hive-pbspro>`__.
 
-SLURM
-  A meadow that supports `Slurm <https://slurm.schedmd.com/>`__. Available for download on GitHub at `tweep/ensembl-hive-slurm <https://github.com/tweep/ensembl-hive-slurm>`__.
-
-DockerSwarm
+DockerSwarm (Deprecated)
   A meadow that can control and run on `Docker Swarm <https://docs.docker.com/engine/swarm/>`__.
   Available for download on GitHub at
   `Ensembl/ensembl-hive-docker-swarm <https://github.com/Ensembl/ensembl-hive-docker-swarm>`__.
@@ -69,25 +66,25 @@ The table below lists the capabilities of each meadow, and whether they are avai
      - Yes
      - Partially implemented
      - Not available
-   * - LSF
+   * - LSF (Deprecated)
      - Yes
      - Yes
      - Yes
      - Yes
      - Yes
-   * - SGE
-     - Yes
-     - Yes
-     - Yes
-     - Yes
-     - Not implemented
-   * - HTCondor
+   * - SGE (Deprecated)
      - Yes
      - Yes
      - Yes
      - Yes
      - Not implemented
-   * - PBSPro
+   * - HTCondor (Deprecated)
+     - Yes
+     - Yes
+     - Yes
+     - Yes
+     - Not implemented
+   * - PBSPro (Deprecated)
      - Yes
      - Yes
      - Yes
@@ -99,7 +96,7 @@ The table below lists the capabilities of each meadow, and whether they are avai
      - Yes
      - Yes
      - Yes
-   * - DockerSwarm
+   * - DockerSwarm (Deprecated)
      - Yes
      - Yes
      - Not implemented

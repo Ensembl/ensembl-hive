@@ -12,6 +12,14 @@ eHive is a system for running computation pipelines on distributed computing res
 
 The name comes from the way pipelines are processed by a swarm of autonomous agents.
 
+> [!IMPORTANT]  
+> As per eHive version 2.7.0, we changed the preferred/default eHive meadow from *LSF* to *SLURM*.
+>
+> Also, because our pipelines are transitioning to *SLURM*, we have decided to deprecate all the meadows other than *SLURM* and *Local*, and not to support them anymore with immediate effect.
+> For details about the schedulers, please see [Grid scheduler and Meadows](#grid-scheduler-and-meadows) below in this README.
+>
+> Please, do not hesitate to contact us, should this be a problem for you.
+
 Available documentation
 -----------------------
 
@@ -70,6 +78,9 @@ Grid scheduler and Meadows
 --------------------------
 
 eHive has a generic interface named _Meadow_ that describes how to interact with an underlying grid scheduler (submit jobs, query job's status, etc). eHive is compatible with
+[SLURM](https://slurm.schedmd.com)
+
+The following schedulers are deprecated and not supported as of eHive 2.7.0.
 [IBM Platform LSF](http://www-03.ibm.com/systems/spectrum-computing/products/lsf/),
 Sun Grid Engine (now known as Oracle Grid Engine),
 [HTCondor](https://research.cs.wisc.edu/htcondor/),
@@ -98,8 +109,8 @@ docker run -it ensemblorg/ensembl-hive beekeeper.pl -url $URL -loop -sleep 0.2
 docker run -it ensemblorg/ensembl-hive runWorker.pl -url $URL
 ```
 
-Docker Swarm
-------------
+Docker Swarm (DEPRECATED)
+-------------------------
 
 Once packaged into Docker images, a pipeline can actually be run under the
 Docker Swarm orchestrator, and thus on any cloud infrastructure that supports
