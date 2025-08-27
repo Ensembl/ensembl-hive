@@ -6,7 +6,7 @@
 
 =head1 SYNOPSIS
 
-    use Bio::EnsEMBL::Hive::Version 2.8.0;
+    use Bio::EnsEMBL::Hive::Version 2.8.1;
 
 =head1 DESCRIPTION
 
@@ -47,7 +47,7 @@ use Exporter 'import';
 our @EXPORT_OK = qw(get_code_version report_versions);
 
 
-our $VERSION = '2.8.0';
+our $VERSION = '2.8.1';
 
 sub get_code_version {
 
