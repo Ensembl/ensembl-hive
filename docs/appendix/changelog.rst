@@ -1,6 +1,19 @@
 Changelog
 *********
 
+Version 2.8.1
+=============
+
+Release overview
+----------------
+
+This version fixes an incompatibility with the Slurm 24 sinfo command.
+
+Changed features and scripts
+------------------------------
+* Adapt to changes in sinfo output
+  
+
 Version 2.8.0
 =============
 
