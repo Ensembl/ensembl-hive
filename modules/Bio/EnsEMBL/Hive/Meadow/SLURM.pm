@@ -70,10 +70,13 @@ our $VERSION = '5.5';
 # if sinfo gives a version and a non-zero node count.
 sub name {
     # List the slurm version and the cluster node count like "23.02.7:197"
-    my $sinfo = `sinfo -ho "%v:%D" 2>/dev/null`;
-    $sinfo =~ /^(\d+)(?:\.\d+)*:(\d+)$/;
+    my $sversion = `sinfo -V 2>/dev/null`;
+    $sversion =~ /^slurm (\d+)(?:\.\d+)*$/i;
     my $slurm_version = $1;
-    my $node_count = $2;
+
+    my $sinfo = `sinfo -ho "%D" 2>/dev/null`;
+    $sinfo =~ /^(\d+)$/;
+    my $node_count = $1;
 
     if ($slurm_version and $node_count and $slurm_version >= 23 and $node_count > 0) {
         return "slurm";
