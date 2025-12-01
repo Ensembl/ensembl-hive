@@ -18,11 +18,12 @@
 use strict;
 use warnings;
 
+use Test::Exception;
 use Test::More;
 use Data::Dumper;
 use Capture::Tiny 'capture_stderr';
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_url_or_die);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker db_cmd get_test_url_or_die);
 
 my $expected_error_pattern = qq{WARNING: Could not find a local analysis named 'oops_i_am_missing' \Q(dataflow from analysis 'first')};
 
@@ -32,8 +33,7 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 my $pipeline_url = get_test_url_or_die();
 
 my $init_stderr = capture_stderr {
-    local @INC = @INC;
-    push @INC, $ENV{'EHIVE_ROOT_DIR'}.'/t/10.pipeconfig/';
+    local $ENV{'PERL5LIB'} = $ENV{'EHIVE_ROOT_DIR'}.'/t/10.pipeconfig/::'.$ENV{PERL5LIB};
     init_pipeline(
         'TestPipeConfig::MissingAnalysis_conf',
         $pipeline_url,
@@ -54,6 +54,29 @@ my $gc_init_stderr = capture_stderr {
 if ($gc_init_stderr =~ /WARNING/ && !$gc_init_stderr =~ /WARNING:\s+MYSQL_OPT_RECONNECT/) {
     fail('no warning from pipeline without missing analysis');
 }
+
+subtest 'Drop on error' => sub {
+
+    # To ensure we start with the database being absent
+    db_cmd($pipeline_url, [-sql => 'DROP DATABASE IF EXISTS']);
+
+    # Will fail because PERL5LIB hasn't been updated to include the local directory
+    init_pipeline('TestPipeConfig::MissingAnalysis_conf', $pipeline_url, [], [],
+        {
+            'expect_failure' => qr/Can't locate TestPipeConfig\/MissingAnalysis_conf.pm in \@INC/,
+        }
+    );
+
+    my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $pipeline_url);
+    if ($dbc->driver eq 'sqlite') {
+        ok(!-e $dbc->dbname, $dbc->dbname . q{ doesn't exist})
+    } else {
+        throws_ok {
+            $dbc->connect;
+        } qr/Could not connect to database.*DBI connect\(.*\) failed/s, q{The database doesn't exist};
+    }
+
+};
 
 done_testing();
 
