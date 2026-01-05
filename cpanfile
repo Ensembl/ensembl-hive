@@ -1,7 +1,7 @@
 requires 'DBI';
-# requires 'DBD::mysql', '< 5.0'; # newer versions do not support MySQL 5
+requires 'DBD::mysql', '< 5.0'; # newer versions do not support MySQL 5
 requires 'DBD::SQLite';
-# requires 'DBD::Pg';
+requires 'DBD::Pg';
 
 requires 'Capture::Tiny';
 requires 'DateTime';
@@ -23,7 +23,7 @@ on 'test' => sub {
    requires 'Perl::Critic::Utils';
    requires 'GraphViz';
    requires 'Devel::Cover';
-#   requires 'Devel::Cover::Report::Codecov';
+   requires 'Devel::Cover::Report::Codecov';
 };
 
 recommends 'Getopt::ArgvFile';
